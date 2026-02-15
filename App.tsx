@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Copy, MessageCircle, Gift, X, MapPin, ArrowRight, ChevronRight } from 'lucide-react';
+import ReactGA from "react-ga4";
+
+// Initialize GA4
+ReactGA.initialize("G-7MEJVWM5JR");
 
 // --- Assets & Data ---
 const ASSETS = {
@@ -197,6 +201,7 @@ const SecretModal = ({ onClose }) => (
           href={ASSETS.lineLink}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => ReactGA.event({ category: "Conversion", action: "click_line_link", label: "Secret Modal Line Link" })}
           className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
         >
           <MessageCircle className="w-4 h-4" />
@@ -213,7 +218,13 @@ export default function App() {
   // Removed showModal state as the welcome screen is no longer needed
   const [showSecretModal, setShowSecretModal] = useState(false);
 
+  // Track Page View
+  useEffect(() => {
+    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+  }, []);
+
   const handleShuffle = () => {
+    ReactGA.event({ category: "Interaction", action: "refresh_review", label: "Refresh Review" });
     let newIndex;
     let currentReviewIndex = REVIEWS.indexOf(review);
     do {
@@ -223,6 +234,7 @@ export default function App() {
   };
 
   const handleCopyAndRedirect = () => {
+    ReactGA.event({ category: "Conversion", action: "copy_and_go", label: "Copy & Go" });
     try {
       const textArea = document.createElement("textarea");
       textArea.value = review;
@@ -373,7 +385,10 @@ export default function App() {
         </motion.div>
 
         {/* --- Prize List (Horizontal Scroll) with Secret at the End --- */}
-        <PrizeTicker onSecretClick={() => setShowSecretModal(true)} />
+        <PrizeTicker onSecretClick={() => {
+          ReactGA.event({ category: "Interaction", action: "view_secret_modal", label: "Clicked Secret Character" });
+          setShowSecretModal(true);
+        }} />
 
       </main>
 
