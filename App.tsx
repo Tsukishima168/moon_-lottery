@@ -109,7 +109,7 @@ const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
             <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
             <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#F59E0B" fillOpacity="0.2" />
             <circle cx="50" cy="50" r="5" fill="#1C1917" />
-        </svg>
+          </svg>
         </motion.div>
 
         {/* Handle */}
@@ -265,24 +265,22 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-sm flex flex-col items-center"
       >
-        {/* 詩籤：日式和風紙條，紅邊、米色底，大字易讀 */}
+        {/* 詩籤：日式和風紙條 -> 改為與主視覺一致的 Glassmorphism 風格 */}
         <div
-          className="w-full max-w-[260px] rounded-lg p-6 mb-5 relative"
-          style={{
-            background: 'linear-gradient(180deg, #FDF8F0 0%, #F5EDE0 100%)',
-            boxShadow: 'inset 0 0 0 3px #B91C1C, 0 6px 20px rgba(0,0,0,0.15)',
-          }}
+          className="w-full max-w-[280px] rounded-2xl p-6 mb-5 relative bg-white/80 backdrop-blur-xl shadow-xl border border-white/50"
         >
+          {/* Card Top Accent (Optional, consistent with main card) */}
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-700/0 via-red-700/50 to-red-700/0 opacity-50 rounded-t-2xl"></div>
+
           <div className="text-center">
-            <span className={`inline-block px-4 py-1.5 rounded text-sm font-black tracking-widest mb-4 ${
-              fortune.level === '隱藏版' ? 'bg-amber-600 text-white' :
-              fortune.level === '大吉' ? 'bg-red-700 text-white' :
-              fortune.level === '中吉' ? 'bg-amber-600 text-white' :
-              'bg-stone-600 text-white'
-            }`}>
+            <span className={`inline-block px-4 py-1.5 rounded text-sm font-black tracking-widest mb-4 ${fortune.level === '隱藏版' ? 'bg-amber-600 text-white' :
+                fortune.level === '大吉' ? 'bg-red-700 text-white' :
+                  fortune.level === '中吉' ? 'bg-amber-600 text-white' :
+                    'bg-stone-600 text-white'
+              }`}>
               {fortune.level}
             </span>
-            <p className="text-stone-900 font-bold text-lg leading-loose">「{fortune.text}」</p>
+            <p className="text-stone-800 font-bold text-lg leading-loose">「{fortune.text}」</p>
           </div>
         </div>
 
