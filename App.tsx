@@ -47,30 +47,30 @@ const REVIEWS = [
 ];
 
 const PRIZES = [
-  "好運能量加持",
-  "神秘小禮物",
-  "今日好心情",
-  "心想事成"
+  "免費配料一份",
+  "飲品折價 10 元",
+  "甜點 9 折優惠",
+  "神秘小禮物"
 ];
 
 const BALL_COLORS = [
   { bg: "bg-red-500", border: "border-red-600" },      // 大吉
   { bg: "bg-amber-400", border: "border-amber-500" },  // 中吉
-  { bg: "bg-blue-400", border: "border-blue-500" },    // 小吉 (水藍色球)
+  { bg: "bg-blue-400", border: "border-blue-500" },    // 小吉
   { bg: "bg-emerald-400", border: "border-emerald-500" }, // 吉
-  { bg: "bg-stone-200", border: "border-stone-300" }   // 驚喜
+  { bg: "bg-stone-200", border: "border-stone-300" }   // 隱藏
 ];
 
 // --- Components ---
 
 // 日式搖珠機 (Garapon) 動畫元件
 const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
-  const [ballColor, setBallColor] = useState(BALL_COLORS[1]);
+  const [activeBallIndex, setActiveBallIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setBallColor(BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)]);
-    }, 5000); // Match repeatDelay + duration
+      setActiveBallIndex((prev) => (prev + 1) % BALL_COLORS.length);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -94,44 +94,51 @@ const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
       <div className="absolute bottom-2 left-10 w-4 h-24 bg-stone-800 -rotate-12 z-0"></div>
       <div className="absolute bottom-2 right-10 w-4 h-24 bg-stone-800 rotate-12 z-0"></div>
 
-      {/* Rotating Hexagon Drum */}
+      {/* Rotating Drum */}
       <motion.div
         className="relative w-32 h-32 z-10"
         animate={{ rotate: 360 }}
-        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
       >
         <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
           <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
           <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#F59E0B" fillOpacity="0.2" />
+
+          {/* Balls inside the drum (Simulated) */}
+          <circle cx="40" cy="40" r="4" fill="#FACC15" />
+          <circle cx="60" cy="45" r="4" fill="#3B82F6" />
+          <circle cx="45" cy="65" r="4" fill="#EF4444" />
+          <circle cx="55" cy="35" r="4" fill="#10B981" />
+          <circle cx="50" cy="55" r="4" fill="#E7E5E4" />
+
           <circle cx="50" cy="50" r="5" fill="#1C1917" />
         </svg>
       </motion.div>
 
-      {/* Handle (Animated) */}
+      {/* Handle */}
       <motion.div
         className="absolute z-20"
         animate={{ rotate: 360 }}
-        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
       >
         <div className="w-1 h-12 bg-stone-400 origin-top translate-y-[-2px]"></div>
         <div className="w-3 h-3 bg-stone-900 rounded-full translate-x-[-4px] translate-y-10"></div>
       </motion.div>
 
-      {/* Dropping Ball Animation */}
+      {/* Dropping Balls (Multi-color sequential) */}
       <motion.div
-        key={ballColor.bg}
-        className={`absolute bottom-4 z-30 w-6 h-6 rounded-full ${ballColor.bg} border-2 ${ballColor.border} shadow-md`}
+        key={activeBallIndex}
+        className={`absolute bottom-4 z-30 w-6 h-6 rounded-full ${BALL_COLORS[activeBallIndex].bg} border-2 ${BALL_COLORS[activeBallIndex].border} shadow-md`}
         initial={{ y: -40, opacity: 0, scale: 0 }}
         animate={{
-          y: [0, 20, 20],
-          x: [0, -20, -30],
+          y: [0, 20, 25],
+          x: [10, -10, -35],
           opacity: [0, 1, 0],
-          scale: [0, 1, 1]
+          scale: [0, 1, 1],
+          rotate: [0, 180, 360]
         }}
         transition={{
-          duration: 2,
-          repeat: Infinity,
-          repeatDelay: 3,
+          duration: 3,
           ease: "easeOut"
         }}
       />
@@ -291,6 +298,21 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
             只要在 Google 地圖完成<span className="text-red-600 font-bold mx-1">五星好評</span><br />
             即可現場兌換轉蛋機中的好禮！
           </p>
+
+          {/* Prize Section (獎項說明) */}
+          <div className="w-full mb-6 text-left">
+            <h4 className="text-[10px] font-black text-red-700/60 mb-2 px-1 tracking-widest flex items-center gap-2">
+              <Gift size={10} /> 獎項說明
+            </h4>
+            <div className="grid grid-cols-2 gap-2">
+              {PRIZES.map((prize, i) => (
+                <div key={i} className="bg-white/40 border border-red-100 rounded-lg p-2 flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${BALL_COLORS[i % BALL_COLORS.length].bg}`}></div>
+                  <span className="text-[10px] font-bold text-stone-700 whitespace-nowrap">{prize}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <div className="w-full space-y-3">
             <a
