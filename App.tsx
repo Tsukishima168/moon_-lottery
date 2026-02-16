@@ -17,16 +17,33 @@ const ASSETS = {
 };
 
 const REVIEWS = [
-  "今天的幸運色是黃色！來點芒果甜點吧！",
-  "適合與朋友分享的一天，享受美好相聚時光。",
-  "享受獨處的時光，一杯咖啡配蛋糕剛剛好。",
-  "發現生活中的小確幸，就在月島甜點。",
-  "好運正在發生，轉角遇到美味。",
-  "甜蜜滋味，撫慰一整天的辛勞。",
-  "來一份限定甜點，犒賞努力的自己。",
-  "帶著笑容，好運自然會跟著你。",
-  "分享這份甜蜜，讓快樂加倍。",
-  "今天的你，比甜點還要甜！"
+  // 地理位置與周邊 (1-5)
+  "位於台南安南區本原街的甜點店，鄰近台南果菜市場。店內提供低糖千層蛋糕與客製化生日蛋糕訂製，也有咖啡內用服務。",
+  "距離國道8號不遠的安南區咖啡店，Google Maps 導航位置準確。提供內用座位與外帶服務，環境安靜舒適。",
+  "在安南區本原街發現的隱藏版甜點。主打低糖製作的千層蛋糕，適合不喜歡太甜的人，是果菜市場周邊的質感小店。",
+  "隱身在本原街巷弄中的咖啡廳，位置雖然隱密但鄰近果菜市場。店內氣氛放鬆，提供插座，是一間適合閱讀或工作的安南區甜點店。",
+  "路過安南區本原街買甜點，停車方便。提供千層蛋糕與布丁的快速外帶，也有預留甜點的服務。",
+
+  // 產品特色：千層與蛋糕 (6-10)
+  "台南安南區的千層蛋糕專賣店，位於本原街。千層蛋糕餅皮層次分明，鮮奶油口感清爽。亦提供整模蛋糕的預訂服務。",
+  "本原街上的甜點工作室，提供客製化生日蛋糕預訂。蛋糕體以低糖為主，也有販售單片的千層蛋糕，建議提前詢問。",
+  "針對不愛吃甜的人設計的低糖甜點店。招牌千層蛋糕與季節水果蛋糕皆為減糖製作，位於台南果菜市場旁。",
+  "提供多種口味千層蛋糕的安南區店家。店址位於本原街，除了切片蛋糕外，也接受節慶禮盒與彌月蛋糕的諮詢。",
+  "使用新鮮食材製作的手作甜點店。千層蛋糕是店內人氣商品，每日口味不同。地點位於台南果菜市場附近的本原街。",
+
+  // 產品特色：布丁與咖啡 (11-15)
+  "這家店位於台南果菜市場旁，主要販售手作甜點。招牌的烤布丁口感綿密，焦糖香氣足夠，適合當作安南區在地的伴手禮。",
+  "台南安南區少見的質感甜點店，位於本原街。美式咖啡與西西里咖啡表現不錯，搭配店內的手作烤布丁剛好。",
+  "安南區本原街上的下午茶選擇。店內販售的西西里咖啡使用新鮮檸檬調製，與低糖甜點搭配協調。",
+  "提供外帶甜點與節慶禮盒的專門店，位於台南果菜市場附近。除了常態的千層蛋糕，烤布丁也是許多人推薦的品項。",
+  "想要在安南區喝下午茶的地方。店內提供手沖咖啡與義式咖啡，甜點以當日現做的千層與布丁為主，位於本原街。",
+
+  // 綜合體驗與服務 (16-20)
+  "台南安南區值得造訪的隱藏版店家。地點在果菜市場旁的本原街，販售低糖千層、烤布丁與客製化蛋糕。",
+  "提供內用與外帶服務的安南區甜點店。店內環境不大但溫馨，適合喜歡安靜的人。位置就在熱鬧的果菜市場隔壁。",
+  "本原街巷弄中的人氣甜點店，若在尋找台南安南區的生日蛋糕或節慶禮盒，建議提前詢問預訂。",
+  "安南區在地人推薦的甜點店，位於本原街。雖然隱密但生意不錯，建議假日前往時先確認是否有位。",
+  "台南果菜市場周邊的休憩空間。販售的甜點皆為店內手作，低糖千層與烤布丁是店內的兩大招牌。"
 ];
 
 const PRIZES = [
@@ -36,10 +53,27 @@ const PRIZES = [
   "心想事成"
 ];
 
+const BALL_COLORS = [
+  { bg: "bg-red-500", border: "border-red-600" },      // 大吉
+  { bg: "bg-amber-400", border: "border-amber-500" },  // 中吉
+  { bg: "bg-blue-400", border: "border-blue-500" },    // 小吉 (水藍色球)
+  { bg: "bg-emerald-400", border: "border-emerald-500" }, // 吉
+  { bg: "bg-stone-200", border: "border-stone-300" }   // 驚喜
+];
+
 // --- Components ---
 
-// 日式搖珠機 (Garapon) 動畫元件 - Make it Interactive!
+// 日式搖珠機 (Garapon) 動畫元件
 const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
+  const [ballColor, setBallColor] = useState(BALL_COLORS[1]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBallColor(BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)]);
+    }, 5000); // Match repeatDelay + duration
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <motion.div
       className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center cursor-pointer group"
@@ -66,12 +100,9 @@ const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
         animate={{ rotate: 360 }}
         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
       >
-        {/* Hexagon Shape using SVG */}
         <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
           <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
-          {/* Wooden Side Panels */}
           <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#F59E0B" fillOpacity="0.2" />
-          {/* Center Pivot */}
           <circle cx="50" cy="50" r="5" fill="#1C1917" />
         </svg>
       </motion.div>
@@ -88,7 +119,8 @@ const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
 
       {/* Dropping Ball Animation */}
       <motion.div
-        className="absolute bottom-4 z-30 w-6 h-6 rounded-full bg-amber-400 border-2 border-amber-500 shadow-md"
+        key={ballColor.bg}
+        className={`absolute bottom-4 z-30 w-6 h-6 rounded-full ${ballColor.bg} border-2 ${ballColor.border} shadow-md`}
         initial={{ y: -40, opacity: 0, scale: 0 }}
         animate={{
           y: [0, 20, 20],
@@ -252,7 +284,7 @@ const EventModal = ({ onClose }: { onClose: () => void }) => (
 );
 
 export default function App() {
-  const [review, setReview] = useState(REVIEWS[0]);
+  const [review, setReview] = useState(() => REVIEWS[Math.floor(Math.random() * REVIEWS.length)]);
   const [isCopied, setIsCopied] = useState(false);
   const [showSecretModal, setShowSecretModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
