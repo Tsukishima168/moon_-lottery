@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Star, RefreshCw, Copy, MessageCircle, Gift, X, MapPin, ArrowRight, ChevronRight } from 'lucide-react';
+import { Star, RefreshCw, Copy, MessageCircle, Gift, X, MapPin, ArrowRight, ChevronRight, CheckCircle } from 'lucide-react';
 import ReactGA from "react-ga4";
 
 // Initialize GA4
@@ -101,7 +101,7 @@ const GaraponAnimation = () => {
 
 // 橫向捲動獎品列表 (Prize Ticker) with Secret Character at the End
 const PrizeTicker = ({ onSecretClick }) => (
-  <div className="w-full mt-auto pb-6">
+  <div className="w-full mt-2 pb-2">
     <div className="flex items-center justify-between mb-3 px-2">
       <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-1">
         <Gift className="w-3 h-3" /> 獎品一覽
@@ -155,10 +155,10 @@ const Toast = ({ show }) => (
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 20 }}
-        className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-stone-900 text-stone-50 rounded-full shadow-lg flex items-center gap-2"
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-stone-900 text-stone-50 rounded-full shadow-lg flex items-center gap-2"
       >
-        <RefreshCw className="w-4 h-4 animate-spin" />
-        <span className="text-sm font-medium">已複製！正在開啟地圖...</span>
+        <CheckCircle className="w-4 h-4 text-emerald-400" />
+        <span className="text-sm font-medium">已複製！即將開啟 Google 留評頁面...</span>
       </motion.div>
     )}
   </AnimatePresence>
@@ -293,9 +293,15 @@ export default function App() {
           <h2 className="text-xl sm:text-2xl font-black tracking-widest text-stone-900 mb-1">
             月島・開運所
           </h2>
-          <p className="text-stone-500 text-[10px] sm:text-xs tracking-wide">
+          <p className="text-stone-500 text-[10px] sm:text-xs tracking-wide mb-4">
             拍下你的發現，好運轉起來。
           </p>
+
+          {/* --- Prize List (直接放在轉蛋下方，讓客人先看到獎項) --- */}
+          <PrizeTicker onSecretClick={() => {
+            ReactGA.event({ category: "Interaction", action: "view_secret_modal", label: "Clicked Secret Character" });
+            setShowSecretModal(true);
+          }} />
         </motion.div>
 
         {/* --- Main Interaction Card --- */}
@@ -366,16 +372,18 @@ export default function App() {
           </div>
         </motion.div>
 
-        {/* --- Prize List (Horizontal Scroll) with Secret at the End --- */}
-        <PrizeTicker onSecretClick={() => {
-          ReactGA.event({ category: "Interaction", action: "view_secret_modal", label: "Clicked Secret Character" });
-          setShowSecretModal(true);
-        }} />
-
       </main>
 
       {/* --- Sticky Bottom Action Bar --- */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-stone-200 z-40 pb-8 sm:pb-4 safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-stone-200 z-40 pb-8 sm:pb-4 safe-area-pb">
+        {/* 步驟說明：讓客人清楚知道流程 */}
+        <div className="max-w-md mx-auto w-full mb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-stone-500 text-center">
+          <span className="text-[11px] font-medium">① 複製評論</span>
+          <ChevronRight className="w-3 h-3 text-stone-300 shrink-0 hidden sm:block" />
+          <span className="text-[11px] font-medium">② 到 Google 貼上留五星</span>
+          <ChevronRight className="w-3 h-3 text-stone-300 shrink-0 hidden sm:block" />
+          <span className="text-[11px] font-medium text-amber-600">③ 到店兌獎</span>
+        </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -392,7 +400,7 @@ export default function App() {
             className="flex-[2] py-3.5 px-4 bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-900/30 hover:bg-red-800 active:bg-red-900 transition-colors flex items-center justify-center gap-2"
           >
             <Copy className="w-4 h-4" />
-            <span className="text-sm tracking-wide">複製 & 出發</span>
+            <span className="text-sm tracking-wide">複製評論 · 前往 Google 留評</span>
           </motion.button>
         </div>
       </div>
