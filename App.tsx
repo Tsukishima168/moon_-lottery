@@ -265,22 +265,27 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-sm flex flex-col items-center"
       >
-        {/* 詩籤：日式和風紙條 -> 改為與主視覺一致的 Glassmorphism 風格 */}
+        {/* 詩籤：Glassmorphism 精緻化 + 襯線體呈現質感 */}
         <div
-          className="w-full max-w-[280px] rounded-2xl p-6 mb-5 relative bg-white/80 backdrop-blur-xl shadow-xl border border-white/50"
+          className="w-full max-w-[280px] rounded-2xl p-8 mb-6 relative bg-white/90 backdrop-blur-xl shadow-2xl border border-white/60 flex flex-col items-center"
         >
-          {/* Card Top Accent (Optional, consistent with main card) */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-700/0 via-red-700/50 to-red-700/0 opacity-50 rounded-t-2xl"></div>
+          {/* Decorative Top Line */}
+          <div className="absolute top-0 w-16 h-1 bg-red-700/80 rounded-b-full opacity-80"></div>
 
-          <div className="text-center">
-            <span className={`inline-block px-4 py-1.5 rounded text-sm font-black tracking-widest mb-4 ${fortune.level === '隱藏版' ? 'bg-amber-600 text-white' :
-                fortune.level === '大吉' ? 'bg-red-700 text-white' :
-                  fortune.level === '中吉' ? 'bg-amber-600 text-white' :
-                    'bg-stone-600 text-white'
+          <div className="text-center mt-2">
+            {/* Badge: Softer, pill-shaped, premium look */}
+            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold tracking-widest mb-6 border ${fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
+                  fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                    'bg-stone-100 text-stone-600 border-stone-200'
               }`}>
               {fortune.level}
             </span>
-            <p className="text-stone-800 font-bold text-lg leading-loose">「{fortune.text}」</p>
+
+            {/* Fortune Text: Serif, larger, more breathing room */}
+            <p className="text-stone-800 font-serif font-medium text-xl leading-loose tracking-wide">
+              「{fortune.text}」
+            </p>
           </div>
         </div>
 
