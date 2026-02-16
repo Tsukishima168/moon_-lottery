@@ -255,7 +255,7 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-stone-900/70 backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div
@@ -265,17 +265,16 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-sm flex flex-col items-center"
       >
-        {/* 詩籤：日式和風紙條，紅邊、米色底、紙質感 */}
+        {/* 詩籤：日式和風紙條，紅邊、米色底，大字易讀 */}
         <div
-          className="w-full max-w-[200px] rounded-sm p-6 mb-6 relative"
+          className="w-full max-w-[260px] rounded-lg p-6 mb-5 relative"
           style={{
             background: 'linear-gradient(180deg, #FDF8F0 0%, #F5EDE0 100%)',
-            boxShadow: 'inset 0 0 0 3px #B91C1C, 0 4px 12px rgba(0,0,0,0.1)',
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`,
+            boxShadow: 'inset 0 0 0 3px #B91C1C, 0 6px 20px rgba(0,0,0,0.15)',
           }}
         >
           <div className="text-center">
-            <span className={`inline-block px-3 py-1 rounded text-xs font-black tracking-widest mb-3 ${
+            <span className={`inline-block px-4 py-1.5 rounded text-sm font-black tracking-widest mb-4 ${
               fortune.level === '隱藏版' ? 'bg-amber-600 text-white' :
               fortune.level === '大吉' ? 'bg-red-700 text-white' :
               fortune.level === '中吉' ? 'bg-amber-600 text-white' :
@@ -283,12 +282,12 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
             }`}>
               {fortune.level}
             </span>
-            <p className="text-stone-800 font-medium text-sm leading-relaxed">「{fortune.text}」</p>
+            <p className="text-stone-900 font-bold text-lg leading-loose">「{fortune.text}」</p>
           </div>
         </div>
 
         {/* 活動說明 */}
-        <p className="text-stone-600 text-xs text-center mb-4 leading-relaxed">
+        <p className="text-stone-700 text-sm text-center mb-4 leading-relaxed font-medium">
           在 Google 地圖留<span className="text-red-600 font-bold">五星好評</span>，<br />
           即可現場轉蛋，兌換獎勵！
         </p>
@@ -299,7 +298,7 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => ReactGA.event({ category: "Conversion", action: "click_ig_link", label: "Event Modal IG Link" })}
-          className="w-full max-w-[200px] py-3 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform text-sm mb-4"
+          className="w-full max-w-[260px] py-3.5 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform text-base mb-4"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
             <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
@@ -310,7 +309,7 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={onClose}
-          className="px-8 py-2.5 bg-stone-800 hover:bg-stone-700 text-white rounded-lg font-bold text-sm transition-colors"
+          className="px-10 py-3 bg-stone-800 hover:bg-stone-700 text-white rounded-lg font-bold text-base transition-colors"
         >
           收下祝福
         </motion.button>
