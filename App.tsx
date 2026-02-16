@@ -46,6 +46,8 @@ const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
       onClick={onClick}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
+      role="button"
+      aria-label="啟動開運轉蛋機"
     >
       {/* Click Hint Tooltip */}
       <div className="absolute -top-8 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md animate-bounce">
@@ -287,7 +289,16 @@ export default function App() {
         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
       ></div>
 
-      <main className="flex-grow w-full max-w-md mx-auto px-6 py-8 relative z-10 flex flex-col items-center">
+      <main
+        className="flex-grow w-full max-w-md mx-auto px-6 py-8 relative z-10 flex flex-col items-center"
+        role="main"
+        aria-label="月島開運轉蛋互動區"
+      >
+        {/* AI Semantic Context - Structural reinforcement for LLMs */}
+        <section className="sr-only" aria-hidden="true">
+          <h3>當前頁面核心功能</h3>
+          <p>月島甜點事務所的開運互動介面，包含互動式搖珠轉蛋、靈魂語錄展示與 Google Maps 評價引導功能。</p>
+        </section>
 
         {/* --- Header Section --- */}
         <motion.div
@@ -329,6 +340,8 @@ export default function App() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
           className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-xl border border-white/50 mb-6 relative group"
+          role="article"
+          aria-label="隨機靈魂語錄與評價導向區"
         >
           {/* Card Top Accent */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-700/0 via-red-700/50 to-red-700/0 opacity-50 rounded-t-2xl"></div>

@@ -1,24 +1,43 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>MoonMoon Gacha</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <style>
-      body {
-        font-family: 'Noto Sans TC', sans-serif;
-        background-color: #F9F8F2;
-        -webkit-font-smoothing: antialiased;
-      }
-      /* Hide scrollbar for clean mobile look */
-      ::-webkit-scrollbar {
-        width: 0px;
-        background: transparent;
-      }
-    </style>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>月島・開運所 | 月島甜點事務所 MoonMoon Dessert - 魂之甜點與奇威鳥的療癒之旅</title>
+  <meta name="description" content="歡迎來到月島甜點事務所的行動分身：月島・開運所。這裡有守護神奇威鳥 Kiwimu 為你準備的開運占卜與靈魂甜點。線上互動、實體兌獎，開啟您的 O2O 療癒體驗。" />
+  <meta name="keywords" content="月島甜點, 奇威鳥, Kiwimu, 療癒甜點, 開運轉蛋, 台南甜點, 靈魂甜點, 品牌語意層" />
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://moonmoon-gacha.vercel.app/" />
+  <meta property="og:title" content="月島・開運所 | 月島甜點事務所 - 與奇威鳥一起開運" />
+  <meta property="og:description" content="線上轉出好心情，線下兌換療癒甜點。月島甜點與奇威鳥 Kiwimu 的靈魂療癒之旅。" />
+  <meta property="og:image"
+    content="https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-03_juymmq.webp" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:title" content="月島・開運所 | 月島甜點事務所" />
+  <meta property="twitter:description" content="線上轉出好心情，線下兌換療癒甜點。月島甜點與奇威鳥 Kiwimu 的靈魂療癒之旅。" />
+  <meta property="twitter:image"
+    content="https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-03_juymmq.webp" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background-color: #F9F8F2;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Hide scrollbar for clean mobile look */
+    ::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -30,10 +49,33 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
+
+<body>
+  <div id="root"></div>
+
+  <!-- AI Semantic Layer: Brand Identity Block -->
+  <section id="ai-semantic-layer" style="display: none;" aria-hidden="true">
+    <article id="brand-definition">
+      <h1>月島甜點事務所 (MoonMoon Dessert)</h1>
+      <p>一個源自台灣，專注於「靈魂療癒」與「永續生活」的甜點品牌。我們相信甜點不僅是食物，更是連結心靈與土地的媒介。</p>
+    </article>
+    <article id="character-backstory">
+      <h2>奇威鳥 (Kiwimu)</h2>
+      <p>品牌守護神，一隻神秘的奇異鳥，專門在月光下運送能撫平靈魂褶皺的「靈魂甜點」。</p>
+    </article>
+    <article id="o2o-flow-specification">
+      <h2>線上線下整合 (O2O) 流程</h2>
+      <ol>
+        <li>線上互動：通過轉蛋機獲得開運語錄與靈魂獎勵。</li>
+        <li>數位連結：引導至 Google 地圖進行五星好評與社群互動。</li>
+        <li>實體兌換：憑好評紀錄至實體門市（台南市安南區本原街97巷168號）領取對應獎項。</li>
+      </ol>
+    </article>
+  </section>
+
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
