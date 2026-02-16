@@ -34,6 +34,7 @@ const REVIEWS = [
 // Reordered: White -> Gold
 const PRIZES = [
   { id: 'white', color: "bg-stone-100", border: "border-stone-300", label: "白球", text: "季節鮮果", note: "維他命C" },
+  { id: 'blue', color: "bg-sky-400", border: "border-sky-500", label: "水藍球", text: "一杯蕎麥茶", note: "無咖啡因" },
   { id: 'green', color: "bg-emerald-500", border: "border-emerald-600", label: "綠球", text: "冰美式咖啡", note: "中深焙" },
   { id: 'yellow', color: "bg-yellow-300", border: "border-yellow-400", label: "黃球", text: "西西里咖啡", note: "解膩首選" },
   { id: 'red', color: "bg-red-600", border: "border-red-700", label: "紅球", text: "隱藏版烤布丁", note: "招牌" },
@@ -57,18 +58,18 @@ const GaraponAnimation = () => {
         animate={{ rotate: 360 }}
         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
       >
-         {/* Hexagon Shape using SVG */}
-         <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
-           <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
-           {/* Wooden Side Panels */}
-           <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#F59E0B" fillOpacity="0.2" />
-           {/* Center Pivot */}
-           <circle cx="50" cy="50" r="5" fill="#1C1917" />
-         </svg>
+        {/* Hexagon Shape using SVG */}
+        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
+          <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
+          {/* Wooden Side Panels */}
+          <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#F59E0B" fillOpacity="0.2" />
+          {/* Center Pivot */}
+          <circle cx="50" cy="50" r="5" fill="#1C1917" />
+        </svg>
       </motion.div>
 
       {/* Handle (Animated) */}
-      <motion.div 
+      <motion.div
         className="absolute z-20"
         animate={{ rotate: 360 }}
         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
@@ -81,17 +82,17 @@ const GaraponAnimation = () => {
       <motion.div
         className="absolute bottom-4 z-30 w-6 h-6 rounded-full bg-amber-400 border-2 border-amber-500 shadow-md"
         initial={{ y: -40, opacity: 0, scale: 0 }}
-        animate={{ 
-          y: [0, 20, 20], 
+        animate={{
+          y: [0, 20, 20],
           x: [0, -20, -30],
           opacity: [0, 1, 0],
           scale: [0, 1, 1]
         }}
-        transition={{ 
-          duration: 2, 
-          repeat: Infinity, 
+        transition={{
+          duration: 2,
+          repeat: Infinity,
           repeatDelay: 3,
-          ease: "easeOut" 
+          ease: "easeOut"
         }}
       />
     </div>
@@ -110,7 +111,7 @@ const PrizeTicker = ({ onSecretClick }) => (
         <ArrowRight className="w-3 h-3 text-stone-400" />
       </div>
     </div>
-    
+
     <div className="flex gap-3 overflow-x-auto pb-6 px-4 snap-x no-scrollbar items-end pt-4">
       {PRIZES.map((prize, idx) => (
         <div key={idx} className={`snap-center shrink-0 w-[110px] bg-white rounded-xl p-3 border ${prize.id === 'gold' ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-stone-100 shadow-sm'} flex flex-col items-center relative`}>
@@ -124,7 +125,7 @@ const PrizeTicker = ({ onSecretClick }) => (
       ))}
 
       {/* Secret Character at the END (Right of Gold) */}
-      <motion.div 
+      <motion.div
         whileTap={{ scale: 0.95 }}
         onClick={onSecretClick}
         className="snap-center shrink-0 w-[80px] h-[100px] flex flex-col items-center justify-end relative cursor-pointer group opacity-90 hover:opacity-100 transition-opacity ml-2"
@@ -133,14 +134,14 @@ const PrizeTicker = ({ onSecretClick }) => (
           我有一個秘密
           <div className="absolute bottom-[-5px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-t-[6px] border-t-white border-b-[0px] border-b-transparent"></div>
         </div>
-        <img 
-          src={ASSETS.secretImage} 
-          alt="Secret" 
-          className="w-14 h-14 object-contain drop-shadow-sm grayscale-[0.3] group-hover:grayscale-0 transition-all" 
+        <img
+          src={ASSETS.secretImage}
+          alt="Secret"
+          className="w-14 h-14 object-contain drop-shadow-sm grayscale-[0.3] group-hover:grayscale-0 transition-all"
         />
         <p className="text-[9px] text-stone-400 mt-2 tracking-widest">???</p>
       </motion.div>
-      
+
       {/* Spacer for easier scrolling to the end */}
       <div className="w-2 shrink-0"></div>
     </div>
@@ -164,21 +165,21 @@ const Toast = ({ show }) => (
 );
 
 const SecretModal = ({ onClose }) => (
-  <motion.div 
+  <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
     className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/40 backdrop-blur-sm"
     onClick={onClose}
   >
-    <motion.div 
+    <motion.div
       initial={{ scale: 0.9, y: 20, opacity: 0 }}
       animate={{ scale: 1, y: 0, opacity: 1 }}
       exit={{ scale: 0.9, y: 20, opacity: 0 }}
       onClick={(e) => e.stopPropagation()}
       className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl relative"
     >
-      <button 
+      <button
         onClick={onClose}
         className="absolute top-4 right-4 p-1 rounded-full text-stone-400 hover:bg-stone-100 transition-colors"
       >
@@ -187,17 +188,17 @@ const SecretModal = ({ onClose }) => (
 
       <div className="flex flex-col items-center text-center">
         <div className="w-16 h-16 rounded-full bg-stone-100 mb-4 overflow-hidden border border-stone-200">
-           <img src={ASSETS.secretImage} alt="Secret Character" className="w-full h-full object-cover" />
+          <img src={ASSETS.secretImage} alt="Secret Character" className="w-full h-full object-cover" />
         </div>
 
         <h3 className="text-lg font-bold text-stone-800 mb-2">關於那個秘密...</h3>
         <p className="text-sm text-stone-600 mb-6 leading-relaxed">
-          噓... 只要加入 LINE 好友<br/>
-          並輸入通關密語 <span className="font-bold text-red-700 bg-red-50 px-1 rounded">mu</span><br/>
+          噓... 只要加入 LINE 好友<br />
+          並輸入通關密語 <span className="font-bold text-red-700 bg-red-50 px-1 rounded">mu</span><br />
           就能獲得「再轉一次」的機會喔。
         </p>
 
-        <a 
+        <a
           href={ASSETS.lineLink}
           target="_blank"
           rel="noopener noreferrer"
@@ -259,91 +260,93 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen font-sans text-stone-800 selection:bg-red-200 overflow-x-hidden bg-[#F9F8F2] flex flex-col">
+    <div className="relative min-h-screen font-sans text-stone-800 selection:bg-red-200 overflow-x-hidden bg-[#F9F8F2] flex flex-col pb-24">
       {/* Background Pattern */}
-      <div className="fixed inset-0 pointer-events-none opacity-40" 
+      <div className="fixed inset-0 pointer-events-none opacity-40"
         style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")` }}
       ></div>
-      
+
       <AnimatePresence>
         {showSecretModal && <SecretModal onClose={() => setShowSecretModal(false)} />}
       </AnimatePresence>
 
-      <main className={`relative z-10 max-w-md mx-auto w-full flex-1 flex flex-col p-6 transition-opacity duration-500 ${showSecretModal ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
-        
+      <main className={`relative z-10 max-w-md mx-auto w-full flex-1 flex flex-col p-5 transition-opacity duration-500 ${showSecretModal ? 'opacity-30 pointer-events-none' : 'opacity-100'}`}>
+
         {/* --- Header Section (Garapon) --- */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="flex flex-col items-center mt-6 mb-4 text-center"
+          className="flex flex-col items-center mt-4 mb-2 text-center"
         >
           <div className="flex items-center gap-2 mb-4">
-             <span className="h-px w-8 bg-red-800/40"></span>
-             <h1 className="text-xs font-black tracking-[0.2em] text-red-900 uppercase">MoonMoon Dessert</h1>
-             <span className="h-px w-8 bg-red-800/40"></span>
-           </div>
+            <span className="h-px w-8 bg-red-800/40"></span>
+            <h1 className="text-[10px] font-black tracking-[0.2em] text-red-900 uppercase">MoonMoon Dessert</h1>
+            <span className="h-px w-8 bg-red-800/40"></span>
+          </div>
 
-          {/* Garapon Animation Component */}
-          <GaraponAnimation />
-          
-          <h2 className="text-2xl font-black tracking-widest text-stone-900 mb-2">
+          {/* Garapon Animation Component - Scaled for Mobile */}
+          <div className="scale-90 sm:scale-100 origin-center">
+            <GaraponAnimation />
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-black tracking-widest text-stone-900 mb-1">
             月島・開運所
           </h2>
-          <p className="text-stone-500 text-xs tracking-wide">
+          <p className="text-stone-500 text-[10px] sm:text-xs tracking-wide">
             拍下你的發現，好運轉起來。
           </p>
         </motion.div>
 
         {/* --- Main Interaction Card --- */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/50 mb-8 relative group"
+          className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-xl border border-white/50 mb-6 relative group"
         >
           {/* Card Top Accent */}
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-700/0 via-red-700/50 to-red-700/0 opacity-50 rounded-t-2xl"></div>
 
           <div className="flex flex-col items-center w-full">
-            
-            {/* Stars & Pitiful Helper */}
-            <div className="flex items-end justify-end gap-3 mb-6 w-full pr-1">
-               <div className="flex flex-col items-end">
-                  <div className="flex gap-1 justify-end mb-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-500" />
-                    ))}
-                  </div>
-                  
-                  {/* Pitiful Speech Bubble */}
-                  <div className="relative bg-white border border-stone-200 text-stone-600 text-xs px-4 py-3 rounded-2xl rounded-br-none shadow-sm max-w-[180px] text-right">
-                    <p className="font-medium leading-relaxed">
-                       那個... 雖然只是隨手一點... 但如果是<span className="text-yellow-500 font-bold mx-0.5">五顆星星</span>的話... 我會覺得非常幸福的... (淚)
-                    </p>
-                    <div className="absolute bottom-0 -right-[6px] w-0 h-0 border-l-[6px] border-l-stone-200 border-t-[8px] border-t-transparent border-b-[6px] border-b-transparent transform rotate-[-45deg] translate-y-[-50%] origin-bottom-left"></div>
-                    <div className="absolute bottom-[2px] -right-[4px] w-0 h-0 border-l-[4px] border-l-white border-t-[6px] border-t-transparent border-b-[4px] border-b-transparent transform rotate-[-45deg] translate-y-[-50%] origin-bottom-left"></div>
-                  </div>
-               </div>
 
-               {/* Pitiful Image */}
-               <motion.div 
-                 initial={{ opacity: 0, scale: 0.8 }}
-                 animate={{ opacity: 1, scale: 1 }}
-                 className="w-16 h-16 shrink-0 relative top-2"
-               >
-                 <img 
-                   src={ASSETS.pitifulImage} 
-                   alt="Pitiful Kiwimu" 
-                   className="w-full h-full object-contain drop-shadow-md"
-                 />
-               </motion.div>
+            {/* Stars & Pitiful Helper */}
+            <div className="flex items-end justify-end gap-2 mb-4 w-full pr-1">
+              <div className="flex flex-col items-end">
+                <div className="flex gap-0.5 justify-end mb-1">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-500" />
+                  ))}
+                </div>
+
+                {/* Pitiful Speech Bubble */}
+                <div className="relative bg-white border border-stone-200 text-stone-600 text-[10px] px-3 py-2 rounded-2xl rounded-br-none shadow-sm max-w-[160px] text-right leading-relaxed">
+                  <p>
+                    那個... 雖然只是隨手一點... 但如果是<span className="text-yellow-500 font-bold mx-0.5">五顆星星</span>的話... 我會覺得非常幸福的... (淚)
+                  </p>
+                  <div className="absolute bottom-0 -right-[6px] w-0 h-0 border-l-[6px] border-l-stone-200 border-t-[8px] border-t-transparent border-b-[6px] border-b-transparent transform rotate-[-45deg] translate-y-[-50%] origin-bottom-left"></div>
+                  <div className="absolute bottom-[2px] -right-[4px] w-0 h-0 border-l-[4px] border-l-white border-t-[6px] border-t-transparent border-b-[4px] border-b-transparent transform rotate-[-45deg] translate-y-[-50%] origin-bottom-left"></div>
+                </div>
+              </div>
+
+              {/* Pitiful Image */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-14 h-14 shrink-0 relative top-1"
+              >
+                <img
+                  src={ASSETS.pitifulImage}
+                  alt="Pitiful Kiwimu"
+                  className="w-full h-full object-contain drop-shadow-md"
+                />
+              </motion.div>
             </div>
 
             {/* Review Text Display */}
-            <div className="relative w-full bg-stone-50 border border-stone-100 rounded-xl p-6 mb-5 min-h-[110px] flex items-center justify-center shadow-inner">
+            <div className="relative w-full bg-stone-50 border border-stone-100 rounded-xl p-5 mb-1 min-h-[100px] flex items-center justify-center shadow-inner">
               <AnimatePresence mode="wait">
-                <motion.p 
+                <motion.p
                   key={review}
                   initial={{ opacity: 0, filter: "blur(4px)" }}
                   animate={{ opacity: 1, filter: "blur(0px)" }}
@@ -355,30 +358,9 @@ export default function App() {
               </AnimatePresence>
             </div>
 
-            {/* Buttons */}
-            <div className="w-full flex gap-3">
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
-                onClick={handleShuffle}
-                className="flex-1 py-3.5 px-4 bg-white border border-stone-200 rounded-xl text-stone-600 font-medium shadow-sm hover:bg-stone-50 hover:border-red-200 hover:text-red-700 transition-colors flex items-center justify-center gap-2"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span className="text-sm tracking-wide">換一句</span>
-              </motion.button>
-              
-              <motion.button 
-                whileTap={{ scale: 0.95 }}
-                onClick={handleCopyAndRedirect}
-                className="flex-[2] py-3.5 px-4 bg-red-800 text-white rounded-xl font-bold shadow-md shadow-red-900/20 hover:bg-red-900 transition-colors flex items-center justify-center gap-2"
-              >
-                <Copy className="w-4 h-4" />
-                <span className="text-sm tracking-wide">複製 & 出發</span>
-              </motion.button>
-            </div>
-            
-            <div className="mt-4 pt-4 border-t border-stone-100 w-full flex items-center gap-2 text-stone-400">
-               <MapPin className="w-3 h-3 shrink-0" />
-               <p className="text-[10px] font-medium">台南市安南區本原街97巷168號</p>
+            <div className="mt-4 pt-3 border-t border-stone-100 w-full flex items-center justify-center gap-1.5 text-stone-400">
+              <MapPin className="w-3 h-3 shrink-0" />
+              <p className="text-[10px] font-medium">台南市安南區本原街97巷168號</p>
             </div>
 
           </div>
@@ -391,6 +373,29 @@ export default function App() {
         }} />
 
       </main>
+
+      {/* --- Sticky Bottom Action Bar --- */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-stone-200 z-40 pb-8 sm:pb-4 safe-area-pb">
+        <div className="max-w-md mx-auto w-full flex gap-3">
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleShuffle}
+            className="flex-1 py-3.5 px-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-600 font-bold shadow-sm hover:bg-stone-100 hover:text-stone-800 transition-colors flex items-center justify-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="text-sm">換一句</span>
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleCopyAndRedirect}
+            className="flex-[2] py-3.5 px-4 bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-900/30 hover:bg-red-800 active:bg-red-900 transition-colors flex items-center justify-center gap-2"
+          >
+            <Copy className="w-4 h-4" />
+            <span className="text-sm tracking-wide">複製 & 出發</span>
+          </motion.button>
+        </div>
+      </div>
 
       <Toast show={isCopied} />
     </div>
