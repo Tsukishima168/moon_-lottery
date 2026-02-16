@@ -218,70 +218,107 @@ const SecretModal = ({ onClose }: { onClose: () => void }) => (
   </motion.div>
 );
 
-const EventModal = ({ onClose }: { onClose: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm"
-    onClick={onClose}
-  >
+const FORTUNES = [
+  { level: "大吉", text: "新的一年，願你的煩惱像我的工作一樣少。" },
+  { level: "中吉", text: "變胖沒關係，那是你對甜點尊重的重量。" },
+  { level: "小吉", text: "把錢變成喜歡的形狀，例如千層蛋糕。" },
+  { level: "吉", text: "今天的運氣，適合再來一顆布丁。" },
+  { level: "大吉", text: "願你的財運，像台南的糖度一樣高。" },
+  { level: "中吉", text: "工作可以低糖，但生活要全糖。" },
+  { level: "吉", text: "老闆說，轉到這張的人，今年會變漂亮。" },
+  { level: "小吉", text: "休息是為了走更長的路，吃甜點是為了不想走路。" },
+  { level: "大吉", text: "恭喜，你今年的桃花運會跟鮮奶油一樣順滑。" },
+  { level: "隱藏版", text: "Kiwimu 覺得你今天長得很好看。" }
+];
+
+
+// --- Components ---
+
+
+const EventModal = ({ onClose }: { onClose: () => void }) => {
+  const [fortune] = useState(() => FORTUNES[Math.floor(Math.random() * FORTUNES.length)]);
+
+  return (
     <motion.div
-      initial={{ scale: 0.9, y: 20, opacity: 0 }}
-      animate={{ scale: 1, y: 0, opacity: 1 }}
-      exit={{ scale: 0.9, y: 20, opacity: 0 }}
-      onClick={(e) => e.stopPropagation()}
-      className="bg-red-50 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-red-100/50 overflow-hidden"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/60 backdrop-blur-sm"
+      onClick={onClose}
     >
-      {/* Decorative Background Elements */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-red-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-amber-200/30 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-
-      <button
-        onClick={onClose}
-        className="absolute top-4 right-4 p-2 rounded-full bg-white/50 text-stone-400 hover:bg-white transition-colors z-10"
+      <motion.div
+        initial={{ scale: 0.9, y: 20, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.9, y: 20, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-red-50 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-red-100/50 overflow-hidden"
       >
-        <X className="w-5 h-5" />
-      </button>
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-red-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-amber-200/30 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
 
-      <div className="flex flex-col items-center text-center relative z-0">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 mb-4 flex items-center justify-center shadow-lg border-4 border-white text-3xl">
-          🧧
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-white/50 text-stone-400 hover:bg-white transition-colors z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex flex-col items-center text-center relative z-0">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 mb-4 flex items-center justify-center shadow-lg border-4 border-white text-3xl">
+            🧧
+          </div>
+
+          <h3 className="text-xl font-black text-red-800 mb-1 tracking-wide">春節好運轉轉樂</h3>
+
+          {/* Fortune Section */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 my-4 w-full border border-red-100 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-1 h-full bg-red-500/20"></div>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest ${fortune.level === '隱藏版' ? 'bg-purple-600 text-white animate-pulse' :
+                fortune.level === '大吉' ? 'bg-red-600 text-white' : 'bg-amber-100 text-amber-700'
+                }`}>
+                {fortune.level}
+              </span>
+              <div className="h-[1px] flex-grow bg-red-100/50"></div>
+            </div>
+            <p className="text-stone-800 font-bold text-sm leading-relaxed italic">
+              「{fortune.level === '隱藏版' ? '' : ''}{fortune.text}」
+            </p>
+          </div>
+
+          <p className="text-[11px] text-stone-500 mb-6 leading-relaxed font-medium">
+            只要在 Google 地圖完成<span className="text-red-600 font-bold mx-1">五星好評</span><br />
+            即可現場兌換轉蛋機中的好禮！
+          </p>
+
+          <div className="w-full space-y-3">
+            <a
+              href={ASSETS.instagramLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => ReactGA.event({ category: "Conversion", action: "click_ig_link", label: "Event Modal IG Link" })}
+              className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 active:scale-95 transition-all text-sm"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+              </svg>
+              <span>追蹤 Instagram 獲取最新優惠</span>
+            </a>
+
+            <button
+              onClick={onClose}
+              className="w-full py-3.5 bg-white border border-stone-200 text-stone-600 rounded-xl font-bold hover:bg-stone-50 transition-colors text-sm"
+            >
+              知道了，馬上參加！
+            </button>
+          </div>
+
         </div>
-
-        <h3 className="text-xl font-black text-red-800 mb-2 tracking-wide">春節好運轉轉樂</h3>
-        <p className="text-sm text-stone-600 mb-6 leading-relaxed font-medium">
-          新年快樂！<br />
-          只要在 Google 地圖完成<span className="text-red-600 font-bold mx-1">五星好評</span><br />
-          即可現場兌換轉蛋機中的好禮！
-        </p>
-
-        <div className="w-full space-y-3">
-          <a
-            href={ASSETS.instagramLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => ReactGA.event({ category: "Conversion", action: "click_ig_link", label: "Event Modal IG Link" })}
-            className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 active:scale-95 transition-all text-sm"
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-            <span>追蹤 Instagram 獲取最新優惠</span>
-          </a>
-
-          <button
-            onClick={onClose}
-            className="w-full py-3.5 bg-white border border-stone-200 text-stone-600 rounded-xl font-bold hover:bg-stone-50 transition-colors text-sm"
-          >
-            知道了，馬上參加！
-          </button>
-        </div>
-
-      </div>
+      </motion.div>
     </motion.div>
-  </motion.div>
-);
+  );
+};
 
 export default function App() {
   const [review, setReview] = useState(() => REVIEWS[Math.floor(Math.random() * REVIEWS.length)]);
