@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Copy, MessageCircle, Gift, X, MapPin, ArrowRight, ChevronRight, CheckCircle } from 'lucide-react';
 import ReactGA from "react-ga4";
@@ -13,7 +13,7 @@ const ASSETS = {
   pitifulImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-04_mfdlsz.webp",
   googleMapsLink: "https://g.page/r/CdR9ng9TTJF3EBM/review",
   lineLink: "https://lin.ee/xhxnUdX",
-  instagramLink: "https://www.instagram.com/moonmoon_dessert/" // Placeholder IG Link
+  instagramLink: "https://www.instagram.com/moonmoon_dessert/"
 };
 
 const REVIEWS = [
@@ -46,185 +46,17 @@ const REVIEWS = [
   "台南果菜市場周邊的休憩空間。販售的甜點皆為店內手作，低糖千層與烤布丁是店內的兩大招牌。"
 ];
 
+// 原始 6 球獎項結構（白→金）
 const PRIZES = [
-  "免費配料一份",
-  "飲品折價 10 元",
-  "甜點 9 折優惠",
-  "神秘小禮物"
+  { id: 'white', color: "bg-stone-100", border: "border-stone-300", label: "白球", text: "季節鮮果", note: "維他命C" },
+  { id: 'blue', color: "bg-sky-400", border: "border-sky-500", label: "水藍球", text: "一杯蕎麥茶", note: "無咖啡因" },
+  { id: 'green', color: "bg-emerald-500", border: "border-emerald-600", label: "綠球", text: "冰美式咖啡", note: "中深焙" },
+  { id: 'yellow', color: "bg-yellow-300", border: "border-yellow-400", label: "黃球", text: "西西里咖啡", note: "解膩首選" },
+  { id: 'red', color: "bg-red-600", border: "border-red-700", label: "紅球", text: "隱藏版烤布丁", note: "招牌" },
+  { id: 'gold', color: "bg-amber-400", border: "border-amber-500", label: "金球", text: "一片千層", note: "本日最大獎" },
 ];
 
-const BALL_COLORS = [
-  { bg: "bg-red-500", border: "border-red-600" },      // 大吉
-  { bg: "bg-amber-400", border: "border-amber-500" },  // 中吉
-  { bg: "bg-blue-400", border: "border-blue-500" },    // 小吉
-  { bg: "bg-emerald-400", border: "border-emerald-500" }, // 吉
-  { bg: "bg-stone-200", border: "border-stone-300" }   // 隱藏
-];
-
-// --- Components ---
-
-// 日式搖珠機 (Garapon) 動畫元件
-const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
-  const [activeBallIndex, setActiveBallIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveBallIndex((prev) => (prev + 1) % BALL_COLORS.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <motion.div
-      className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center cursor-pointer group"
-      onClick={onClick}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      role="button"
-      aria-label="啟動開運轉蛋機"
-    >
-      {/* Click Hint Tooltip */}
-      <div className="absolute -top-8 bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md animate-bounce">
-        點我查看活動！
-        <div className="absolute bottom-[-4px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-t-[6px] border-t-red-600 border-b-[0px] border-b-transparent"></div>
-      </div>
-
-      {/* Stand Base */}
-      <div className="absolute bottom-0 w-32 h-4 bg-stone-800 rounded-lg z-10"></div>
-      <div className="absolute bottom-2 left-10 w-4 h-24 bg-stone-800 -rotate-12 z-0"></div>
-      <div className="absolute bottom-2 right-10 w-4 h-24 bg-stone-800 rotate-12 z-0"></div>
-
-      {/* Rotating Drum */}
-      <motion.div
-        className="relative w-32 h-32 z-10"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-      >
-        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
-          <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
-          <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#F59E0B" fillOpacity="0.2" />
-
-          {/* Balls inside the drum (Simulated) */}
-          <circle cx="40" cy="40" r="4" fill="#FACC15" />
-          <circle cx="60" cy="45" r="4" fill="#3B82F6" />
-          <circle cx="45" cy="65" r="4" fill="#EF4444" />
-          <circle cx="55" cy="35" r="4" fill="#10B981" />
-          <circle cx="50" cy="55" r="4" fill="#E7E5E4" />
-
-          <circle cx="50" cy="50" r="5" fill="#1C1917" />
-        </svg>
-      </motion.div>
-
-      {/* Handle */}
-      <motion.div
-        className="absolute z-20"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-      >
-        <div className="w-1 h-12 bg-stone-400 origin-top translate-y-[-2px]"></div>
-        <div className="w-3 h-3 bg-stone-900 rounded-full translate-x-[-4px] translate-y-10"></div>
-      </motion.div>
-
-      {/* Dropping Balls (Multi-color sequential) */}
-      <motion.div
-        key={activeBallIndex}
-        className={`absolute bottom-4 z-30 w-6 h-6 rounded-full ${BALL_COLORS[activeBallIndex].bg} border-2 ${BALL_COLORS[activeBallIndex].border} shadow-md`}
-        initial={{ y: -40, opacity: 0, scale: 0 }}
-        animate={{
-          y: [0, 20, 25],
-          x: [10, -10, -35],
-          opacity: [0, 1, 0],
-          scale: [0, 1, 1],
-          rotate: [0, 180, 360]
-        }}
-        transition={{
-          duration: 3,
-          ease: "easeOut"
-        }}
-      />
-    </motion.div>
-  );
-};
-
-const PrizeTicker = ({ onSecretClick }: { onSecretClick: () => void }) => {
-  return (
-    <div className="w-full overflow-hidden bg-stone-100 py-2 relative flex items-center mb-6">
-      <div className="flex animate-marquee whitespace-nowrap">
-        {[...PRIZES, ...PRIZES, ...PRIZES].map((prize, index) => (
-          <div key={index} className="mx-4 flex items-center space-x-2 text-stone-600 text-sm font-medium">
-            <Gift size={14} className="text-red-500" />
-            <span>{prize}</span>
-          </div>
-        ))}
-        {/* Hidden Secret Trigger */}
-        <div
-          onClick={onSecretClick}
-          className="mx-4 flex items-center space-x-2 text-transparent text-sm font-medium cursor-pointer select-none"
-        >
-          <span>Secret</span>
-        </div>
-      </div>
-      <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-stone-50 to-transparent z-10"></div>
-      <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-stone-50 to-transparent z-10"></div>
-    </div>
-  );
-};
-
-const Toast = ({ show }: { show: boolean }) => (
-  <AnimatePresence>
-    {show && (
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-stone-800 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 text-sm"
-      >
-        <CheckCircle className="w-4 h-4 text-green-400" />
-        <span>已複製！即將前往 Google Maps...</span>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
-
-const SecretModal = ({ onClose }: { onClose: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/90 backdrop-blur-sm"
-    onClick={onClose}
-  >
-    <motion.div
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.8, opacity: 0 }}
-      onClick={(e) => e.stopPropagation()}
-      className="bg-stone-800 w-full max-w-sm rounded-3xl p-8 shadow-2xl relative border border-stone-700 overflow-hidden text-center"
-    >
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-red-500"></div>
-
-      <img
-        src={ASSETS.secretImage}
-        alt="Secret Character"
-        className="w-32 h-32 mx-auto mb-6 rounded-full border-4 border-stone-700 shadow-xl object-cover"
-      />
-
-      <h3 className="text-2xl font-black text-white mb-2 tracking-widest">HIDDEN UNLOCKED!</h3>
-      <p className="text-stone-400 text-sm mb-6 leading-relaxed">
-        恭喜發現隱藏彩蛋！<br />
-        其實... 我們一直在等你。
-      </p>
-
-      <button
-        onClick={onClose}
-        className="px-6 py-2 bg-stone-700 hover:bg-stone-600 text-white rounded-full text-sm font-bold transition-colors"
-      >
-        保守秘密
-      </button>
-    </motion.div>
-  </motion.div>
-);
-
+// 詩籤 Kiwimu Blessing
 const FORTUNES = [
   { level: "大吉", text: "新的一年，願你的煩惱像我的工作一樣少。" },
   { level: "中吉", text: "變胖沒關係，那是你對甜點尊重的重量。" },
@@ -238,10 +70,183 @@ const FORTUNES = [
   { level: "隱藏版", text: "Kiwimu 覺得你今天長得很好看。" }
 ];
 
-
 // --- Components ---
 
+// 日式搖珠機 (Garapon) 動畫元件 - 可點擊，浮動動畫引導
+const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
+  const controls = useAnimation();
+  const handleClick = async () => {
+    await controls.start({ x: [0, -6, 6, -6, 6, 0], transition: { duration: 0.35 } });
+    onClick();
+  };
+  return (
+    <motion.div
+      className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center cursor-pointer"
+      onClick={handleClick}
+      animate={{ y: [0, -5, 0] }}
+      transition={{ y: { duration: 2.5, repeat: Infinity, ease: "easeInOut" } }}
+      role="button"
+      aria-label="點擊轉蛋查看活動與詩籤"
+    >
+      <motion.div className="relative w-full h-full flex items-center justify-center" animate={controls}>
+        {/* 點擊提示 */}
+        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md whitespace-nowrap animate-pulse">
+          點我轉好運
+        </div>
 
+        {/* Stand Base */}
+        <div className="absolute bottom-0 w-32 h-4 bg-stone-800 rounded-lg z-10"></div>
+        <div className="absolute bottom-2 left-10 w-4 h-24 bg-stone-800 -rotate-12 z-0"></div>
+        <div className="absolute bottom-2 right-10 w-4 h-24 bg-stone-800 rotate-12 z-0"></div>
+
+        {/* Rotating Hexagon Drum */}
+        <motion.div
+          className="relative w-32 h-32 z-10"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        >
+          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
+            <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
+            <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#F59E0B" fillOpacity="0.2" />
+            <circle cx="50" cy="50" r="5" fill="#1C1917" />
+        </svg>
+        </motion.div>
+
+        {/* Handle */}
+        <motion.div
+          className="absolute z-20"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        >
+          <div className="w-1 h-12 bg-stone-400 origin-top translate-y-[-2px]"></div>
+          <div className="w-3 h-3 bg-stone-900 rounded-full translate-x-[-4px] translate-y-10"></div>
+        </motion.div>
+
+        {/* Dropping Ball */}
+        <motion.div
+          className="absolute bottom-4 z-30 w-6 h-6 rounded-full bg-amber-400 border-2 border-amber-500 shadow-md"
+          initial={{ y: -40, opacity: 0, scale: 0 }}
+          animate={{
+            y: [0, 20, 20],
+            x: [0, -20, -30],
+            opacity: [0, 1, 0],
+            scale: [0, 1, 1]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            repeatDelay: 3,
+            ease: "easeOut"
+          }}
+        />
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// 橫向捲動獎品列表 (Prize Ticker) - 獎項在轉蛋下方，滑到最右有彩蛋
+const PrizeTicker = ({ onSecretClick }: { onSecretClick: () => void }) => (
+  <div className="w-full mt-2 pb-2">
+    <div className="flex items-center justify-between mb-3 px-2">
+      <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-1">
+        <Gift className="w-3 h-3" /> 獎品一覽
+      </h3>
+      <div className="flex items-center gap-1">
+        <span className="text-[10px] text-stone-400 font-medium">大獎在最右邊，滑過去看看</span>
+        <ArrowRight className="w-3 h-3 text-stone-400" />
+      </div>
+    </div>
+    <div className="flex gap-3 overflow-x-auto pb-6 px-4 snap-x snap-mandatory items-end pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+      {PRIZES.map((prize, idx) => (
+        <div key={prize.id} className={`snap-center shrink-0 w-[110px] bg-white rounded-xl p-3 border ${prize.id === 'gold' ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-stone-100 shadow-sm'} flex flex-col items-center relative`}>
+          {prize.id === 'gold' && (
+            <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">TOP</div>
+          )}
+          <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
+          <p className="font-bold text-stone-800 text-xs mb-0.5 text-center whitespace-nowrap">{prize.text}</p>
+          <p className="text-[10px] text-stone-400">{prize.note}</p>
+        </div>
+      ))}
+      {/* 彩蛋：滑到最右邊 */}
+      <motion.div
+        whileTap={{ scale: 0.95 }}
+        onClick={onSecretClick}
+        className="snap-center shrink-0 w-[80px] h-[100px] flex flex-col items-center justify-end relative cursor-pointer group opacity-90 hover:opacity-100 transition-opacity ml-2"
+      >
+        <div className="absolute -top-1 bg-white border border-stone-200 text-stone-600 text-[10px] font-bold px-2 py-1.5 rounded-xl shadow-sm whitespace-nowrap z-10 animate-pulse">
+          我有一個秘密
+          <div className="absolute bottom-[-5px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-t-[6px] border-t-white border-b-[0px] border-b-transparent"></div>
+        </div>
+        <img src={ASSETS.secretImage} alt="Secret" className="w-14 h-14 object-contain drop-shadow-sm grayscale-[0.3] group-hover:grayscale-0 transition-all" />
+        <p className="text-[9px] text-stone-400 mt-2 tracking-widest">???</p>
+      </motion.div>
+      <div className="w-2 shrink-0"></div>
+    </div>
+  </div>
+);
+
+const Toast = ({ show }: { show: boolean }) => (
+  <AnimatePresence>
+    {show && (
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-stone-900 text-stone-50 rounded-full shadow-lg flex items-center gap-2"
+      >
+        <CheckCircle className="w-4 h-4 text-emerald-400" />
+        <span className="text-sm font-medium">已複製！即將開啟 Google 留評頁面...</span>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+// 隱藏彩蛋 Modal：LINE 密語
+const SecretModal = ({ onClose }: { onClose: () => void }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/40 backdrop-blur-sm"
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ scale: 0.9, y: 20, opacity: 0 }}
+      animate={{ scale: 1, y: 0, opacity: 1 }}
+      exit={{ scale: 0.9, y: 20, opacity: 0 }}
+      onClick={(e) => e.stopPropagation()}
+      className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl relative"
+    >
+      <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full text-stone-400 hover:bg-stone-100 transition-colors">
+        <X className="w-5 h-5" />
+      </button>
+      <div className="flex flex-col items-center text-center">
+        <div className="w-16 h-16 rounded-full bg-stone-100 mb-4 overflow-hidden border border-stone-200">
+          <img src={ASSETS.secretImage} alt="Secret Character" className="w-full h-full object-cover" />
+        </div>
+        <h3 className="text-lg font-bold text-stone-800 mb-2">關於那個秘密...</h3>
+        <p className="text-sm text-stone-600 mb-6 leading-relaxed">
+          噓... 只要加入 LINE 好友<br />
+          並輸入通關密語 <span className="font-bold text-red-700 bg-red-50 px-1 rounded">mu</span><br />
+          就能獲得「再轉一次」的機會喔。
+        </p>
+        <a
+          href={ASSETS.lineLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => ReactGA.event({ category: "Conversion", action: "click_line_link", label: "Secret Modal Line Link" })}
+          className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span>前往 LINE 輸入密語</span>
+        </a>
+      </div>
+    </motion.div>
+  </motion.div>
+);
+
+
+// 點擊轉蛋後的活動 Modal：詩籤 + IG + 活動說明
 const EventModal = ({ onClose }: { onClose: () => void }) => {
   const [fortune] = useState(() => FORTUNES[Math.floor(Math.random() * FORTUNES.length)]);
 
@@ -258,85 +263,57 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.9, y: 20, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-red-50 w-full max-w-sm rounded-3xl p-6 shadow-2xl relative border-4 border-red-100/50 overflow-hidden"
+        className="w-full max-w-sm flex flex-col items-center"
       >
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-red-200/30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-amber-200/30 rounded-full blur-2xl translate-y-1/2 -translate-x-1/2"></div>
-
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-white/50 text-stone-400 hover:bg-white transition-colors z-10"
+        {/* 詩籤：日式和風紙條，紅邊、米色底、紙質感 */}
+        <div
+          className="w-full max-w-[200px] rounded-sm p-6 mb-6 relative"
+          style={{
+            background: 'linear-gradient(180deg, #FDF8F0 0%, #F5EDE0 100%)',
+            boxShadow: 'inset 0 0 0 3px #B91C1C, 0 4px 12px rgba(0,0,0,0.1)',
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`,
+          }}
         >
-          <X className="w-5 h-5" />
-        </button>
-
-        <div className="flex flex-col items-center text-center relative z-0">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 mb-4 flex items-center justify-center shadow-lg border-4 border-white text-3xl">
-            🧧
+          <div className="text-center">
+            <span className={`inline-block px-3 py-1 rounded text-xs font-black tracking-widest mb-3 ${
+              fortune.level === '隱藏版' ? 'bg-amber-600 text-white' :
+              fortune.level === '大吉' ? 'bg-red-700 text-white' :
+              fortune.level === '中吉' ? 'bg-amber-600 text-white' :
+              'bg-stone-600 text-white'
+            }`}>
+              {fortune.level}
+            </span>
+            <p className="text-stone-800 font-medium text-sm leading-relaxed">「{fortune.text}」</p>
           </div>
-
-          <h3 className="text-xl font-black text-red-800 mb-1 tracking-wide">春節好運轉轉樂</h3>
-
-          {/* Fortune Section */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 my-4 w-full border border-red-100 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-1 h-full bg-red-500/20"></div>
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-widest ${fortune.level === '隱藏版' ? 'bg-purple-600 text-white animate-pulse' :
-                fortune.level === '大吉' ? 'bg-red-600 text-white' : 'bg-amber-100 text-amber-700'
-                }`}>
-                {fortune.level}
-              </span>
-              <div className="h-[1px] flex-grow bg-red-100/50"></div>
-            </div>
-            <p className="text-stone-800 font-bold text-sm leading-relaxed italic">
-              「{fortune.level === '隱藏版' ? '' : ''}{fortune.text}」
-            </p>
-          </div>
-
-          <p className="text-[11px] text-stone-500 mb-6 leading-relaxed font-medium">
-            只要在 Google 地圖完成<span className="text-red-600 font-bold mx-1">五星好評</span><br />
-            即可現場兌換轉蛋機中的好禮！
-          </p>
-
-          {/* Prize Section (獎項說明) */}
-          <div className="w-full mb-6 text-left">
-            <h4 className="text-[10px] font-black text-red-700/60 mb-2 px-1 tracking-widest flex items-center gap-2">
-              <Gift size={10} /> 獎項說明
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {PRIZES.map((prize, i) => (
-                <div key={i} className="bg-white/40 border border-red-100 rounded-lg p-2 flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${BALL_COLORS[i % BALL_COLORS.length].bg}`}></div>
-                  <span className="text-[10px] font-bold text-stone-700 whitespace-nowrap">{prize}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="w-full space-y-3">
-            <a
-              href={ASSETS.instagramLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => ReactGA.event({ category: "Conversion", action: "click_ig_link", label: "Event Modal IG Link" })}
-              className="w-full py-3.5 bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-500/20 active:scale-95 transition-all text-sm"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-              </svg>
-              <span>追蹤 Instagram 獲取最新優惠</span>
-            </a>
-
-            <button
-              onClick={onClose}
-              className="w-full py-3.5 bg-white border border-stone-200 text-stone-600 rounded-xl font-bold hover:bg-stone-50 transition-colors text-sm"
-            >
-              知道了，馬上參加！
-            </button>
-          </div>
-
         </div>
+
+        {/* 活動說明 */}
+        <p className="text-stone-600 text-xs text-center mb-4 leading-relaxed">
+          在 Google 地圖留<span className="text-red-600 font-bold">五星好評</span>，<br />
+          即可現場轉蛋，兌換獎勵！
+        </p>
+
+        {/* IG 連結 */}
+        <a
+          href={ASSETS.instagramLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => ReactGA.event({ category: "Conversion", action: "click_ig_link", label: "Event Modal IG Link" })}
+          className="w-full max-w-[200px] py-3 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform text-sm mb-4"
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 shrink-0">
+            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+          </svg>
+          <span>追蹤 Instagram</span>
+        </a>
+
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={onClose}
+          className="px-8 py-2.5 bg-stone-800 hover:bg-stone-700 text-white rounded-lg font-bold text-sm transition-colors"
+        >
+          收下祝福
+        </motion.button>
       </motion.div>
     </motion.div>
   );
@@ -354,31 +331,47 @@ export default function App() {
   }, []);
 
   const handleShuffle = () => {
-    ReactGA.event({ category: "Interaction", action: "shuffle_review", label: "Refresh Review Text" });
-    const randomIndex = Math.floor(Math.random() * REVIEWS.length);
-    setReview(REVIEWS[randomIndex]);
+    ReactGA.event({ category: "Interaction", action: "refresh_review", label: "Refresh Review" });
+    let newIndex;
+    const currentReviewIndex = REVIEWS.indexOf(review);
+    do {
+      newIndex = Math.floor(Math.random() * REVIEWS.length);
+    } while (newIndex === currentReviewIndex && REVIEWS.length > 1);
+    setReview(REVIEWS[newIndex]);
   };
 
   const handleCopyAndRedirect = () => {
-    ReactGA.event({ category: "Conversion", action: "copy_and_redirect", label: "Copy Review & Go to Google Maps" });
-    navigator.clipboard.writeText(review);
+    ReactGA.event({ category: "Conversion", action: "copy_and_go", label: "Copy & Go" });
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = review;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      textArea.style.top = "0";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      if (!successful) navigator.clipboard.writeText(review);
+    } catch {
+      navigator.clipboard.writeText(review);
+    }
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000); // Reset toast after 2s
-
-    // Redirect after a short delay to let user see the toast
     setTimeout(() => {
+      setIsCopied(false);
       window.open(ASSETS.googleMapsLink, '_blank');
-    }, 1500);
+    }, 800);
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCF8] flex flex-col font-sans selection:bg-red-100 selection:text-red-900 pb-24 sm:pb-0">
+    <div className="relative min-h-screen font-sans text-stone-800 selection:bg-red-200 overflow-x-hidden bg-[#F9F8F2] flex flex-col pb-24">
 
-      {/* Background Texture */}
+      {/* Background Pattern */}
       <div
-        className="fixed inset-0 opacity-[0.03] pointer-events-none z-0"
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }}
-      ></div>
+        className="fixed inset-0 pointer-events-none opacity-40"
+        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")` }}
+      />
 
       <main
         className="flex-grow w-full max-w-md mx-auto px-6 py-8 relative z-10 flex flex-col items-center"
@@ -505,7 +498,7 @@ export default function App() {
           <ChevronRight className="w-3 h-3 text-stone-300 shrink-0 hidden sm:block" />
           <span className="text-[11px] font-medium">② 到 Google 貼上留五星</span>
           <ChevronRight className="w-3 h-3 text-stone-300 shrink-0 hidden sm:block" />
-          <span className="text-[11px] font-medium text-amber-600">③ 到店兌獎</span>
+          <span className="text-[11px] font-medium text-amber-600">③ 現場轉蛋兌換獎勵</span>
         </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
           <motion.button
