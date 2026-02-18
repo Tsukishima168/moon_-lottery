@@ -294,7 +294,7 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
 
           {/* 2. Event Description */}
           <div className="text-center mb-6">
-            <p className="text-stone-500 text-xs tracking-wider mb-2 font-medium">✨ 來自奇威鳥的祝福 ✨</p>
+            <p className="text-stone-500 text-xs tracking-wider mb-2 font-medium">✨ Kiwimu ✨</p>
             <p className="text-stone-700 text-sm leading-7">
               在 Google 地圖<br />
               留下<span className="text-red-600 font-bold mx-1">五星好評</span><br />
