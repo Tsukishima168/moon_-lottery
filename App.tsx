@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Copy, MessageCircle, Gift, X, MapPin, ArrowRight, ChevronRight, CheckCircle } from 'lucide-react';
 import ReactGA from "react-ga4";
@@ -12,6 +12,7 @@ const ASSETS = {
   secretImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1767438020/mbti_ESTP_rfs53m.png",
   pitifulImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-04_mfdlsz.webp",
   googleMapsLink: "https://g.page/r/CdR9ng9TTJF3EBM/review",
+  // lineLink: "https://lin.ee/xhxnUdX", // Original
   lineLink: "https://lin.ee/xhxnUdX",
   instagramLink: "https://www.instagram.com/moonmoon_dessert/"
 };
@@ -46,53 +47,92 @@ const REVIEWS = [
   "位於台南安南區的這家店，初四來品嚐了西西里咖啡。搭配店內的低糖甜點，是果菜市場周邊很優質的休息點。"
 ];
 
-// 原始 6 球獎項結構（白→金）
+// 獎項結構（含機率權重）
+// weight: 機率權重 (數值越大越容易抽中)
 const PRIZES = [
-  { id: 'white', color: "bg-stone-100", border: "border-stone-300", label: "白球", text: "季節鮮果", note: "維他命C" },
-  { id: 'blue', color: "bg-sky-400", border: "border-sky-500", label: "水藍球", text: "一杯蕎麥茶", note: "無咖啡因" },
-  { id: 'green', color: "bg-emerald-500", border: "border-emerald-600", label: "綠球", text: "冰美式咖啡", note: "中深焙" },
-  { id: 'yellow', color: "bg-yellow-300", border: "border-yellow-400", label: "黃球", text: "西西里咖啡", note: "解膩首選" },
-  { id: 'red', color: "bg-red-600", border: "border-red-700", label: "紅球", text: "隱藏版烤布丁", note: "招牌" },
-  { id: 'gold', color: "bg-amber-400", border: "border-amber-500", label: "金球", text: "一片千層", note: "本日最大獎" },
+  { id: 'white', color: "bg-stone-100", border: "border-stone-300", label: "白球", text: "季節鮮果", note: "維他命C", weight: 30 },
+  { id: 'blue', color: "bg-sky-400", border: "border-sky-500", label: "水藍球", text: "一杯蕎麥茶", note: "無咖啡因", weight: 25 },
+  { id: 'green', color: "bg-emerald-500", border: "border-emerald-600", label: "綠球", text: "冰美式咖啡", note: "中深焙", weight: 20 },
+  { id: 'yellow', color: "bg-yellow-300", border: "border-yellow-400", label: "黃球", text: "西西里咖啡", note: "解膩首選", weight: 15 },
+  { id: 'red', color: "bg-red-600", border: "border-red-700", label: "紅球", text: "隱藏版烤布丁", note: "招牌", weight: 8 },
+  { id: 'gold', color: "bg-amber-400", border: "border-amber-500", label: "金球", text: "一片千層", note: "本日最大獎", weight: 2 },
+  { id: 'special', color: "bg-pink-500", border: "border-pink-600", label: "彩球", text: "Kiwimu 限量徽章", note: "初四限定紅包", weight: 5 }, // 新增：初四限定
 ];
 
 // 詩籤 Kiwimu Blessing
 const FORTUNES = [
-  { level: "大吉", text: "新的一年，願你的煩惱像我的工作一樣少。" },
-  { level: "中吉", text: "變胖沒關係，那是你對甜點尊重的重量。" },
-  { level: "小吉", text: "把錢變成喜歡的形狀，例如千層蛋糕。" },
-  { level: "吉", text: "今天的運氣，適合再來一顆布丁。" },
-  { level: "大吉", text: "願你的財運，像台南的糖度一樣高。" },
-  { level: "中吉", text: "工作可以低糖，但生活要全糖。" },
-  { level: "吉", text: "老闆說，轉到這張的人，今年會變漂亮。" },
-  { level: "小吉", text: "休息是為了走更長的路，吃甜點是為了不想走路。" },
-  { level: "大吉", text: "恭喜，你今年的桃花運會跟鮮奶油一樣順滑。" },
-  { level: "隱藏版", text: "Kiwimu 覺得你今天長得很好看。" }
+  { id: 1, level: "大吉", text: "新的一年，願你的煩惱像我的工作一樣少。" },
+  { id: 2, level: "中吉", text: "變胖沒關係，那是你對甜點尊重的重量。" },
+  { id: 3, level: "小吉", text: "把錢變成喜歡的形狀，例如千層蛋糕。" },
+  { id: 4, level: "吉", text: "今天的運氣，適合再來一顆布丁。" },
+  { id: 5, level: "大吉", text: "願你的財運，像台南的糖度一樣高。" },
+  { id: 6, level: "中吉", text: "工作可以低糖，但生活要全糖。" },
+  { id: 7, level: "吉", text: "老闆說，轉到這張的人，今年會變漂亮。" },
+  { id: 8, level: "小吉", text: "休息是為了走更長的路，吃甜點是為了不想走路。" },
+  { id: 9, level: "大吉", text: "恭喜，你今年的桃花運會跟鮮奶油一樣順滑。" },
+  { id: 10, level: "隱藏版", text: "Kiwimu 覺得你今天長得很好看。" }
 ];
 
 // --- Components ---
 
 // 日式搖珠機 (Garapon) 動畫元件 - 可點擊，浮動動畫引導
-const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
+const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () => void, isSpinning: boolean, resultColor?: string }) => {
   const controls = useAnimation();
-  const handleClick = async () => {
-    await controls.start({ x: [0, -6, 6, -6, 6, 0], transition: { duration: 0.35 } });
-    onClick();
-  };
+  const drumControls = useAnimation();
+
+  // Handle spin animation sequence
+  useEffect(() => {
+    if (isSpinning) {
+      const sequence = async () => {
+        // 1. Shake / Start
+        await controls.start({ x: [0, -5, 5, -5, 5, 0], transition: { duration: 0.4 } });
+
+        // 2. Fast Rotate
+        await drumControls.start({
+          rotate: 360 * 3,
+          transition: { duration: 2, ease: "easeInOut" }
+        });
+
+        // Reset rotation for next time without animation
+        drumControls.set({ rotate: 0 });
+      };
+      sequence();
+    }
+  }, [isSpinning, controls, drumControls]);
+
+  // Idle floating animation
+  useEffect(() => {
+    if (!isSpinning) {
+      controls.start({
+        y: [0, -5, 0],
+        transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
+      });
+      drumControls.start({
+        rotate: 360,
+        transition: { duration: 20, repeat: Infinity, ease: "linear" }
+      });
+    } else {
+      controls.stop();
+      // Drum rotation is handled by the async sequence above
+    }
+  }, [isSpinning, controls, drumControls]);
+
+
   return (
     <motion.div
       className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center cursor-pointer"
-      onClick={handleClick}
-      animate={{ y: [0, -5, 0] }}
-      transition={{ y: { duration: 2.5, repeat: Infinity, ease: "easeInOut" } }}
+      onClick={!isSpinning ? onClick : undefined}
+      animate={controls}
       role="button"
       aria-label="點擊轉蛋查看活動與詩籤"
     >
-      <motion.div className="relative w-full h-full flex items-center justify-center" animate={controls}>
+      <div className="relative w-full h-full flex items-center justify-center">
         {/* 點擊提示 */}
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md whitespace-nowrap animate-pulse">
-          點我轉好運
-        </div>
+        {!isSpinning && (
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md whitespace-nowrap animate-pulse">
+            一天一次・點我轉好運
+          </div>
+        )}
 
         {/* Stand Base */}
         <div className="absolute bottom-0 w-32 h-4 bg-stone-800 rounded-lg z-10"></div>
@@ -102,8 +142,7 @@ const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
         {/* Rotating Hexagon Drum */}
         <motion.div
           className="relative w-32 h-32 z-10"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          animate={drumControls}
         >
           <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
             <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
@@ -115,31 +154,34 @@ const GaraponAnimation = ({ onClick }: { onClick: () => void }) => {
         {/* Handle */}
         <motion.div
           className="absolute z-20"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          animate={drumControls} // Handle rotates with drum
         >
           <div className="w-1 h-12 bg-stone-400 origin-top translate-y-[-2px]"></div>
           <div className="w-3 h-3 bg-stone-900 rounded-full translate-x-[-4px] translate-y-10"></div>
         </motion.div>
 
         {/* Dropping Ball */}
-        <motion.div
-          className="absolute bottom-4 z-30 w-6 h-6 rounded-full bg-amber-400 border-2 border-amber-500 shadow-md"
-          initial={{ y: -40, opacity: 0, scale: 0 }}
-          animate={{
-            y: [0, 20, 20],
-            x: [0, -20, -30],
-            opacity: [0, 1, 0],
-            scale: [0, 1, 1]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatDelay: 3,
-            ease: "easeOut"
-          }}
-        />
-      </motion.div>
+        <AnimatePresence>
+          {isSpinning && resultColor && (
+            <motion.div
+              className={`absolute bottom-4 z-30 w-6 h-6 rounded-full ${resultColor} border-2 border-white shadow-md`}
+              initial={{ y: 10, opacity: 0, scale: 0 }}
+              animate={{
+                y: [10, 60],
+                x: [0, 20],
+                opacity: [0, 1],
+                scale: [0.5, 1.2]
+              }}
+              transition={{
+                delay: 1.8, // Wait for most of the spin to finish
+                duration: 0.5,
+                ease: "easeOut"
+              }}
+            />
+          )}
+        </AnimatePresence>
+
+      </div>
     </motion.div>
   );
 };
@@ -158,9 +200,12 @@ const PrizeTicker = ({ onSecretClick }: { onSecretClick: () => void }) => (
     </div>
     <div className="flex gap-3 overflow-x-auto pb-6 px-4 snap-x snap-mandatory items-end pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       {PRIZES.map((prize, idx) => (
-        <div key={prize.id} className={`snap-center shrink-0 w-[110px] bg-white rounded-xl p-3 border ${prize.id === 'gold' ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-stone-100 shadow-sm'} flex flex-col items-center relative`}>
+        <div key={prize.id} className={`snap-center shrink-0 w-[110px] bg-white rounded-xl p-3 border ${prize.id.includes('gold') || prize.id === 'special' ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-stone-100 shadow-sm'} flex flex-col items-center relative`}>
           {prize.id === 'gold' && (
             <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">TOP</div>
+          )}
+          {prize.id === 'special' && (
+            <div className="absolute top-0 right-0 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">NEW</div>
           )}
           <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
           <p className="font-bold text-stone-800 text-xs mb-0.5 text-center whitespace-nowrap">{prize.text}</p>
@@ -201,8 +246,8 @@ const Toast = ({ show }: { show: boolean }) => (
   </AnimatePresence>
 );
 
-// 隱藏彩蛋 Modal：LINE 密語
-const SecretModal = ({ onClose }: { onClose: () => void }) => (
+// 隱藏彩蛋 Modal：LINE 密語 -> 引導至 LINE 並獲得重抽機會
+const SecretModal = ({ onClose, onRespin }: { onClose: () => void, onRespin: () => void }) => (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
@@ -228,17 +273,21 @@ const SecretModal = ({ onClose }: { onClose: () => void }) => (
         <p className="text-sm text-stone-600 mb-6 leading-relaxed">
           噓... 只要加入 LINE 好友<br />
           並輸入通關密語 <span className="font-bold text-red-700 bg-red-50 px-1 rounded">mu</span><br />
-          就能獲得「再轉一次」的機會喔。
+          就能獲得「再轉一次」的機會喔。<br />
+          <span className="text-xs text-stone-400 mt-1 block">( 注意：重抽將會覆蓋原本的結果 )</span>
         </p>
         <a
           href={ASSETS.lineLink}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => ReactGA.event({ category: "Conversion", action: "click_line_link", label: "Secret Modal Line Link" })}
+          onClick={() => {
+            ReactGA.event({ category: "Conversion", action: "click_line_link_respin", label: "Secret Modal Line Respin" });
+            onRespin();
+          }}
           className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
         >
           <MessageCircle className="w-4 h-4" />
-          <span>前往 LINE 輸入密語</span>
+          <span>前往 LINE 輸入密語 (重抽)</span>
         </a>
       </div>
     </motion.div>
@@ -247,9 +296,7 @@ const SecretModal = ({ onClose }: { onClose: () => void }) => (
 
 
 // 點擊轉蛋後的活動 Modal：單張籤詩風格 (Unified Card Style)
-const EventModal = ({ onClose }: { onClose: () => void }) => {
-  const [fortune] = useState(() => FORTUNES[Math.floor(Math.random() * FORTUNES.length)]);
-
+const EventModal = ({ onClose, prize, fortune, isPlayedToday }: { onClose: () => void, prize: typeof PRIZES[0], fortune: typeof FORTUNES[0], isPlayedToday: boolean }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -266,25 +313,36 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
         className="w-full max-w-[320px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 overflow-hidden relative flex flex-col items-center"
       >
         {/* Card Top Decorative Accent */}
-        <div className="absolute top-0 w-full h-1.5 bg-gradient-to-r from-red-800 via-red-600 to-red-800 opacity-90"></div>
+        <div className={`absolute top-0 w-full h-1.5 bg-gradient-to-r ${prize.id === 'gold' ? 'from-amber-400 via-yellow-300 to-amber-500' : prize.id === 'special' ? 'from-pink-500 via-rose-400 to-pink-500' : 'from-red-800 via-red-600 to-red-800'} opacity-90`}></div>
 
         <div className="p-8 w-full flex flex-col items-center">
           {/* 1. Fortune Content */}
-          <div className="text-center mb-8 relative w-full">
+          <div className="text-center mb-6 relative w-full">
             {/* Watermark/Background Decoration */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-red-50 rounded-full blur-2xl -z-10 opacity-60"></div>
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl -z-10 opacity-60 ${prize.id === 'gold' ? 'bg-amber-100' : prize.id === 'special' ? 'bg-pink-100' : 'bg-red-50'}`}></div>
 
             {/* Level Badge */}
-            <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-6 border ${fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-              fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
-                fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                  'bg-stone-50 text-stone-600 border-stone-200'
+            <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-4 border ${fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
+                  fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                    'bg-stone-50 text-stone-600 border-stone-200'
               }`}>
               {fortune.level}
             </span>
 
+            {/* Prize Ball Visual */}
+            <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-4 mx-auto`}></div>
+
+            <div className="text-center mb-2">
+              <p className="text-xs text-stone-400 mb-1">恭喜獲得</p>
+              <p className={`text-lg font-bold ${prize.id === 'special' ? 'text-pink-600' : 'text-stone-800'}`}>{prize.text}</p>
+              {prize.id === 'special' && (
+                <p className="text-[10px] text-pink-400 mt-1">✨ 請向店員出示此畫面 ✨</p>
+              )}
+            </div>
+
             {/* Text */}
-            <p className="text-stone-800 font-serif font-medium text-xl leading-relaxed tracking-wide px-2">
+            <p className="text-stone-600 font-serif font-medium text-base leading-relaxed tracking-wide px-2 mt-4 italic">
               「{fortune.text}」
             </p>
           </div>
@@ -300,6 +358,12 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
               留下<span className="text-red-600 font-bold mx-1">五星好評</span><br />
               即可現場兌換好運獎勵
             </p>
+            {isPlayedToday && (
+              <div className="mt-2 text-center">
+                <p className="text-xs text-stone-400">( 這是您今天的運勢，明天再來玩喔！ )</p>
+                {/* Subtle link to secret if they want to try again via secret way, although ticker handles it */}
+              </div>
+            )}
           </div>
 
           {/* 3. Actions */}
@@ -311,7 +375,7 @@ const EventModal = ({ onClose }: { onClose: () => void }) => {
             className="w-full py-3 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-200 hover:shadow-pink-300 active:scale-98 transition-all text-sm mb-3"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
             </svg>
             <span>追蹤 Instagram</span>
           </a>
@@ -333,12 +397,111 @@ export default function App() {
   const [review, setReview] = useState(() => REVIEWS[Math.floor(Math.random() * REVIEWS.length)]);
   const [isCopied, setIsCopied] = useState(false);
   const [showSecretModal, setShowSecretModal] = useState(false);
-  const [showEventModal, setShowEventModal] = useState(false);
 
-  // Track Page View
+  // Gacha State
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [resultPrize, setResultPrize] = useState<typeof PRIZES[0] | null>(null);
+  const [resultFortune, setResultFortune] = useState<typeof FORTUNES[0] | null>(null);
+  const [isPlayedToday, setIsPlayedToday] = useState(false);
+
+  // Load state from local storage on mount
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+
+    const today = new Date().toLocaleDateString();
+    const lastPlayed = localStorage.getItem('moonmoon_gacha_last_played');
+
+    if (lastPlayed === today) {
+      setIsPlayedToday(true);
+      const savedResult = localStorage.getItem('moonmoon_gacha_today_result');
+      if (savedResult) {
+        try {
+          const parsed = JSON.parse(savedResult);
+          if (parsed.prizeId && parsed.fortuneId) {
+            const prize = PRIZES.find(p => p.id === parsed.prizeId) || PRIZES[0];
+            const fortune = FORTUNES.find(f => f.id === parsed.fortuneId) || FORTUNES[0];
+            setResultPrize(prize);
+            setResultFortune(fortune);
+          }
+        } catch (e) {
+          console.error("Failed to parse saved result", e);
+        }
+      }
+    }
   }, []);
+
+  const handleRespin = () => {
+    ReactGA.event({ category: "Interaction", action: "respin_triggered", label: "Secret Modal Respin" });
+
+    // Clear today's record
+    localStorage.removeItem('moonmoon_gacha_last_played');
+    localStorage.removeItem('moonmoon_gacha_today_result');
+
+    // Reset state
+    setIsPlayedToday(false);
+    setResultPrize(null);
+    setResultFortune(null);
+    setShowSecretModal(false);
+    setShowEventModal(false); // Close event modal if open (though unlikely)
+
+    // Force a small delay or reload might not be needed as state updates
+    // Optional: Auto-spin or just let user click again? "能夠再轉一次" -> Let user click.
+    // Maybe show a toast or message?
+  };
+
+  const handleGachaClick = () => {
+    if (isSpinning) return;
+
+    if (isPlayedToday && resultPrize && resultFortune) {
+      // Already played today, show result immediately
+      ReactGA.event({ category: "Interaction", action: "view_today_result", label: "View Today's Result" });
+      setShowEventModal(true);
+      return;
+    }
+
+    // Start spin sequence
+    setIsSpinning(true);
+    ReactGA.event({ category: "Interaction", action: "spin_gacha", label: "Start Spin" });
+
+    // 1. Determine result immediately (but don't show yet)
+    // Weighted Random Logic
+    const totalWeight = PRIZES.reduce((sum, prize) => sum + (prize.weight || 1), 0);
+    let randomVal = Math.random() * totalWeight;
+    let selectedPrize = PRIZES[0];
+
+    for (const prize of PRIZES) {
+      const weight = prize.weight || 1;
+      if (randomVal < weight) {
+        selectedPrize = prize;
+        console.log("Selected Prize:", prize.text, "Weight:", weight, "Total:", totalWeight);
+        break;
+      }
+      randomVal -= weight;
+    }
+
+    const randomFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+
+    setResultPrize(selectedPrize);
+    setResultFortune(randomFortune);
+
+    // 2. Wait for animation (roughly 2.5s for spin + drop)
+    setTimeout(() => {
+      setIsSpinning(false);
+      setShowEventModal(true);
+      setIsPlayedToday(true);
+
+      // Save to local storage
+      const today = new Date().toLocaleDateString();
+      localStorage.setItem('moonmoon_gacha_last_played', today);
+      localStorage.setItem('moonmoon_gacha_today_result', JSON.stringify({
+        prizeId: selectedPrize.id,
+        fortuneId: randomFortune.id
+      }));
+
+    }, 2500);
+  };
+
 
   const handleShuffle = () => {
     ReactGA.event({ category: "Interaction", action: "refresh_review", label: "Refresh Review" });
@@ -403,15 +566,23 @@ export default function App() {
         >
           {/* Garapon Animation Component - Scaled for Mobile */}
           <div className="scale-90 sm:scale-100 origin-center">
-            <GaraponAnimation onClick={() => {
-              ReactGA.event({ category: "Interaction", action: "click_garapon", label: "Open Event Modal" });
-              setShowEventModal(true);
-            }} />
+            <GaraponAnimation
+              onClick={handleGachaClick}
+              isSpinning={isSpinning}
+              resultColor={resultPrize?.color}
+            />
           </div>
 
           <AnimatePresence>
-            {showSecretModal && <SecretModal onClose={() => setShowSecretModal(false)} />}
-            {showEventModal && <EventModal onClose={() => setShowEventModal(false)} />}
+            {showSecretModal && <SecretModal onClose={() => setShowSecretModal(false)} onRespin={handleRespin} />}
+            {showEventModal && resultPrize && resultFortune && (
+              <EventModal
+                onClose={() => setShowEventModal(false)}
+                prize={resultPrize}
+                fortune={resultFortune}
+                isPlayedToday={isPlayedToday}
+              />
+            )}
           </AnimatePresence>
 
           <h2 className="text-xl sm:text-2xl font-black tracking-widest text-stone-900 mb-1">
