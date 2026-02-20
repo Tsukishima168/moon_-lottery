@@ -47,10 +47,14 @@ const REVIEWS = [
   "位於台南安南區的這家店，初四來品嚐了西西里咖啡。搭配店內的低糖甜點，是果菜市場周邊很優質的休息點。"
 ];
 
-// 獎項結構（含機率權重）
-// weight: 機率權重 (數值越大越容易抽中)
 const PRIZES = [
-  { id: 'special', color: "bg-pink-500", border: "border-pink-600", label: "彩球", text: "Kiwimu 限量徽章", note: "隱藏驚喜", weight: 5 },
+  { id: 'white', color: "bg-stone-100", border: "border-stone-300", label: "白球", text: "季節鮮果", note: "現場轉蛋", weight: 0 },
+  { id: 'blue', color: "bg-sky-400", border: "border-sky-500", label: "水藍球", text: "一杯蕎麥茶", note: "現場轉蛋", weight: 0 },
+  { id: 'green', color: "bg-emerald-500", border: "border-emerald-600", label: "綠球", text: "冰美式咖啡", note: "現場轉蛋", weight: 0 },
+  { id: 'yellow', color: "bg-yellow-300", border: "border-yellow-400", label: "黃球", text: "西西里咖啡", note: "現場轉蛋", weight: 0 },
+  { id: 'red', color: "bg-red-600", border: "border-red-700", label: "紅球", text: "隱藏版烤布丁", note: "現場轉蛋", weight: 0 },
+  { id: 'gold', color: "bg-amber-400", border: "border-amber-500", label: "金球", text: "一片千層", note: "現場轉蛋", weight: 0 },
+  { id: 'special', color: "bg-pink-500", border: "border-pink-600", label: "彩球", text: "Kiwimu 限量徽章", note: "線上專屬驚喜", weight: 5 },
   { id: 'blessing', color: "", border: "", label: "", text: "靈魂開運籤", note: "心誠則靈", weight: 95 },
 ];
 
@@ -200,7 +204,7 @@ const PrizeTicker = ({ onSecretClick }: { onSecretClick: () => void }) => (
             <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">TOP</div>
           )}
           {prize.id === 'special' && (
-            <div className="absolute top-0 right-0 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">限量</div>
+            <div className="absolute top-0 right-0 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">線上</div>
           )}
           {prize.color && (
             <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
@@ -319,10 +323,11 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday }: { onClose: () =>
             <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl -z-10 opacity-60 ${prize.id === 'gold' ? 'bg-amber-100' : prize.id === 'special' ? 'bg-pink-100' : 'bg-red-50'}`}></div>
 
             {/* Level Badge */}
-            <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-4 border ${fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-              fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
-                fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                  'bg-stone-50 text-stone-600 border-stone-200'
+            <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-4 border ${fortune.level === '特吉' ? 'bg-pink-50 text-pink-700 border-pink-200 shadow-sm' :
+                fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                  fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
+                    fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                      'bg-stone-50 text-stone-600 border-stone-200'
               }`}>
               {fortune.level}
             </span>
@@ -475,22 +480,32 @@ export default function App() {
     ReactGA.event({ category: "Interaction", action: "spin_gacha", label: "Start Spin" });
 
     // 1. Determine result immediately (but don't show yet)
-    // Weighted Random Logic
-    const totalWeight = PRIZES.reduce((sum, prize) => sum + (prize.weight || 1), 0);
+    // Weighted Random Logic ONLY for online draw (Badge vs Blessing)
+    const onlinePrizes = PRIZES.filter(p => p.id === 'special' || p.id === 'blessing');
+    const totalWeight = onlinePrizes.reduce((sum, prize) => sum + (prize.weight || 0), 0);
     let randomVal = Math.random() * totalWeight;
-    let selectedPrize = PRIZES[0];
+    let selectedPrize = onlinePrizes[0];
 
-    for (const prize of PRIZES) {
-      const weight = prize.weight || 1;
+    for (const prize of onlinePrizes) {
+      const weight = prize.weight || 0;
       if (randomVal < weight) {
         selectedPrize = prize;
-        console.log("Selected Prize:", prize.text, "Weight:", weight, "Total:", totalWeight);
         break;
       }
       randomVal -= weight;
     }
 
-    const randomFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+    let randomFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
+
+    // Override fortune if Badge (special) is drawn to "特吉"
+    if (selectedPrize.id === 'special') {
+      randomFortune = {
+        ...randomFortune,
+        id: 999,
+        level: "特吉",
+        text: "Kiwimu 降臨！這份專屬幸運非你莫屬。請截圖出示給店員兌換徽章！"
+      };
+    }
 
     setResultPrize(selectedPrize);
     setResultFortune(randomFortune);
