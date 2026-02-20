@@ -324,10 +324,10 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday }: { onClose: () =>
 
             {/* Level Badge */}
             <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-4 border ${fortune.level === '特吉' ? 'bg-pink-50 text-pink-700 border-pink-200 shadow-sm' :
-                fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                  fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
-                    fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                      'bg-stone-50 text-stone-600 border-stone-200'
+              fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
+                  fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                    'bg-stone-50 text-stone-600 border-stone-200'
               }`}>
               {fortune.level}
             </span>
@@ -358,14 +358,13 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday }: { onClose: () =>
           <div className="text-center mb-6">
             <p className="text-stone-500 text-xs tracking-wider mb-2 font-medium">✨ Kiwimu ✨</p>
             <p className="text-stone-700 text-sm leading-7">
-              在 Google 地圖<br />
-              留下<span className="text-red-600 font-bold mx-1">五星好評</span><br />
-              即可現場兌換好運獎勵
+              實體店面正舉辦<br />
+              <span className="text-red-600 font-bold mx-1">「五星好評・搖珠轉蛋」</span><br />
+              有機會把千層蛋糕帶回家！
             </p>
             {isPlayedToday && (
               <div className="mt-2 text-center">
                 <p className="text-xs text-stone-400">( 這是您今天的運勢，明天再來玩喔！ )</p>
-                {/* Subtle link to secret if they want to try again via secret way, although ticker handles it */}
               </div>
             )}
           </div>
