@@ -14,7 +14,7 @@ const ASSETS = {
   googleMapsLink: "https://g.page/r/CdR9ng9TTJF3EBM/review",
   // lineLink: "https://lin.ee/xhxnUdX", // Original
   lineLink: "https://lin.ee/xhxnUdX",
-  instagramLink: "https://www.instagram.com/moonmoon_dessert/"
+  instagramLink: "https://www.instagram.com/moon_moon_dessert/"
 };
 
 const REVIEWS = [
@@ -50,27 +50,22 @@ const REVIEWS = [
 // 獎項結構（含機率權重）
 // weight: 機率權重 (數值越大越容易抽中)
 const PRIZES = [
-  { id: 'white', color: "bg-stone-100", border: "border-stone-300", label: "白球", text: "季節鮮果", note: "維他命C", weight: 30 },
-  { id: 'blue', color: "bg-sky-400", border: "border-sky-500", label: "水藍球", text: "一杯蕎麥茶", note: "無咖啡因", weight: 25 },
-  { id: 'green', color: "bg-emerald-500", border: "border-emerald-600", label: "綠球", text: "冰美式咖啡", note: "中深焙", weight: 20 },
-  { id: 'yellow', color: "bg-yellow-300", border: "border-yellow-400", label: "黃球", text: "西西里咖啡", note: "解膩首選", weight: 15 },
-  { id: 'red', color: "bg-red-600", border: "border-red-700", label: "紅球", text: "隱藏版烤布丁", note: "招牌", weight: 8 },
-  { id: 'gold', color: "bg-amber-400", border: "border-amber-500", label: "金球", text: "一片千層", note: "本日最大獎", weight: 2 },
-  { id: 'special', color: "bg-pink-500", border: "border-pink-600", label: "彩球", text: "Kiwimu 限量徽章", note: "初四限定紅包", weight: 5 }, // 新增：初四限定
+  { id: 'special', color: "bg-pink-500", border: "border-pink-600", label: "彩球", text: "Kiwimu 限量徽章", note: "隱藏驚喜", weight: 5 },
+  { id: 'blessing', color: "", border: "", label: "", text: "靈魂開運籤", note: "心誠則靈", weight: 95 },
 ];
 
 // 詩籤 Kiwimu Blessing
 const FORTUNES = [
-  { id: 1, level: "大吉", text: "新的一年，願你的煩惱像我的工作一樣少。" },
-  { id: 2, level: "中吉", text: "變胖沒關係，那是你對甜點尊重的重量。" },
-  { id: 3, level: "小吉", text: "把錢變成喜歡的形狀，例如千層蛋糕。" },
-  { id: 4, level: "吉", text: "今天的運氣，適合再來一顆布丁。" },
-  { id: 5, level: "大吉", text: "願你的財運，像台南的糖度一樣高。" },
-  { id: 6, level: "中吉", text: "工作可以低糖，但生活要全糖。" },
-  { id: 7, level: "吉", text: "老闆說，轉到這張的人，今年會變漂亮。" },
-  { id: 8, level: "小吉", text: "休息是為了走更長的路，吃甜點是為了不想走路。" },
-  { id: 9, level: "大吉", text: "恭喜，你今年的桃花運會跟鮮奶油一樣順滑。" },
-  { id: 10, level: "隱藏版", text: "Kiwimu 覺得你今天長得很好看。" }
+  { id: 1, level: "大吉", text: "新的一年，財神爺已經在你家門口排隊了。" },
+  { id: 2, level: "中吉", text: "財源滾滾來，今年的紅包厚度會讓你笑出來。" },
+  { id: 3, level: "大吉", text: "福星高照！不只吃甜點，連走在路上都會撿到錢。" },
+  { id: 4, level: "吉", text: "好運來敲門，今天適合買張彩券試試手氣。" },
+  { id: 5, level: "大吉", text: "事業步步高升，今年的戶頭數字將會直線上升。" },
+  { id: 6, level: "中吉", text: "福氣滿滿，今年你將會收穫滿滿的善意與財富。" },
+  { id: 7, level: "吉", text: "貴人相助，今年遇到什麼困難都能輕鬆迎刃而解。" },
+  { id: 8, level: "小吉", text: "雖然是小吉，但積累的福氣足以讓你整年平安順遂。" },
+  { id: 9, level: "大吉", text: "金銀財寶滿滿滿，今年的你就是行走的招財貓！" },
+  { id: 10, level: "隱藏版", text: "Kiwimu 賜予你隱藏版好運，心想事成，萬事如意。" }
 ];
 
 // --- Components ---
@@ -162,7 +157,7 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
 
         {/* Dropping Ball */}
         <AnimatePresence>
-          {isSpinning && resultColor && (
+          {isSpinning && resultColor && resultColor !== "" && (
             <motion.div
               className={`absolute bottom-4 z-30 w-6 h-6 rounded-full ${resultColor} border-2 border-white shadow-md`}
               initial={{ y: 10, opacity: 0, scale: 0 }}
@@ -199,15 +194,17 @@ const PrizeTicker = ({ onSecretClick }: { onSecretClick: () => void }) => (
       </div>
     </div>
     <div className="flex gap-3 overflow-x-auto pb-6 px-4 snap-x snap-mandatory items-end pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-      {PRIZES.map((prize, idx) => (
+      {PRIZES.filter(p => p.id !== 'blessing').map((prize, idx) => (
         <div key={prize.id} className={`snap-center shrink-0 w-[110px] bg-white rounded-xl p-3 border ${prize.id.includes('gold') || prize.id === 'special' ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-stone-100 shadow-sm'} flex flex-col items-center relative`}>
           {prize.id === 'gold' && (
             <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">TOP</div>
           )}
           {prize.id === 'special' && (
-            <div className="absolute top-0 right-0 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">NEW</div>
+            <div className="absolute top-0 right-0 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">限量</div>
           )}
-          <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
+          {prize.color && (
+            <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
+          )}
           <p className="font-bold text-stone-800 text-xs mb-0.5 text-center whitespace-nowrap">{prize.text}</p>
           <p className="text-[10px] text-stone-400">{prize.note}</p>
         </div>
@@ -323,15 +320,17 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday }: { onClose: () =>
 
             {/* Level Badge */}
             <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-4 border ${fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
-                  fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                    'bg-stone-50 text-stone-600 border-stone-200'
+              fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
+                fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                  'bg-stone-50 text-stone-600 border-stone-200'
               }`}>
               {fortune.level}
             </span>
 
             {/* Prize Ball Visual */}
-            <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-4 mx-auto`}></div>
+            {prize.color && (
+              <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-4 mx-auto`}></div>
+            )}
 
             <div className="text-center mb-2">
               <p className="text-xs text-stone-400 mb-1">恭喜獲得</p>
@@ -409,6 +408,15 @@ export default function App() {
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
 
+    // GA4 duration/engagement tracking
+    const startTime = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      if ([10, 30, 60, 120, 300].includes(elapsed)) {
+        ReactGA.event({ category: "Engagement", action: "time_on_page", value: elapsed, label: `${elapsed}_seconds` });
+      }
+    }, 1000);
+
     const today = new Date().toLocaleDateString();
     const lastPlayed = localStorage.getItem('moonmoon_gacha_last_played');
 
@@ -429,6 +437,8 @@ export default function App() {
         }
       }
     }
+
+    return () => clearInterval(timer);
   }, []);
 
   const handleRespin = () => {
