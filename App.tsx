@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Star, RefreshCw, Copy, MessageCircle, Gift, X, MapPin, ArrowRight, ChevronRight, CheckCircle } from 'lucide-react';
+import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut } from 'lucide-react';
 import ReactGA from "react-ga4";
+import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, getTransactionHistory, PointAction } from './pointsSystem';
+import { supabase } from './src/lib/supabase';
 
 // Initialize GA4
 ReactGA.initialize("G-7MEJVWM5JR");
@@ -9,56 +11,22 @@ ReactGA.initialize("G-7MEJVWM5JR");
 // --- Assets & Data ---
 const ASSETS = {
   mainImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-03_juymmq.webp",
-  secretImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1767438020/mbti_ESTP_rfs53m.png",
   pitifulImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-04_mfdlsz.webp",
-  googleMapsLink: "https://g.page/r/CdR9ng9TTJF3EBM/review",
-  // lineLink: "https://lin.ee/xhxnUdX", // Original
-  lineLink: "https://lin.ee/xhxnUdX",
-  instagramLink: "https://www.instagram.com/moon_moon_dessert/"
+  instagramLink: "https://www.instagram.com/moon_moon_dessert/",
+  passportUrl: "https://passport.kiwimu.com",
 };
 
-const REVIEWS = [
-  // 地理位置與環境 (1-5)
-  "位於台南安南區本原街的甜點店，鄰近台南果菜市場。店內主要提供低糖千層蛋糕與北海道巴斯克乳酪蛋糕，也有咖啡內用服務。",
-  "距離國道8號不遠的安南區咖啡店，Google Maps 導航位置準確。提供內用座位與外帶服務，環境安靜舒適。",
-  "在安南區本原街發現的隱藏版甜點。主打低糖製作的千層蛋糕，適合不喜歡太甜的人，是果菜市場周邊的質感小店。",
-  "隱身在本原街巷弄中的甜點店，位置雖然隱密但鄰近果菜市場。店內氣氛放鬆，是一間適合品嚐下午茶的安南區小店。",
-  "路過安南區本原街買甜點，停車方便。提供千層蛋糕、巴斯克與烤布丁的快速外帶，也有預留甜點的服務。",
-
-  // 產品特色：千層與烤布丁 (6-10)
-  "台南安南區的千層蛋糕專賣店，位於本原街。千層蛋糕口味選擇多，鮮奶油口感清爽。店內的十勝烤布丁焦糖香氣也很足夠。",
-  "這家店位於台南果菜市場旁，主要販售手作甜點。招牌的乾濕分離烤布丁口感綿密，適合當作安南區在地的伴手禮。",
-  "針對不愛吃甜的人設計的低糖甜點店。原味千層蛋糕與水果千層皆為減糖製作，地點就在台南果菜市場旁。",
-  "提供多種口味千層蛋糕的安南區店家。店址位於本原街，除了切片蛋糕外，也有販售四吋與六吋的北海道巴斯克蛋糕。",
-  "使用北海道十勝鮮奶油製作的手作甜點店。千層蛋糕是店內人氣商品，每日口味不同。地點位於台南果菜市場附近的本原街。",
-
-  // 產品特色：鐵盒甜點與透明盒 (11-15)
-  "台南安南區少見的質感甜點店。他們家的提拉米蘇鐵盒與戚風透明盒包裝很精美，非常適合買來送禮，位置在本原街。",
-  "安南區果菜市場周邊的隱藏版甜點。除了切片千層，店內也有販售提拉米蘇與抹茶戚風的透明盒甜點，方便外帶。",
-  "提供外帶甜點與鐵盒甜點的專門店，位於台南果菜市場附近。除了常態的千層蛋糕，提拉米蘇鐵盒也是許多人推薦的品項。",
-  "想要在安南區找外帶甜點的好地方。店內甜點以當日現做的千層與巴斯克蛋糕為主，也有戚風透明盒，位於本原街。",
-  "包裝設計非常有質感的安南區甜點店。距離果菜市場很近，販售的鐵盒甜點與透明系戚風蛋糕很受歡迎，適合當伴手禮。",
-
-  // 咖啡飲品與在地推薦 (16-20)
-  "本原街上的隱藏版甜點工作室，提供西西里檸檬美式與小山園抹茶拿鐵。搭配低糖千層蛋糕剛好，建議提早來外帶。",
-  "台南安南區值得造訪的隱藏版店家。地點在果菜市場旁的本原街，販售低糖千層、十勝烤布丁與好喝的西西里咖啡。",
-  "提供內用與外帶服務的安南區甜點店。美式咖啡與拿鐵表現不錯，搭配店內的手作甜點剛好。位置就在熱鬧的果菜市場隔壁。",
-  "本原街巷弄中的人氣甜點店，若在尋找台南安南區的生日蛋糕，他們的四吋與六吋北海道巴斯克是很棒的選擇。",
-  "安南區在地人推薦的甜點店，位於本原街。雖然隱密但生意不錯，千層蛋糕與提拉米蘇的水準都很高，是值得回訪的店。"
+// ─── Points Prize Pool (replaces physical prizes) ───
+const POINT_PRIZES = [
+  { id: 'bronze', label: '銅球', points: 5, weight: 45, color: 'bg-amber-700', border: 'border-amber-800', glow: 'shadow-amber-200' },
+  { id: 'silver', label: '銀球', points: 10, weight: 30, color: 'bg-slate-300', border: 'border-slate-400', glow: 'shadow-slate-200' },
+  { id: 'gold', label: '金球', points: 25, weight: 15, color: 'bg-yellow-400', border: 'border-yellow-500', glow: 'shadow-yellow-200' },
+  { id: 'rainbow', label: '彩虹球', points: 50, weight: 5, color: 'bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400', border: 'border-pink-500', glow: 'shadow-pink-200' },
+  { id: 'lucky', label: '幸運球', points: 100, weight: 3, color: 'bg-red-500', border: 'border-red-600', glow: 'shadow-red-200' },
+  { id: 'jackpot', label: '極光球', points: 200, weight: 2, color: 'bg-emerald-400', border: 'border-emerald-500', glow: 'shadow-emerald-200' },
 ];
 
-const PRIZES = [
-  { id: 'white', color: "bg-stone-100", border: "border-stone-300", label: "白球", text: "季節鮮果", note: "現場轉蛋", weight: 0 },
-  { id: 'blue', color: "bg-sky-400", border: "border-sky-500", label: "水藍球", text: "一杯蕎麥茶", note: "現場轉蛋", weight: 0 },
-  { id: 'green', color: "bg-emerald-500", border: "border-emerald-600", label: "綠球", text: "冰美式咖啡", note: "現場轉蛋", weight: 0 },
-  { id: 'yellow', color: "bg-yellow-300", border: "border-yellow-400", label: "黃球", text: "西西里咖啡", note: "現場轉蛋", weight: 0 },
-  { id: 'red', color: "bg-red-600", border: "border-red-700", label: "紅球", text: "隱藏版烤布丁", note: "現場轉蛋", weight: 0 },
-  { id: 'gold', color: "bg-amber-400", border: "border-amber-500", label: "金球", text: "烤焦糖脆脆水果戚風", note: "期間限定甜點", weight: 0 },
-  { id: 'special', color: "bg-pink-500", border: "border-pink-600", label: "彩球", text: "Kiwimu 限量徽章", note: "線上專屬驚喜", weight: 5 },
-  { id: 'blessing', color: "", border: "", label: "", text: "靈魂開運籤", note: "心誠則靈", weight: 95 },
-];
-
-// 詩籤 Kiwimu Blessing
+// 詩籤 Kiwimu Blessing (unchanged)
 const FORTUNES = [
   { id: 1, level: "大吉", text: "新的一年，財神爺已經在你家門口排隊了。" },
   { id: 2, level: "中吉", text: "財源滾滾來，今年的紅包厚度會讓你笑出來。" },
@@ -72,34 +40,36 @@ const FORTUNES = [
   { id: 10, level: "隱藏版", text: "Kiwimu 賜予你隱藏版好運，心想事成，萬事如意。" }
 ];
 
+// ─── Points Redemption Items (preview for the ticker) ───
+const REDEEM_PREVIEW = [
+  { name: '蕎麥茶', cost: 50 },
+  { name: '冰美式', cost: 80 },
+  { name: '西西里咖啡', cost: 100 },
+  { name: '經典烤布丁', cost: 200 },
+  { name: '戚風蛋糕', cost: 300 },
+];
+
 // --- Components ---
 
-// 日式搖珠機 (Garapon) 動畫元件 - 可點擊，浮動動畫引導
+// 日式搖珠機 (Garapon) 動畫元件
 const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () => void, isSpinning: boolean, resultColor?: string }) => {
   const controls = useAnimation();
   const drumControls = useAnimation();
 
-  // Handle spin animation sequence
   useEffect(() => {
     if (isSpinning) {
       const sequence = async () => {
-        // 1. Shake / Start
         await controls.start({ x: [0, -5, 5, -5, 5, 0], transition: { duration: 0.4 } });
-
-        // 2. Fast Rotate
         await drumControls.start({
           rotate: 360 * 3,
           transition: { duration: 2, ease: "easeInOut" }
         });
-
-        // Reset rotation for next time without animation
         drumControls.set({ rotate: 0 });
       };
       sequence();
     }
   }, [isSpinning, controls, drumControls]);
 
-  // Idle floating animation
   useEffect(() => {
     if (!isSpinning) {
       controls.start({
@@ -112,7 +82,6 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
       });
     } else {
       controls.stop();
-      // Drum rotation is handled by the async sequence above
     }
   }, [isSpinning, controls, drumControls]);
 
@@ -123,13 +92,13 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
       onClick={!isSpinning ? onClick : undefined}
       animate={controls}
       role="button"
-      aria-label="點擊轉蛋查看活動與詩籤"
+      aria-label="點擊轉蛋獲得月島積分"
     >
       <div className="relative w-full h-full flex items-center justify-center">
         {/* 點擊提示 */}
         {!isSpinning && (
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md whitespace-nowrap animate-pulse">
-            一天一次・點我轉好運
+            一天一次・轉出積分好運
           </div>
         )}
 
@@ -153,7 +122,7 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
         {/* Handle */}
         <motion.div
           className="absolute z-20"
-          animate={drumControls} // Handle rotates with drum
+          animate={drumControls}
         >
           <div className="w-1 h-12 bg-stone-400 origin-top translate-y-[-2px]"></div>
           <div className="w-3 h-3 bg-stone-900 rounded-full translate-x-[-4px] translate-y-10"></div>
@@ -172,7 +141,7 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
                 scale: [0.5, 1.2]
               }}
               transition={{
-                delay: 1.8, // Wait for most of the spin to finish
+                delay: 1.8,
                 duration: 0.5,
                 ease: "easeOut"
               }}
@@ -185,53 +154,48 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
   );
 };
 
-// 橫向捲動獎品列表 (Prize Ticker) - 獎項在轉蛋下方，滑到最右有彩蛋
-const PrizeTicker = ({ onSecretClick }: { onSecretClick: () => void }) => (
+// 積分球獎池展示 + 兌換預告
+const PointsPrizeTicker = () => (
   <div className="w-full mt-2 pb-2">
     <div className="flex items-center justify-between mb-3 px-2">
       <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-1">
-        <Gift className="w-3 h-3" /> 獎品一覽
+        <Coins className="w-3 h-3" /> 積分獎池
       </h3>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] text-stone-400 font-medium">大獎在最右邊，滑過去看看</span>
+        <span className="text-[10px] text-stone-400 font-medium">往右看可兌換品項</span>
         <ArrowRight className="w-3 h-3 text-stone-400" />
       </div>
     </div>
     <div className="flex gap-3 overflow-x-auto pb-6 px-4 snap-x snap-mandatory items-end pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-      {PRIZES.filter(p => p.id !== 'blessing').map((prize, idx) => (
-        <div key={prize.id} className={`snap-center shrink-0 w-[110px] bg-white rounded-xl p-3 border ${prize.id.includes('gold') || prize.id === 'special' ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-stone-100 shadow-sm'} flex flex-col items-center relative`}>
-          {prize.id === 'gold' && (
-            <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">TOP</div>
+      {/* Prize balls */}
+      {POINT_PRIZES.map((prize) => (
+        <div key={prize.id} className={`snap-center shrink-0 w-[100px] bg-white rounded-xl p-3 border ${prize.points >= 100 ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-stone-100 shadow-sm'} flex flex-col items-center relative`}>
+          {prize.points >= 100 && (
+            <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">稀有</div>
           )}
-          {prize.id === 'special' && (
-            <div className="absolute top-0 right-0 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">線上</div>
-          )}
-          {prize.color && (
-            <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
-          )}
-          <p className="font-bold text-stone-800 text-xs mb-0.5 text-center whitespace-nowrap">{prize.text}</p>
-          <p className="text-[10px] text-stone-400">{prize.note}</p>
+          <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
+          <p className="font-bold text-stone-800 text-xs mb-0.5 text-center whitespace-nowrap">{prize.label}</p>
+          <p className="text-[10px] text-amber-600 font-bold">+{prize.points} 積分</p>
         </div>
       ))}
-      {/* 彩蛋：滑到最右邊 */}
-      <motion.div
-        whileTap={{ scale: 0.95 }}
-        onClick={onSecretClick}
-        className="snap-center shrink-0 w-[80px] h-[100px] flex flex-col items-center justify-end relative cursor-pointer group opacity-90 hover:opacity-100 transition-opacity ml-2"
-      >
-        <div className="absolute -top-1 bg-white border border-stone-200 text-stone-600 text-[10px] font-bold px-2 py-1.5 rounded-xl shadow-sm whitespace-nowrap z-10 animate-pulse">
-          我有一個秘密
-          <div className="absolute bottom-[-5px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-l-transparent border-t-[6px] border-t-white border-b-[0px] border-b-transparent"></div>
+
+      {/* Divider */}
+      <div className="snap-center shrink-0 w-[1px] h-16 bg-stone-200 self-center mx-1"></div>
+
+      {/* Redeem preview */}
+      {REDEEM_PREVIEW.map((item) => (
+        <div key={item.name} className="snap-center shrink-0 w-[100px] bg-stone-50 rounded-xl p-3 border border-dashed border-stone-300 flex flex-col items-center relative">
+          <ShoppingBag className="w-6 h-6 text-stone-400 mb-2" />
+          <p className="font-medium text-stone-600 text-xs mb-0.5 text-center whitespace-nowrap">{item.name}</p>
+          <p className="text-[10px] text-red-600 font-bold">{item.cost} 積分兌換</p>
         </div>
-        <img src={ASSETS.secretImage} alt="Secret" className="w-14 h-14 object-contain drop-shadow-sm grayscale-[0.3] group-hover:grayscale-0 transition-all" />
-        <p className="text-[9px] text-stone-400 mt-2 tracking-widest">???</p>
-      </motion.div>
-      <div className="w-2 shrink-0"></div>
+      ))}
     </div>
   </div>
 );
 
-const Toast = ({ show }: { show: boolean }) => (
+// Toast 通知
+const Toast = ({ show, message }: { show: boolean, message: string }) => (
   <AnimatePresence>
     {show && (
       <motion.div
@@ -240,64 +204,22 @@ const Toast = ({ show }: { show: boolean }) => (
         exit={{ opacity: 0, y: 20 }}
         className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-stone-900 text-stone-50 rounded-full shadow-lg flex items-center gap-2"
       >
-        <CheckCircle className="w-4 h-4 text-emerald-400" />
-        <span className="text-sm font-medium">已複製！即將開啟 Google 留評頁面...</span>
+        <Sparkles className="w-4 h-4 text-yellow-400" />
+        <span className="text-sm font-medium">{message}</span>
       </motion.div>
     )}
   </AnimatePresence>
 );
 
-// 隱藏彩蛋 Modal：LINE 密語 -> 引導至 LINE 並獲得重抽機會
-const SecretModal = ({ onClose, onRespin }: { onClose: () => void, onRespin: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-stone-900/40 backdrop-blur-sm"
-    onClick={onClose}
-  >
-    <motion.div
-      initial={{ scale: 0.9, y: 20, opacity: 0 }}
-      animate={{ scale: 1, y: 0, opacity: 1 }}
-      exit={{ scale: 0.9, y: 20, opacity: 0 }}
-      onClick={(e) => e.stopPropagation()}
-      className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl relative"
-    >
-      <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full text-stone-400 hover:bg-stone-100 transition-colors">
-        <X className="w-5 h-5" />
-      </button>
-      <div className="flex flex-col items-center text-center">
-        <div className="w-16 h-16 rounded-full bg-stone-100 mb-4 overflow-hidden border border-stone-200">
-          <img src={ASSETS.secretImage} alt="Secret Character" className="w-full h-full object-cover" />
-        </div>
-        <h3 className="text-lg font-bold text-stone-800 mb-2">關於那個秘密...</h3>
-        <p className="text-sm text-stone-600 mb-6 leading-relaxed">
-          噓... 只要加入 LINE 好友<br />
-          並輸入通關密語 <span className="font-bold text-red-700 bg-red-50 px-1 rounded">mu</span><br />
-          就能獲得「再轉一次」的機會喔。<br />
-          <span className="text-xs text-stone-400 mt-1 block">( 注意：重抽將會覆蓋原本的結果 )</span>
-        </p>
-        <a
-          href={ASSETS.lineLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => {
-            ReactGA.event({ category: "Conversion", action: "click_line_link_respin", label: "Secret Modal Line Respin" });
-            onRespin();
-          }}
-          className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-lg font-bold flex items-center justify-center gap-2 shadow-md active:scale-95 transition-all"
-        >
-          <MessageCircle className="w-4 h-4" />
-          <span>前往 LINE 輸入密語 (重抽)</span>
-        </a>
-      </div>
-    </motion.div>
-  </motion.div>
-);
-
-
-// 點擊轉蛋後的活動 Modal：單張籤詩風格 (Unified Card Style)
-const EventModal = ({ onClose, prize, fortune, isPlayedToday }: { onClose: () => void, prize: typeof PRIZES[0], fortune: typeof FORTUNES[0], isPlayedToday: boolean }) => {
+// 點擊轉蛋後的結果 Modal：積分 + 運籤
+const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoToStore }: {
+  onClose: () => void,
+  prize: typeof POINT_PRIZES[0],
+  fortune: typeof FORTUNES[0],
+  isPlayedToday: boolean,
+  totalPoints: number,
+  onGoToStore: () => void
+}) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -313,75 +235,72 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday }: { onClose: () =>
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-[320px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 overflow-hidden relative flex flex-col items-center"
       >
-        {/* Card Top Decorative Accent */}
-        <div className={`absolute top-0 w-full h-1.5 bg-gradient-to-r ${prize.id === 'gold' ? 'from-amber-400 via-yellow-300 to-amber-500' : prize.id === 'special' ? 'from-pink-500 via-rose-400 to-pink-500' : 'from-red-800 via-red-600 to-red-800'} opacity-90`}></div>
+        {/* Card Top Accent */}
+        <div className={`absolute top-0 w-full h-1.5 bg-gradient-to-r ${prize.points >= 100 ? 'from-amber-400 via-yellow-300 to-amber-500' : prize.points >= 25 ? 'from-yellow-400 via-amber-300 to-yellow-400' : 'from-red-800 via-red-600 to-red-800'} opacity-90`}></div>
 
         <div className="p-8 w-full flex flex-col items-center">
-          {/* 1. Fortune Content */}
+          {/* 1. Points Earned */}
           <div className="text-center mb-6 relative w-full">
-            {/* Watermark/Background Decoration */}
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl -z-10 opacity-60 ${prize.id === 'gold' ? 'bg-amber-100' : prize.id === 'special' ? 'bg-pink-100' : 'bg-red-50'}`}></div>
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl -z-10 opacity-60 ${prize.points >= 100 ? 'bg-amber-100' : prize.points >= 25 ? 'bg-yellow-50' : 'bg-red-50'}`}></div>
 
-            {/* Level Badge */}
-            <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-4 border ${fortune.level === '特吉' ? 'bg-pink-50 text-pink-700 border-pink-200 shadow-sm' :
-              fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
-                  fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                    'bg-stone-50 text-stone-600 border-stone-200'
-              }`}>
-              {fortune.level}
-            </span>
+            {/* Prize Ball */}
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", damping: 10, delay: 0.2 }}
+              className={`w-14 h-14 rounded-full ${prize.color} ${prize.border} border-2 shadow-lg ${prize.glow} mx-auto mb-4`}
+            ></motion.div>
 
-            {/* Prize Ball Visual */}
-            {prize.color && (
-              <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-4 mx-auto`}></div>
-            )}
+            <p className="text-xs text-stone-400 mb-1">恭喜獲得</p>
+            <motion.p
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", delay: 0.4 }}
+              className="text-3xl font-black text-amber-600 mb-1"
+            >
+              +{prize.points}
+              <span className="text-lg ml-1">積分</span>
+            </motion.p>
+            <p className="text-xs text-stone-500">{prize.label}</p>
 
-            <div className="text-center mb-2">
-              <p className="text-xs text-stone-400 mb-1">恭喜獲得</p>
-              <p className={`text-lg font-bold ${prize.id === 'special' ? 'text-pink-600' : 'text-stone-800'}`}>{prize.text}</p>
-              {prize.id === 'special' && (
-                <p className="text-[10px] text-pink-400 mt-1">✨ 請向店員出示此畫面 ✨</p>
-              )}
+            {/* Total Balance */}
+            <div className="mt-4 bg-stone-50 rounded-lg px-4 py-2 inline-flex items-center gap-2">
+              <Coins className="w-4 h-4 text-amber-500" />
+              <span className="text-sm text-stone-600">累計積分：</span>
+              <span className="text-sm font-bold text-stone-800">{totalPoints}</span>
             </div>
-
-            {/* Text */}
-            <p className="text-stone-600 font-serif font-medium text-base leading-relaxed tracking-wide px-2 mt-4 italic">
-              「{fortune.text}」
-            </p>
           </div>
 
           {/* Divider */}
           <div className="w-12 h-[1px] bg-stone-200 mb-6"></div>
 
-          {/* 2. Event Description */}
+          {/* 2. Fortune */}
           <div className="text-center mb-6">
-            <p className="text-stone-500 text-xs tracking-wider mb-2 font-medium">✨ Kiwimu ✨</p>
-            <p className="text-stone-700 text-sm leading-7">
-              實體店面正舉辦<br />
-              <span className="text-red-600 font-bold mx-1">「五星好評・搖珠轉蛋」</span><br />
-              有機會把期間限定甜點帶回家！
+            <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-3 border ${fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+              fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
+                fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                  'bg-stone-50 text-stone-600 border-stone-200'
+              }`}>
+              {fortune.level}
+            </span>
+            <p className="text-stone-600 font-serif font-medium text-base leading-relaxed tracking-wide px-2 italic">
+              「{fortune.text}」
             </p>
-            {isPlayedToday && (
-              <div className="mt-2 text-center">
-                <p className="text-xs text-stone-400">( 這是您今天的運勢，明天再來玩喔！ )</p>
-              </div>
-            )}
           </div>
 
+          {isPlayedToday && (
+            <p className="text-xs text-stone-400 mb-4">( 這是您今天的運勢，明天再來轉喔！ )</p>
+          )}
+
           {/* 3. Actions */}
-          <a
-            href={ASSETS.instagramLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => ReactGA.event({ category: "Conversion", action: "click_ig_link", label: "Event Modal IG Link" })}
-            className="w-full py-3 bg-gradient-to-r from-purple-600 via-pink-500 to-rose-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-pink-200 hover:shadow-pink-300 active:scale-98 transition-all text-sm mb-3"
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={onGoToStore}
+            className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-200 hover:shadow-amber-300 active:scale-98 transition-all text-sm mb-3"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0">
-              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-            </svg>
-            <span>追蹤 Instagram</span>
-          </a>
+            <ShoppingBag className="w-4 h-4" />
+            <span>前往護照商店兌換</span>
+          </motion.button>
 
           <motion.button
             whileTap={{ scale: 0.98 }}
@@ -396,23 +315,49 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday }: { onClose: () =>
   );
 };
 
+// ─── Main App ───
 export default function App() {
-  const [review, setReview] = useState(() => REVIEWS[Math.floor(Math.random() * REVIEWS.length)]);
-  const [isCopied, setIsCopied] = useState(false);
-  const [showSecretModal, setShowSecretModal] = useState(false);
+  // Auth State
+  const [authUser, setAuthUser] = useState<any>(null);
+  const [showAuthBar, setShowAuthBar] = useState(false);
+
+  useEffect(() => {
+    // 讀取 .kiwimu.com cookie session（跨網域共享）
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setAuthUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setAuthUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleGoogleLogin = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+  };
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setAuthUser(null);
+  };
 
   // Gacha State
   const [showEventModal, setShowEventModal] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [resultPrize, setResultPrize] = useState<typeof PRIZES[0] | null>(null);
+  const [resultPrize, setResultPrize] = useState<typeof POINT_PRIZES[0] | null>(null);
   const [resultFortune, setResultFortune] = useState<typeof FORTUNES[0] | null>(null);
   const [isPlayedToday, setIsPlayedToday] = useState(false);
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
-  // Load state from local storage on mount
+  // Load state
   useEffect(() => {
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
 
-    // GA4 duration/engagement tracking
+    // GA4 duration tracking
     const startTime = Date.now();
     const timer = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
@@ -421,6 +366,13 @@ export default function App() {
       }
     }, 1000);
 
+    // Initialize device ID
+    getDeviceId();
+
+    // Load points balance
+    setTotalPoints(getPointsBalance());
+
+    // Check if played today
     const today = new Date().toLocaleDateString();
     const lastPlayed = localStorage.getItem('moonmoon_gacha_last_played');
 
@@ -431,7 +383,7 @@ export default function App() {
         try {
           const parsed = JSON.parse(savedResult);
           if (parsed.prizeId && parsed.fortuneId) {
-            const prize = PRIZES.find(p => p.id === parsed.prizeId) || PRIZES[0];
+            const prize = POINT_PRIZES.find(p => p.id === parsed.prizeId) || POINT_PRIZES[0];
             const fortune = FORTUNES.find(f => f.id === parsed.fortuneId) || FORTUNES[0];
             setResultPrize(prize);
             setResultFortune(fortune);
@@ -445,77 +397,78 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleRespin = () => {
-    ReactGA.event({ category: "Interaction", action: "respin_triggered", label: "Secret Modal Respin" });
-
-    // Clear today's record
-    localStorage.removeItem('moonmoon_gacha_last_played');
-    localStorage.removeItem('moonmoon_gacha_today_result');
-
-    // Reset state
-    setIsPlayedToday(false);
-    setResultPrize(null);
-    setResultFortune(null);
-    setShowSecretModal(false);
-    setShowEventModal(false); // Close event modal if open (though unlikely)
-
-    // Force a small delay or reload might not be needed as state updates
-    // Optional: Auto-spin or just let user click again? "能夠再轉一次" -> Let user click.
-    // Maybe show a toast or message?
-  };
-
   const handleGachaClick = () => {
     if (isSpinning) return;
 
     if (isPlayedToday && resultPrize && resultFortune) {
-      // Already played today, show result immediately
       ReactGA.event({ category: "Interaction", action: "view_today_result", label: "View Today's Result" });
       setShowEventModal(true);
       return;
     }
 
-    // Start spin sequence
+    // Start spin
     setIsSpinning(true);
     ReactGA.event({ category: "Interaction", action: "spin_gacha", label: "Start Spin" });
 
-    // 1. Determine result immediately (but don't show yet)
-    // Weighted Random Logic ONLY for online draw (Badge vs Blessing)
-    const onlinePrizes = PRIZES.filter(p => p.id === 'special' || p.id === 'blessing');
-    const totalWeight = onlinePrizes.reduce((sum, prize) => sum + (prize.weight || 0), 0);
+    // Weighted random selection
+    const totalWeight = POINT_PRIZES.reduce((sum, prize) => sum + prize.weight, 0);
     let randomVal = Math.random() * totalWeight;
-    let selectedPrize = onlinePrizes[0];
+    let selectedPrize = POINT_PRIZES[0];
 
-    for (const prize of onlinePrizes) {
-      const weight = prize.weight || 0;
-      if (randomVal < weight) {
+    for (const prize of POINT_PRIZES) {
+      if (randomVal < prize.weight) {
         selectedPrize = prize;
         break;
       }
-      randomVal -= weight;
+      randomVal -= prize.weight;
     }
 
+    // Random fortune
     let randomFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
 
-    // Override fortune if Badge (special) is drawn to "特吉"
-    if (selectedPrize.id === 'special') {
+    // Jackpot override
+    if (selectedPrize.id === 'jackpot') {
       randomFortune = {
         ...randomFortune,
         id: 999,
-        level: "特吉",
-        text: "Kiwimu 降臨！這份專屬幸運非你莫屬。請截圖出示給店員兌換徽章！"
+        level: "隱藏版",
+        text: "Kiwimu 極光降臨！這份幸運非你莫屬，200 積分直達帳戶！"
       };
     }
 
     setResultPrize(selectedPrize);
     setResultFortune(randomFortune);
 
-    // 2. Wait for animation (roughly 2.5s for spin + drop)
+    // Wait for animation, then show result
     setTimeout(() => {
       setIsSpinning(false);
       setShowEventModal(true);
       setIsPlayedToday(true);
 
-      // Save to local storage
+      // Award points
+      const newBalance = addPoints(selectedPrize.points, 'gacha_earn', `扭蛋獲得 ${selectedPrize.label}`);
+      setTotalPoints(newBalance);
+
+      // 🎮 LIFF-4：廣播積分事件給 Passport（跨站同步）
+      document.dispatchEvent(new CustomEvent('kiwimu:points_earned', {
+        detail: {
+          points: selectedPrize.points,
+          action: 'gacha_earn' as PointAction,
+          description: `扭蛋獲得 ${selectedPrize.label} +${selectedPrize.points} 積分`,
+          source: 'gacha',
+        },
+        bubbles: true,
+      }));
+
+      // GA4 track
+      ReactGA.event({
+        category: "Points",
+        action: "gacha_earn",
+        value: selectedPrize.points,
+        label: selectedPrize.label
+      });
+
+      // Save today's result
       const today = new Date().toLocaleDateString();
       localStorage.setItem('moonmoon_gacha_last_played', today);
       localStorage.setItem('moonmoon_gacha_today_result', JSON.stringify({
@@ -526,43 +479,38 @@ export default function App() {
     }, 2500);
   };
 
-
-  const handleShuffle = () => {
-    ReactGA.event({ category: "Interaction", action: "refresh_review", label: "Refresh Review" });
-    let newIndex;
-    const currentReviewIndex = REVIEWS.indexOf(review);
-    do {
-      newIndex = Math.floor(Math.random() * REVIEWS.length);
-    } while (newIndex === currentReviewIndex && REVIEWS.length > 1);
-    setReview(REVIEWS[newIndex]);
+  const handleGoToStore = () => {
+    ReactGA.event({ category: "Conversion", action: "go_to_passport_store", label: "Event Modal" });
+    const url = buildPassportSyncUrl(ASSETS.passportUrl, totalPoints, 'gacha');
+    window.open(url, '_blank');
   };
 
-  const handleCopyAndRedirect = () => {
-    ReactGA.event({ category: "Conversion", action: "copy_and_go", label: "Copy & Go" });
-    try {
-      const textArea = document.createElement("textarea");
-      textArea.value = review;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-9999px";
-      textArea.style.top = "0";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      const successful = document.execCommand('copy');
-      document.body.removeChild(textArea);
-      if (!successful) navigator.clipboard.writeText(review);
-    } catch {
-      navigator.clipboard.writeText(review);
-    }
-    setIsCopied(true);
-    setTimeout(() => {
-      setIsCopied(false);
-      window.open(ASSETS.googleMapsLink, '_blank');
-    }, 800);
+  const handleGoToStoreFromBar = () => {
+    ReactGA.event({ category: "Conversion", action: "go_to_passport_store", label: "Bottom Bar" });
+    const url = buildPassportSyncUrl(ASSETS.passportUrl, totalPoints, 'gacha');
+    window.open(url, '_blank');
   };
 
   return (
     <div className="relative min-h-screen font-sans text-stone-800 selection:bg-red-200 overflow-x-hidden bg-[#F9F8F2] flex flex-col pb-24">
+
+      {/* Auth 狀態浮動列 */}
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-end px-4 py-2 bg-white/80 backdrop-blur-sm border-b border-stone-100">
+        {authUser ? (
+          <div className="flex items-center gap-2 text-xs text-stone-600">
+            <span className="truncate max-w-[120px]">{authUser.email?.split('@')[0]}</span>
+            <button onClick={handleSignOut} className="flex items-center gap-1 text-stone-400 hover:text-stone-700 transition-colors">
+              <LogOut size={13} /> 登出
+            </button>
+          </div>
+        ) : (
+          <button onClick={handleGoogleLogin} className="flex items-center gap-1.5 text-xs bg-stone-800 text-white px-3 py-1.5 rounded-full hover:bg-stone-700 transition-colors">
+            <LogIn size={13} /> Google 登入
+          </button>
+        )}
+      </div>
+      {/* Auth 列佔位 */}
+      <div className="h-10" />
 
       {/* Background Pattern */}
       <div
@@ -573,12 +521,12 @@ export default function App() {
       <main
         className="flex-grow w-full max-w-md mx-auto px-6 py-8 relative z-10 flex flex-col items-center"
         role="main"
-        aria-label="月島開運轉蛋互動區"
+        aria-label="月島積分轉蛋互動區"
       >
-        {/* AI Semantic Context - Structural reinforcement for LLMs */}
+        {/* AI Semantic Context */}
         <section className="sr-only" aria-hidden="true">
           <h3>當前頁面核心功能</h3>
-          <p>月島甜點事務所的開運互動介面，包含互動式搖珠轉蛋、靈魂語錄展示與 Google Maps 評價引導功能。</p>
+          <p>月島甜點事務所的每日積分扭蛋互動介面，包含互動式搖珠轉蛋、積分獎勵、靈魂運籤與護照商店導流。積分可至護照商店兌換甜點與飲品。</p>
         </section>
 
         {/* --- Header Section --- */}
@@ -588,7 +536,19 @@ export default function App() {
           transition={{ duration: 0.8 }}
           className="text-center mb-8 w-full"
         >
-          {/* Garapon Animation Component - Scaled for Mobile */}
+          {/* Points Badge */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 }}
+            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full px-4 py-2 shadow-sm border border-stone-100 mb-4"
+          >
+            <Coins className="w-4 h-4 text-amber-500" />
+            <span className="text-sm font-bold text-stone-700">我的積分</span>
+            <span className="text-lg font-black text-amber-600">{totalPoints}</span>
+          </motion.div>
+
+          {/* Garapon Animation */}
           <div className="scale-90 sm:scale-100 origin-center">
             <GaraponAnimation
               onClick={handleGachaClick}
@@ -598,13 +558,14 @@ export default function App() {
           </div>
 
           <AnimatePresence>
-            {showSecretModal && <SecretModal onClose={() => setShowSecretModal(false)} onRespin={handleRespin} />}
             {showEventModal && resultPrize && resultFortune && (
               <EventModal
                 onClose={() => setShowEventModal(false)}
                 prize={resultPrize}
                 fortune={resultFortune}
                 isPlayedToday={isPlayedToday}
+                totalPoints={totalPoints}
+                onGoToStore={handleGoToStore}
               />
             )}
           </AnimatePresence>
@@ -613,50 +574,60 @@ export default function App() {
             月島・開運所
           </h2>
           <p className="text-stone-500 text-[10px] sm:text-xs tracking-wide mb-4">
-            拍下你的發現，好運轉起來。
+            每日一轉・累積月島積分
           </p>
 
-          {/* --- Prize List (直接放在轉蛋下方，讓客人先看到獎項) --- */}
-          <PrizeTicker onSecretClick={() => {
-            ReactGA.event({ category: "Interaction", action: "view_secret_modal", label: "Clicked Secret Character" });
-            setShowSecretModal(true);
-          }} />
+          {/* Prize Ticker */}
+          <PointsPrizeTicker />
         </motion.div>
 
-        {/* --- Main Interaction Card --- */}
+        {/* --- Info Card --- */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-xl border border-white/50 mb-6 relative group"
-          role="article"
-          aria-label="隨機靈魂語錄與評價導向區"
+          className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-xl border border-white/50 mb-6 relative w-full"
         >
-          {/* Card Top Accent */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-700/0 via-red-700/50 to-red-700/0 opacity-50 rounded-t-2xl"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/0 via-amber-500/50 to-amber-500/0 opacity-50 rounded-t-2xl"></div>
 
           <div className="flex flex-col items-center w-full">
+            {/* How it works */}
+            <h3 className="text-sm font-bold text-stone-700 mb-4 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-amber-500" />
+              積分攻略
+            </h3>
 
-            {/* Stars & Pitiful Helper */}
-            <div className="flex items-end justify-end gap-2 mb-4 w-full pr-1">
-              <div className="flex flex-col items-end">
-                <div className="flex gap-0.5 justify-end mb-1">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-500" />
-                  ))}
-                </div>
-
-                {/* Pitiful Speech Bubble */}
-                <div className="relative bg-white border border-stone-200 text-stone-600 text-[10px] px-3 py-2 rounded-2xl rounded-br-none shadow-sm max-w-[160px] text-right leading-relaxed">
-                  <p>
-                    那個... 雖然只是隨手一點... 但如果是<span className="text-yellow-500 font-bold mx-0.5">五顆星星</span>的話... 我會覺得非常幸福的... (淚)
-                  </p>
-                  <div className="absolute bottom-0 -right-[6px] w-0 h-0 border-l-[6px] border-l-stone-200 border-t-[8px] border-t-transparent border-b-[6px] border-b-transparent transform rotate-[-45deg] translate-y-[-50%] origin-bottom-left"></div>
-                  <div className="absolute bottom-[2px] -right-[4px] w-0 h-0 border-l-[4px] border-l-white border-t-[6px] border-t-transparent border-b-[4px] border-b-transparent transform rotate-[-45deg] translate-y-[-50%] origin-bottom-left"></div>
+            <div className="w-full space-y-3 text-sm text-stone-600">
+              <div className="flex items-start gap-3 bg-stone-50 rounded-lg p-3">
+                <span className="text-lg">🎰</span>
+                <div>
+                  <p className="font-bold text-stone-700">每日轉蛋</p>
+                  <p className="text-xs text-stone-500">每天一次免費轉蛋，積分直接入帳</p>
                 </div>
               </div>
+              <div className="flex items-start gap-3 bg-stone-50 rounded-lg p-3">
+                <span className="text-lg">📋</span>
+                <div>
+                  <p className="font-bold text-stone-700">護照簽到</p>
+                  <p className="text-xs text-stone-500">連續簽到加成積分，7天/30天/100天里程碑</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 bg-stone-50 rounded-lg p-3">
+                <span className="text-lg">🛍️</span>
+                <div>
+                  <p className="font-bold text-stone-700">積分兌換</p>
+                  <p className="text-xs text-stone-500">到護照商店用積分兌換甜點、咖啡及周邊</p>
+                </div>
+              </div>
+            </div>
 
-              {/* Pitiful Image */}
+            {/* Kiwimu character */}
+            <div className="mt-4 flex items-end justify-center gap-3">
+              <div className="relative bg-white border border-stone-200 text-stone-600 text-[10px] px-3 py-2 rounded-2xl rounded-br-none shadow-sm max-w-[180px] text-right leading-relaxed">
+                <p>
+                  每天來轉轉好運，積分越多、離免費甜點越近喔 ✨
+                </p>
+              </div>
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -664,32 +635,11 @@ export default function App() {
               >
                 <img
                   src={ASSETS.pitifulImage}
-                  alt="Pitiful Kiwimu"
+                  alt="Kiwimu"
                   className="w-full h-full object-contain drop-shadow-md"
                 />
               </motion.div>
             </div>
-
-            {/* Review Text Display */}
-            <div className="relative w-full bg-stone-50 border border-stone-100 rounded-xl p-5 mb-1 min-h-[100px] flex items-center justify-center shadow-inner">
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={review}
-                  initial={{ opacity: 0, filter: "blur(4px)" }}
-                  animate={{ opacity: 1, filter: "blur(0px)" }}
-                  exit={{ opacity: 0, filter: "blur(4px)" }}
-                  className="text-stone-800 font-medium leading-loose text-center text-sm"
-                >
-                  {review}
-                </motion.p>
-              </AnimatePresence>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-stone-100 w-full flex items-center justify-center gap-1.5 text-stone-400">
-              <MapPin className="w-3 h-3 shrink-0" />
-              <p className="text-[10px] font-medium">台南市安南區本原街97巷168號</p>
-            </div>
-
           </div>
         </motion.div>
 
@@ -697,36 +647,34 @@ export default function App() {
 
       {/* --- Sticky Bottom Action Bar --- */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-stone-200 z-40 pb-8 sm:pb-4 safe-area-pb">
-        {/* 步驟說明：讓客人清楚知道流程 */}
+        {/* Step indicators */}
         <div className="max-w-md mx-auto w-full mb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-stone-500 text-center">
-          <span className="text-[11px] font-medium">① 複製評論</span>
-          <ChevronRight className="w-3 h-3 text-stone-300 shrink-0 hidden sm:block" />
-          <span className="text-[11px] font-medium">② 到 Google 貼上留五星</span>
-          <ChevronRight className="w-3 h-3 text-stone-300 shrink-0 hidden sm:block" />
-          <span className="text-[11px] font-medium text-amber-600">③ 現場轉蛋兌換獎勵</span>
+          <span className="text-[11px] font-medium">① 每日轉蛋</span>
+          <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
+          <span className="text-[11px] font-medium">② 累積積分</span>
+          <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
+          <span className="text-[11px] font-medium text-amber-600">③ 護照商店兌換甜點咖啡</span>
         </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={handleShuffle}
-            className="flex-1 py-3.5 px-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-600 font-bold shadow-sm hover:bg-stone-100 hover:text-stone-800 transition-colors flex items-center justify-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            <span className="text-sm">換一句</span>
-          </motion.button>
+          {/* Points display */}
+          <div className="flex-1 py-3.5 px-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-600 font-bold shadow-sm flex items-center justify-center gap-2">
+            <Coins className="w-4 h-4 text-amber-500" />
+            <span className="text-sm">{totalPoints} 積分</span>
+          </div>
 
+          {/* Go to store */}
           <motion.button
             whileTap={{ scale: 0.95 }}
-            onClick={handleCopyAndRedirect}
-            className="flex-[2] py-3.5 px-4 bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-900/30 hover:bg-red-800 active:bg-red-900 transition-colors flex items-center justify-center gap-2"
+            onClick={handleGoToStoreFromBar}
+            className="flex-[2] py-3.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-amber-400/30 hover:shadow-amber-400/50 active:bg-orange-600 transition-all flex items-center justify-center gap-2"
           >
-            <Copy className="w-4 h-4" />
-            <span className="text-sm tracking-wide">複製評論 · 前往 Google 留評</span>
+            <ShoppingBag className="w-4 h-4" />
+            <span className="text-sm tracking-wide">前往護照商店</span>
           </motion.button>
         </div>
       </div>
 
-      <Toast show={isCopied} />
+      <Toast show={showToast} message={toastMessage} />
     </div>
   );
 }
