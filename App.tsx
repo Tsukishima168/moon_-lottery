@@ -4,6 +4,7 @@ import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, Sh
 import ReactGA from "react-ga4";
 import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, getTransactionHistory, PointAction } from './pointsSystem';
 import { supabase } from './src/lib/supabase';
+import { initLiff, sharePullToLine } from './src/lib/liffShare';
 
 // Initialize GA4
 ReactGA.initialize("G-7MEJVWM5JR");
@@ -295,6 +296,17 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
           {/* 3. Actions */}
           <motion.button
             whileTap={{ scale: 0.98 }}
+            onClick={async () => {
+              await sharePullToLine(prize.label, prize.points);
+            }}
+            className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#06C755]/30 active:scale-98 transition-all text-sm mb-3"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M12 2C6.48 2 2 5.92 2 10.75c0 3.39 2.21 6.36 5.56 7.82-.16.63-.58 2.24-.66 2.65-.12.65.26 1.07 1 1.07.39 0 .86-.17 3.5-3.04.83.1 1.68.16 2.55.16 5.52 0 10-3.92 10-8.75S19.52 2 12 2zm1.09 11h-2.18c-.28 0-.5-.22-.5-.5v-1.63H8.78c-.28 0-.5-.22-.5-.5V8.87c0-.28.22-.5.5h4.31c.28 0 .5.22.5.5v1.63h1.63c.28 0 .5.22.5.5v1.62c0 .28-.22.5-.5.5z" /></svg>
+            <span>跟 LINE 好友炫耀</span>
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.98 }}
             onClick={onGoToStore}
             className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-200 hover:shadow-amber-300 active:scale-98 transition-all text-sm mb-3"
           >
@@ -355,6 +367,7 @@ export default function App() {
 
   // Load state
   useEffect(() => {
+    initLiff();
     ReactGA.send({ hitType: "pageview", page: window.location.pathname });
 
     // GA4 duration tracking
