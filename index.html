@@ -50,6 +50,23 @@
 }
 </script>
   <link rel="stylesheet" href="/index.css">
+
+  <!-- Google Analytics (GA4) -->
+  <script type="module">
+    // Use the new Kiwimu-Core GA4 ID for unified funnel tracking
+    const gaId = import.meta.env.VITE_GA4_ID || 'G-DM6F27KL8B';
+
+    window.__GA4_ID__ = gaId;
+    const gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    document.head.appendChild(gaScript);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', gaId);
+  </script>
 </head>
 
 <body>

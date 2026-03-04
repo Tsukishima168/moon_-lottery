@@ -7,7 +7,8 @@ import { supabase } from './src/lib/supabase';
 import { initLiff, sharePullToLine } from './src/lib/liffShare';
 
 // Initialize GA4
-ReactGA.initialize("G-7MEJVWM5JR");
+const GA4_ID = import.meta.env.VITE_GA4_ID || "G-7MEJVWM5JR";
+ReactGA.initialize(GA4_ID);
 
 // --- Assets & Data ---
 const ASSETS = {
@@ -476,7 +477,7 @@ export default function App() {
       // GA4 track
       ReactGA.event({
         category: "Points",
-        action: "gacha_earn",
+        action: "points_earned",
         value: selectedPrize.points,
         label: selectedPrize.label
       });
