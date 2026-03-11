@@ -222,6 +222,14 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
   totalPoints: number,
   onGoToStore: () => void
 }) => {
+  useEffect(() => {
+    ReactGA.event('result_viewed', {
+      prize_id: prize.id,
+      prize_label: prize.label,
+      prize_points: prize.points,
+    });
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -458,6 +466,13 @@ export default function App() {
       setIsSpinning(false);
       setShowEventModal(true);
       setIsPlayedToday(true);
+
+      // GA4: gacha_drawn — 結果揭曉
+      ReactGA.event('gacha_drawn', {
+        prize_id: selectedPrize.id,
+        prize_points: selectedPrize.points,
+        prize_label: selectedPrize.label,
+      });
 
       // Award points
       const newBalance = addPoints(selectedPrize.points, 'gacha_earn', `扭蛋獲得 ${selectedPrize.label}`);
