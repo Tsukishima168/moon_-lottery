@@ -425,6 +425,11 @@ export default function App() {
     if (isPlayedToday && resultPrize && resultFortune) {
       ReactGA.event({ category: "Interaction", action: "view_today_result", label: "View Today's Result" });
       setShowEventModal(true);
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'result_viewed', {
+          result_name: resultPrize.label,
+        });
+      }
       return;
     }
 
@@ -466,8 +471,16 @@ export default function App() {
       setIsSpinning(false);
       setShowEventModal(true);
       setIsPlayedToday(true);
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'result_viewed', {
+          result_name: selectedPrize.label,
+        });
+      }
 
       // GA4: gacha_drawn — 結果揭曉
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'gacha_drawn');
+      }
       ReactGA.event('gacha_drawn', {
         prize_id: selectedPrize.id,
         prize_points: selectedPrize.points,
@@ -477,6 +490,11 @@ export default function App() {
       // Award points
       const newBalance = addPoints(selectedPrize.points, 'gacha_earn', `扭蛋獲得 ${selectedPrize.label}`);
       setTotalPoints(newBalance);
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'reward_claimed', {
+          reward_name: selectedPrize.label,
+        });
+      }
 
       // 🎮 LIFF-4：廣播積分事件給 Passport（跨站同步）
       document.dispatchEvent(new CustomEvent('kiwimu:points_earned', {
