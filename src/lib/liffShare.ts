@@ -2,6 +2,14 @@ import liff from '@line/liff';
 
 const liffId = import.meta.env.VITE_LINE_LIFF_ID;
 
+export type ShareToLineResult =
+    | { ok: true }
+    | {
+        ok: false;
+        reason: 'missing_liff_id' | 'not_logged_in' | 'unavailable' | 'cancelled' | 'error';
+        message: string;
+    };
+
 export const initLiff = async () => {
     if (!liffId) {
         console.warn('VITE_LINE_LIFF_ID is not set in environment variables');
@@ -17,14 +25,31 @@ export const initLiff = async () => {
     }
 };
 
-export const sharePullToLine = async (prizeLabel: string, points: number): Promise<boolean> => {
+export const sharePullToLine = async (prizeLabel: string, points: number): Promise<ShareToLineResult> => {
+    if (!liffId) {
+        return {
+            ok: false,
+            reason: 'missing_liff_id',
+            message: 'LINE 分享功能尚未啟用，請稍後再試。',
+        };
+    }
+
     if (!liff.isLoggedIn()) {
         console.warn("LIFF is not logged in. shareTargetPicker may fail if not in LINE app.");
+        return {
+            ok: false,
+            reason: 'not_logged_in',
+            message: '請在 LINE App 內開啟，才能直接分享給好友。',
+        };
     }
 
     if (!liff.isApiAvailable('shareTargetPicker')) {
         console.warn('shareTargetPicker is not available in this environment.');
-        return false;
+        return {
+            ok: false,
+            reason: 'unavailable',
+            message: '目前環境不支援 LINE 分享，請改用 LINE App 開啟。',
+        };
     }
 
     const siteUrl = 'https://gacha.kiwimu.com';
@@ -102,13 +127,21 @@ export const sharePullToLine = async (prizeLabel: string, points: number): Promi
         const res = await liff.shareTargetPicker([flexMessage]);
         if (res) {
             console.log('Flex message sent successfully');
-            return true;
+            return { ok: true };
         } else {
             console.log('User cancelled share target picker');
-            return false;
+            return {
+                ok: false,
+                reason: 'cancelled',
+                message: '你已取消分享。',
+            };
         }
     } catch (error) {
         console.error('Error sharing target picker', error);
-        return false;
+        return {
+            ok: false,
+            reason: 'error',
+            message: '分享失敗，請稍後再試。',
+        };
     }
 };

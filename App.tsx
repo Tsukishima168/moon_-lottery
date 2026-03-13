@@ -215,13 +215,14 @@ const Toast = ({ show, message }: { show: boolean, message: string }) => (
 );
 
 // 點擊轉蛋後的結果 Modal：積分 + 運籤
-const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoToStore }: {
+const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoToStore, onShareResult }: {
   onClose: () => void,
   prize: typeof POINT_PRIZES[0],
   fortune: typeof FORTUNES[0],
   isPlayedToday: boolean,
   totalPoints: number,
-  onGoToStore: () => void
+  onGoToStore: () => void,
+  onShareResult: (message: string) => void
 }) => {
   useEffect(() => {
     trackGtagEvent('result_viewed', {
@@ -307,7 +308,15 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={async () => {
-              await sharePullToLine(prize.label, prize.points);
+              const result = await sharePullToLine(prize.label, prize.points);
+              if (result.ok) {
+                onShareResult('已開啟 LINE 分享。');
+                return;
+              }
+
+              if ('message' in result) {
+                onShareResult(result.message);
+              }
             }}
             className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#06C755]/30 active:scale-98 transition-all text-sm mb-3"
           >
@@ -364,10 +373,15 @@ export default function App() {
       return;
     }
 
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+    } catch (error) {
+      console.error('Google login failed', error);
+      showTransientToast('Google 登入失敗，請稍後再試。');
+    }
   };
   const handleSignOut = async () => {
     if (!supabase) {
@@ -375,8 +389,14 @@ export default function App() {
       return;
     }
 
-    await supabase.auth.signOut();
-    setAuthUser(null);
+    try {
+      await supabase.auth.signOut();
+      setAuthUser(null);
+      showTransientToast('已登出。');
+    } catch (error) {
+      console.error('Sign out failed', error);
+      showTransientToast('登出失敗，請稍後再試。');
+    }
   };
 
   // Gacha State
@@ -671,6 +691,7 @@ export default function App() {
                 isPlayedToday={isPlayedToday}
                 totalPoints={totalPoints}
                 onGoToStore={handleGoToStore}
+                onShareResult={showTransientToast}
               />
             )}
           </AnimatePresence>
