@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut } from 'lucide-react';
-import ReactGA from "react-ga4";
-import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, getTransactionHistory, PointAction } from './pointsSystem';
+import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, getPendingPassportSync, markPassportSyncPrepared, PointAction } from './pointsSystem';
 import { supabase } from './src/lib/supabase';
 import { initLiff, sharePullToLine } from './src/lib/liffShare';
 
-// Initialize GA4
-const GA4_ID = import.meta.env.VITE_GA4_ID || "G-7MEJVWM5JR";
-ReactGA.initialize(GA4_ID);
+const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', eventName, params);
+  }
+};
 
 // --- Assets & Data ---
 const ASSETS = {
@@ -223,12 +224,12 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
   onGoToStore: () => void
 }) => {
   useEffect(() => {
-    ReactGA.event('result_viewed', {
+    trackGtagEvent('result_viewed', {
       prize_id: prize.id,
       prize_label: prize.label,
       prize_points: prize.points,
     });
-  }, []);
+  }, [prize.id, prize.label, prize.points]);
 
   return (
     <motion.div
@@ -373,18 +374,39 @@ export default function App() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const toastTimerRef = useRef<number | null>(null);
+
+  const showTransientToast = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = window.setTimeout(() => {
+      setShowToast(false);
+    }, 2400);
+  };
 
   // Load state
   useEffect(() => {
     initLiff();
-    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+    trackGtagEvent('page_view', {
+      page_path: window.location.pathname,
+      page_title: document.title,
+    });
 
     // GA4 duration tracking
     const startTime = Date.now();
     const timer = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       if ([10, 30, 60, 120, 300].includes(elapsed)) {
-        ReactGA.event({ category: "Engagement", action: "time_on_page", value: elapsed, label: `${elapsed}_seconds` });
+        trackGtagEvent('time_on_page', {
+          event_category: 'Engagement',
+          value: elapsed,
+          event_label: `${elapsed}_seconds`,
+        });
       }
     }, 1000);
 
@@ -419,23 +441,32 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
   const handleGachaClick = () => {
     if (isSpinning) return;
 
     if (isPlayedToday && resultPrize && resultFortune) {
-      ReactGA.event({ category: "Interaction", action: "view_today_result", label: "View Today's Result" });
+      trackGtagEvent('view_today_result', {
+        event_category: 'Interaction',
+        event_label: 'View Today\'s Result',
+      });
       setShowEventModal(true);
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', 'result_viewed', {
-          result_name: resultPrize.label,
-        });
-      }
       return;
     }
 
     // Start spin
     setIsSpinning(true);
-    ReactGA.event({ category: "Interaction", action: "spin_gacha", label: "Start Spin" });
+    trackGtagEvent('spin_gacha', {
+      event_category: 'Interaction',
+      event_label: 'Start Spin',
+    });
 
     // Weighted random selection
     const totalWeight = POINT_PRIZES.reduce((sum, prize) => sum + prize.weight, 0);
@@ -471,17 +502,9 @@ export default function App() {
       setIsSpinning(false);
       setShowEventModal(true);
       setIsPlayedToday(true);
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', 'result_viewed', {
-          result_name: selectedPrize.label,
-        });
-      }
 
       // GA4: gacha_drawn — 結果揭曉
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', 'gacha_drawn');
-      }
-      ReactGA.event('gacha_drawn', {
+      trackGtagEvent('gacha_drawn', {
         prize_id: selectedPrize.id,
         prize_points: selectedPrize.points,
         prize_label: selectedPrize.label,
@@ -490,11 +513,9 @@ export default function App() {
       // Award points
       const newBalance = addPoints(selectedPrize.points, 'gacha_earn', `扭蛋獲得 ${selectedPrize.label}`);
       setTotalPoints(newBalance);
-      if (typeof window !== 'undefined' && (window as any).gtag) {
-        (window as any).gtag('event', 'reward_claimed', {
-          reward_name: selectedPrize.label,
-        });
-      }
+      trackGtagEvent('reward_claimed', {
+        reward_name: selectedPrize.label,
+      });
 
       // 🎮 LIFF-4：廣播積分事件給 Passport（跨站同步）
       document.dispatchEvent(new CustomEvent('kiwimu:points_earned', {
@@ -508,11 +529,10 @@ export default function App() {
       }));
 
       // GA4 track
-      ReactGA.event({
-        category: "Points",
-        action: "points_earned",
+      trackGtagEvent('points_earned', {
+        event_category: 'Points',
         value: selectedPrize.points,
-        label: selectedPrize.label
+        event_label: selectedPrize.label,
       });
 
       // Save today's result
@@ -526,16 +546,36 @@ export default function App() {
     }, 2500);
   };
 
+  const openPassportStore = (label: "Event Modal" | "Bottom Bar") => {
+    trackGtagEvent('go_to_passport_store', {
+      event_category: 'Conversion',
+      event_label: label,
+    });
+
+    const pendingSync = getPendingPassportSync();
+    const url = pendingSync
+      ? buildPassportSyncUrl(ASSETS.passportUrl, pendingSync.amount, 'gacha', pendingSync.latestTimestamp)
+      : ASSETS.passportUrl;
+
+    if (pendingSync) {
+      markPassportSyncPrepared(pendingSync.latestTimestamp);
+      showTransientToast(`準備同步 ${pendingSync.amount} 積分到 Passport。`);
+    } else {
+      showTransientToast('目前沒有新的 Gacha 積分待同步，直接帶你前往 Passport。');
+    }
+
+    const passportWindow = window.open(url, '_blank', 'noopener');
+    if (!passportWindow) {
+      window.location.href = url;
+    }
+  };
+
   const handleGoToStore = () => {
-    ReactGA.event({ category: "Conversion", action: "go_to_passport_store", label: "Event Modal" });
-    const url = buildPassportSyncUrl(ASSETS.passportUrl, totalPoints, 'gacha');
-    window.open(url, '_blank');
+    openPassportStore("Event Modal");
   };
 
   const handleGoToStoreFromBar = () => {
-    ReactGA.event({ category: "Conversion", action: "go_to_passport_store", label: "Bottom Bar" });
-    const url = buildPassportSyncUrl(ASSETS.passportUrl, totalPoints, 'gacha');
-    window.open(url, '_blank');
+    openPassportStore("Bottom Bar");
   };
 
   return (

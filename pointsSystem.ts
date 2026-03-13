@@ -15,6 +15,7 @@ const DEVICE_ID_KEY = 'moonmoon_device_id';
 const POINTS_KEY = 'moonmoon_points';
 const TRANSACTIONS_KEY = 'moonmoon_points_tx';
 const WEEKLY_LIMIT_PREFIX = 'kiwimu_weekly_limit_';
+const PASSPORT_SYNC_CURSOR_KEY = 'moonmoon_gacha_passport_sync_cursor_ts';
 
 // ─── Types (對齊 gamification-types.ts PointAction) ───
 export type PointAction =
@@ -28,6 +29,12 @@ export interface PointTransaction {
   amount: number;
   description: string;
   timestamp: number;
+}
+
+export interface PendingPassportSync {
+  amount: number;
+  latestTimestamp: number;
+  transactionCount: number;
 }
 
 
@@ -149,6 +156,37 @@ export function getTransactionHistory(): PointTransaction[] {
   return [];
 }
 
+export function getPendingPassportSync(): PendingPassportSync | null {
+  try {
+    const cursorRaw = localStorage.getItem(PASSPORT_SYNC_CURSOR_KEY);
+    const cursor = cursorRaw ? parseInt(cursorRaw, 10) : 0;
+    const pendingTransactions = getTransactionHistory()
+      .filter((tx) => tx.type === 'gacha_earn' && tx.amount > 0 && tx.timestamp > cursor)
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    if (pendingTransactions.length === 0) {
+      return null;
+    }
+
+    return {
+      amount: pendingTransactions.reduce((sum, tx) => sum + tx.amount, 0),
+      latestTimestamp: pendingTransactions[pendingTransactions.length - 1].timestamp,
+      transactionCount: pendingTransactions.length,
+    };
+  } catch (e) {
+    console.error('Failed to compute pending Passport sync:', e);
+    return null;
+  }
+}
+
+export function markPassportSyncPrepared(syncTimestamp: number): void {
+  try {
+    localStorage.setItem(PASSPORT_SYNC_CURSOR_KEY, String(syncTimestamp));
+  } catch (e) {
+    console.error('Failed to persist Passport sync cursor:', e);
+  }
+}
+
 // ─── Cross-Site Sync Helper ───
 
 /**
@@ -158,16 +196,16 @@ export function getTransactionHistory(): PointTransaction[] {
 export function buildPassportSyncUrl(
   passportBaseUrl: string,
   pointsToSync: number,
-  source: string
+  source: string,
+  syncTimestamp: number = Date.now()
 ): string {
   const deviceId = getDeviceId();
-  const timestamp = Date.now();
   const params = new URLSearchParams({
     action: 'add_points',
     amount: String(pointsToSync),
     source,
     device_id: deviceId,
-    ts: String(timestamp),
+    ts: String(syncTimestamp),
   });
   return `${passportBaseUrl}?${params.toString()}`;
 }

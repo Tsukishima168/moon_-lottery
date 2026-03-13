@@ -10,6 +10,27 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       host: '0.0.0.0',
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return
+            if (id.includes('@supabase')) return 'supabase'
+            if (id.includes('@line/liff')) return 'liff'
+            if (id.includes('framer-motion')) return 'motion'
+            if (
+              id.includes('/react/') ||
+              id.includes('/react-dom/') ||
+              id.includes('scheduler') ||
+              id.includes('react-ga4')
+            ) {
+              return 'react-vendor'
+            }
+            return undefined
+          },
+        },
+      },
+    },
     plugins: [
       react(),
       VitePWA({
