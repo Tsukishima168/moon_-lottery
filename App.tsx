@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut } from 'lucide-react';
 import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, getPendingPassportSync, markPassportSyncPrepared, PointAction } from './pointsSystem';
-import { supabase } from './src/lib/supabase';
+import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
 import { initLiff, sharePullToLine } from './src/lib/liffShare';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
@@ -341,9 +341,13 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
 export default function App() {
   // Auth State
   const [authUser, setAuthUser] = useState<any>(null);
-  const [showAuthBar, setShowAuthBar] = useState(false);
 
   useEffect(() => {
+    if (!supabase) {
+      setAuthUser(null);
+      return;
+    }
+
     // 讀取 .kiwimu.com cookie session（跨網域共享）
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthUser(session?.user ?? null);
@@ -355,12 +359,22 @@ export default function App() {
   }, []);
 
   const handleGoogleLogin = async () => {
+    if (!supabase) {
+      showTransientToast(supabaseEnvWarning || '會員登入目前暫時不可用。');
+      return;
+    }
+
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
     });
   };
   const handleSignOut = async () => {
+    if (!supabase) {
+      setAuthUser(null);
+      return;
+    }
+
     await supabase.auth.signOut();
     setAuthUser(null);
   };
@@ -590,6 +604,10 @@ export default function App() {
               <LogOut size={13} /> 登出
             </button>
           </div>
+        ) : !hasSupabaseEnv ? (
+          <div className="text-[11px] text-stone-500 bg-stone-100 px-3 py-1.5 rounded-full">
+            會員同步暫停中
+          </div>
         ) : (
           <button onClick={handleGoogleLogin} className="flex items-center gap-1.5 text-xs bg-stone-800 text-white px-3 py-1.5 rounded-full hover:bg-stone-700 transition-colors">
             <LogIn size={13} /> Google 登入
@@ -664,9 +682,17 @@ export default function App() {
             每日一轉・累積月島積分
           </p>
 
-          {/* Prize Ticker */}
-          <PointsPrizeTicker />
-        </motion.div>
+        {/* Prize Ticker */}
+        <PointsPrizeTicker />
+
+        {!hasSupabaseEnv && (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left text-xs leading-6 text-amber-800 shadow-sm">
+            <div className="font-bold mb-1">雲端同步暫時停用</div>
+            <div>{supabaseEnvWarning}</div>
+            <div>目前仍可正常體驗每日扭蛋與本地積分，待環境變數補齊後再恢復登入與雲端同步。</div>
+          </div>
+        )}
+      </motion.div>
 
         {/* --- Info Card --- */}
         <motion.div
