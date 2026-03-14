@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut } from 'lucide-react';
+import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut, MessageCircle } from 'lucide-react';
 import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, consumePassportSyncAck, getPendingPassportSync, PointAction } from './pointsSystem';
 import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
 import { initLiff, sharePullToLine } from './src/lib/liffShare';
@@ -107,14 +107,16 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
 
 
   return (
-    <motion.div
+    <div
       className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center cursor-pointer"
       onClick={!isSpinning ? onClick : undefined}
-      animate={controls}
       role="button"
       aria-label="點擊轉蛋獲得月島積分"
     >
-      <div className="relative w-full h-full flex items-center justify-center">
+      <motion.div
+        className="relative w-full h-full flex items-center justify-center"
+        animate={controls}
+      >
         {/* 點擊提示 */}
         {!isSpinning && (
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md whitespace-nowrap animate-pulse">
@@ -169,8 +171,8 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
           )}
         </AnimatePresence>
 
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
 
@@ -337,7 +339,7 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
             }}
             className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#06C755]/30 active:scale-98 transition-all text-sm mb-3"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M12 2C6.48 2 2 5.92 2 10.75c0 3.39 2.21 6.36 5.56 7.82-.16.63-.58 2.24-.66 2.65-.12.65.26 1.07 1 1.07.39 0 .86-.17 3.5-3.04.83.1 1.68.16 2.55.16 5.52 0 10-3.92 10-8.75S19.52 2 12 2zm1.09 11h-2.18c-.28 0-.5-.22-.5-.5v-1.63H8.78c-.28 0-.5-.22-.5-.5V8.87c0-.28.22-.5.5h4.31c.28 0 .5.22.5.5v1.63h1.63c.28 0 .5.22.5.5v1.62c0 .28-.22.5-.5.5z" /></svg>
+            <MessageCircle className="w-4 h-4" />
             <span>跟 LINE 好友炫耀</span>
           </motion.button>
 
