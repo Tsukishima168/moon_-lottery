@@ -1,6 +1,8 @@
 import liff from '@line/liff';
 
 const liffId = import.meta.env.VITE_LINE_LIFF_ID;
+let liffInitPromise: Promise<boolean> | null = null;
+let liffReady = false;
 
 export type ShareToLineResult =
     | { ok: true }
@@ -15,14 +17,29 @@ export const initLiff = async () => {
         console.warn('VITE_LINE_LIFF_ID is not set in environment variables');
         return false;
     }
-    try {
-        await liff.init({ liffId });
-        console.log('LIFF initialized successfully.');
+
+    if (liffReady) {
         return true;
-    } catch (err) {
-        console.error('LIFF initialization failed', err);
-        return false;
     }
+
+    if (liffInitPromise) {
+        return liffInitPromise;
+    }
+
+    liffInitPromise = (async () => {
+        try {
+            await liff.init({ liffId });
+            liffReady = true;
+            return true;
+        } catch (err) {
+            console.warn('LIFF initialization skipped:', err);
+            return false;
+        } finally {
+            liffInitPromise = null;
+        }
+    })();
+
+    return liffInitPromise;
 };
 
 export const sharePullToLine = async (prizeLabel: string, points: number): Promise<ShareToLineResult> => {
@@ -31,6 +48,15 @@ export const sharePullToLine = async (prizeLabel: string, points: number): Promi
             ok: false,
             reason: 'missing_liff_id',
             message: 'LINE 分享功能尚未啟用，請稍後再試。',
+        };
+    }
+
+    const initialized = await initLiff();
+    if (!initialized) {
+        return {
+            ok: false,
+            reason: 'unavailable',
+            message: '目前無法啟用 LINE 分享，請改用 LINE App 開啟或稍後再試。',
         };
     }
 

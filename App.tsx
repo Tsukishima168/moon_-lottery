@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut, MessageCircle } from 'lucide-react';
 import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, consumePassportSyncAck, getPendingPassportSync, PointAction } from './pointsSystem';
 import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
-import { initLiff, sharePullToLine } from './src/lib/liffShare';
+import { sharePullToLine } from './src/lib/liffShare';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -444,7 +444,6 @@ export default function App() {
 
   // Load state
   useEffect(() => {
-    initLiff();
     trackGtagEvent('page_view', {
       page_path: window.location.pathname,
       page_title: document.title,
