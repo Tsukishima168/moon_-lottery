@@ -28,6 +28,14 @@ const safeStorageSet = (key: string, value: string) => {
   }
 };
 
+const safeStorageRemove = (key: string) => {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Failed to remove localStorage key: ${key}`, error);
+  }
+};
+
 // --- Assets & Data ---
 const ASSETS = {
   mainImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-03_juymmq.webp",
@@ -424,6 +432,7 @@ export default function App() {
   const [resultPrize, setResultPrize] = useState<typeof POINT_PRIZES[0] | null>(null);
   const [resultFortune, setResultFortune] = useState<typeof FORTUNES[0] | null>(null);
   const [isPlayedToday, setIsPlayedToday] = useState(false);
+  const [todayResultUnavailable, setTodayResultUnavailable] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -474,6 +483,7 @@ export default function App() {
 
     if (lastPlayed === today) {
       setIsPlayedToday(true);
+      setTodayResultUnavailable(false);
       const savedResult = safeStorageGet('moonmoon_gacha_today_result');
       if (savedResult) {
         try {
@@ -483,10 +493,17 @@ export default function App() {
             const fortune = FORTUNES.find(f => f.id === parsed.fortuneId) || FORTUNES[0];
             setResultPrize(prize);
             setResultFortune(fortune);
+          } else {
+            safeStorageRemove('moonmoon_gacha_today_result');
+            setTodayResultUnavailable(true);
           }
         } catch (e) {
-          console.error("Failed to parse saved result", e);
+          console.warn('Failed to parse saved result, clearing corrupted cache.', e);
+          safeStorageRemove('moonmoon_gacha_today_result');
+          setTodayResultUnavailable(true);
         }
+      } else {
+        setTodayResultUnavailable(true);
       }
     }
 
@@ -530,13 +547,20 @@ export default function App() {
   const handleGachaClick = () => {
     if (isSpinning) return;
 
-    if (isPlayedToday && resultPrize && resultFortune) {
-      trackGtagEvent('view_today_result', {
-        event_category: 'Interaction',
-        event_label: 'View Today\'s Result',
-      });
-      setShowEventModal(true);
-      return;
+    if (isPlayedToday) {
+      if (resultPrize && resultFortune) {
+        trackGtagEvent('view_today_result', {
+          event_category: 'Interaction',
+          event_label: 'View Today\'s Result',
+        });
+        setShowEventModal(true);
+        return;
+      }
+
+      if (todayResultUnavailable) {
+        showTransientToast('今天已抽過，但今日結果讀取失敗；請重新整理後再查看。');
+        return;
+      }
     }
 
     // Start spin
@@ -580,6 +604,7 @@ export default function App() {
       setIsSpinning(false);
       setShowEventModal(true);
       setIsPlayedToday(true);
+      setTodayResultUnavailable(false);
 
       // GA4: gacha_drawn — 結果揭曉
       trackGtagEvent('gacha_drawn', {
