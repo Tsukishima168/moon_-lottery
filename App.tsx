@@ -115,14 +115,16 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
 
 
   return (
-    <div
-      className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center cursor-pointer"
-      onClick={!isSpinning ? onClick : undefined}
-      role="button"
-      aria-label="點擊轉蛋獲得月島積分"
-    >
+    <div className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={isSpinning}
+        aria-label="點擊轉蛋獲得月島積分"
+        className="absolute inset-0 z-40 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-4 disabled:cursor-wait"
+      />
       <motion.div
-        className="relative w-full h-full flex items-center justify-center"
+        className="pointer-events-none relative w-full h-full flex items-center justify-center"
         animate={controls}
       >
         {/* 點擊提示 */}
