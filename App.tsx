@@ -11,6 +11,23 @@ const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {})
   }
 };
 
+const safeStorageGet = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.error(`Failed to read localStorage key: ${key}`, error);
+    return null;
+  }
+};
+
+const safeStorageSet = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.error(`Failed to write localStorage key: ${key}`, error);
+  }
+};
+
 // --- Assets & Data ---
 const ASSETS = {
   mainImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-03_juymmq.webp",
@@ -452,11 +469,11 @@ export default function App() {
 
     // Check if played today
     const today = new Date().toLocaleDateString();
-    const lastPlayed = localStorage.getItem('moonmoon_gacha_last_played');
+    const lastPlayed = safeStorageGet('moonmoon_gacha_last_played');
 
     if (lastPlayed === today) {
       setIsPlayedToday(true);
-      const savedResult = localStorage.getItem('moonmoon_gacha_today_result');
+      const savedResult = safeStorageGet('moonmoon_gacha_today_result');
       if (savedResult) {
         try {
           const parsed = JSON.parse(savedResult);
@@ -571,8 +588,8 @@ export default function App() {
 
       // Save today's result
       const today = new Date().toLocaleDateString();
-      localStorage.setItem('moonmoon_gacha_last_played', today);
-      localStorage.setItem('moonmoon_gacha_today_result', JSON.stringify({
+      safeStorageSet('moonmoon_gacha_last_played', today);
+      safeStorageSet('moonmoon_gacha_today_result', JSON.stringify({
         prizeId: selectedPrize.id,
         fortuneId: randomFortune.id
       }));

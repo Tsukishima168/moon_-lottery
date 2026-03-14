@@ -45,7 +45,14 @@ export interface PendingPassportSync {
  * 與 Passport 共用同一個 key（moonmoon_device_id）→ 跨站積分合併的基礎
  */
 export function getDeviceId(): string {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
+  let id: string | null = null;
+
+  try {
+    id = localStorage.getItem(DEVICE_ID_KEY);
+  } catch (e) {
+    console.error('Failed to read device ID:', e);
+  }
+
   if (!id) {
     id = crypto.randomUUID();
     try {
