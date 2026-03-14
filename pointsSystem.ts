@@ -15,6 +15,9 @@ const DEVICE_ID_KEY = 'moonmoon_device_id';
 const POINTS_KEY = 'moonmoon_points';
 const TRANSACTIONS_KEY = 'moonmoon_points_tx';
 const WEEKLY_LIMIT_PREFIX = 'kiwimu_weekly_limit_';
+const PASSPORT_SYNC_CURSOR_KEY = 'moonmoon_gacha_passport_sync_cursor_ts';
+const PASSPORT_SYNC_ACK_COOKIE = 'moonmoon_passport_sync_ack_ts';
+const COOKIE_DOMAIN = '.kiwimu.com';
 
 // ─── Types (對齊 gamification-types.ts PointAction) ───
 export type PointAction =
@@ -30,6 +33,12 @@ export interface PointTransaction {
   timestamp: number;
 }
 
+export interface PendingPassportSync {
+  amount: number;
+  latestTimestamp: number;
+  transactionCount: number;
+}
+
 
 // ─── Device Binding ───
 
@@ -38,7 +47,14 @@ export interface PointTransaction {
  * 與 Passport 共用同一個 key（moonmoon_device_id）→ 跨站積分合併的基礎
  */
 export function getDeviceId(): string {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
+  let id: string | null = null;
+
+  try {
+    id = localStorage.getItem(DEVICE_ID_KEY);
+  } catch (e) {
+    console.error('Failed to read device ID:', e);
+  }
+
   if (!id) {
     id = crypto.randomUUID();
     try {
@@ -149,6 +165,81 @@ export function getTransactionHistory(): PointTransaction[] {
   return [];
 }
 
+export function getPendingPassportSync(): PendingPassportSync | null {
+  try {
+    const cursorRaw = localStorage.getItem(PASSPORT_SYNC_CURSOR_KEY);
+    const cursor = cursorRaw ? parseInt(cursorRaw, 10) : 0;
+    const pendingTransactions = getTransactionHistory()
+      .filter((tx) => tx.type === 'gacha_earn' && tx.amount > 0 && tx.timestamp > cursor)
+      .sort((a, b) => a.timestamp - b.timestamp);
+
+    if (pendingTransactions.length === 0) {
+      return null;
+    }
+
+    return {
+      amount: pendingTransactions.reduce((sum, tx) => sum + tx.amount, 0),
+      latestTimestamp: pendingTransactions[pendingTransactions.length - 1].timestamp,
+      transactionCount: pendingTransactions.length,
+    };
+  } catch (e) {
+    console.error('Failed to compute pending Passport sync:', e);
+    return null;
+  }
+}
+
+export function markPassportSyncPrepared(syncTimestamp: number): void {
+  try {
+    localStorage.setItem(PASSPORT_SYNC_CURSOR_KEY, String(syncTimestamp));
+  } catch (e) {
+    console.error('Failed to persist Passport sync cursor:', e);
+  }
+}
+
+function getCookie(name: string): string | null {
+  try {
+    const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+    return match ? decodeURIComponent(match[2]) : null;
+  } catch (e) {
+    console.error(`Failed to read cookie: ${name}`, e);
+    return null;
+  }
+}
+
+function deleteCookie(name: string) {
+  try {
+    document.cookie = `${name}=; domain=${COOKIE_DOMAIN}; path=/; max-age=0; SameSite=Lax`;
+  } catch (e) {
+    console.error(`Failed to delete cookie: ${name}`, e);
+  }
+}
+
+export function consumePassportSyncAck(): number | null {
+  const ackRaw = getCookie(PASSPORT_SYNC_ACK_COOKIE);
+  if (!ackRaw) return null;
+
+  deleteCookie(PASSPORT_SYNC_ACK_COOKIE);
+
+  const ackTimestamp = parseInt(ackRaw, 10);
+  if (isNaN(ackTimestamp) || ackTimestamp <= 0) {
+    return null;
+  }
+
+  try {
+    const cursorRaw = localStorage.getItem(PASSPORT_SYNC_CURSOR_KEY);
+    const cursor = cursorRaw ? parseInt(cursorRaw, 10) : 0;
+
+    if (ackTimestamp > cursor) {
+      localStorage.setItem(PASSPORT_SYNC_CURSOR_KEY, String(ackTimestamp));
+      return ackTimestamp;
+    }
+  } catch (e) {
+    console.error('Failed to persist Passport sync ack:', e);
+  }
+
+  return null;
+}
+
 // ─── Cross-Site Sync Helper ───
 
 /**
@@ -158,16 +249,16 @@ export function getTransactionHistory(): PointTransaction[] {
 export function buildPassportSyncUrl(
   passportBaseUrl: string,
   pointsToSync: number,
-  source: string
+  source: string,
+  syncTimestamp: number = Date.now()
 ): string {
   const deviceId = getDeviceId();
-  const timestamp = Date.now();
   const params = new URLSearchParams({
     action: 'add_points',
     amount: String(pointsToSync),
     source,
     device_id: deviceId,
-    ts: String(timestamp),
+    ts: String(syncTimestamp),
   });
   return `${passportBaseUrl}?${params.toString()}`;
 }

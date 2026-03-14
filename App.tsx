@@ -1,14 +1,40 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut } from 'lucide-react';
-import ReactGA from "react-ga4";
-import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, getTransactionHistory, PointAction } from './pointsSystem';
-import { supabase } from './src/lib/supabase';
-import { initLiff, sharePullToLine } from './src/lib/liffShare';
+import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut, MessageCircle } from 'lucide-react';
+import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, consumePassportSyncAck, getPendingPassportSync, PointAction } from './pointsSystem';
+import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
+import { sharePullToLine } from './src/lib/liffShare';
 
-// Initialize GA4
-const GA4_ID = import.meta.env.VITE_GA4_ID || "G-7MEJVWM5JR";
-ReactGA.initialize(GA4_ID);
+const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', eventName, params);
+  }
+};
+
+const safeStorageGet = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.error(`Failed to read localStorage key: ${key}`, error);
+    return null;
+  }
+};
+
+const safeStorageSet = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.error(`Failed to write localStorage key: ${key}`, error);
+  }
+};
+
+const safeStorageRemove = (key: string) => {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Failed to remove localStorage key: ${key}`, error);
+  }
+};
 
 // --- Assets & Data ---
 const ASSETS = {
@@ -89,14 +115,18 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
 
 
   return (
-    <motion.div
-      className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center cursor-pointer"
-      onClick={!isSpinning ? onClick : undefined}
-      animate={controls}
-      role="button"
-      aria-label="點擊轉蛋獲得月島積分"
-    >
-      <div className="relative w-full h-full flex items-center justify-center">
+    <div className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center">
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={isSpinning}
+        aria-label="點擊轉蛋獲得月島積分"
+        className="absolute inset-0 z-40 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-4 disabled:cursor-wait"
+      />
+      <motion.div
+        className="pointer-events-none relative w-full h-full flex items-center justify-center"
+        animate={controls}
+      >
         {/* 點擊提示 */}
         {!isSpinning && (
           <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md whitespace-nowrap animate-pulse">
@@ -151,8 +181,8 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
           )}
         </AnimatePresence>
 
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 };
 
@@ -214,14 +244,23 @@ const Toast = ({ show, message }: { show: boolean, message: string }) => (
 );
 
 // 點擊轉蛋後的結果 Modal：積分 + 運籤
-const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoToStore }: {
+const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoToStore, onShareResult }: {
   onClose: () => void,
   prize: typeof POINT_PRIZES[0],
   fortune: typeof FORTUNES[0],
   isPlayedToday: boolean,
   totalPoints: number,
-  onGoToStore: () => void
+  onGoToStore: () => void,
+  onShareResult: (message: string) => void
 }) => {
+  useEffect(() => {
+    trackGtagEvent('result_viewed', {
+      prize_id: prize.id,
+      prize_label: prize.label,
+      prize_points: prize.points,
+    });
+  }, [prize.id, prize.label, prize.points]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -298,11 +337,19 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={async () => {
-              await sharePullToLine(prize.label, prize.points);
+              const result = await sharePullToLine(prize.label, prize.points);
+              if (result.ok) {
+                onShareResult('已開啟 LINE 分享。');
+                return;
+              }
+
+              if ('message' in result) {
+                onShareResult(result.message);
+              }
             }}
             className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#06C755]/30 active:scale-98 transition-all text-sm mb-3"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M12 2C6.48 2 2 5.92 2 10.75c0 3.39 2.21 6.36 5.56 7.82-.16.63-.58 2.24-.66 2.65-.12.65.26 1.07 1 1.07.39 0 .86-.17 3.5-3.04.83.1 1.68.16 2.55.16 5.52 0 10-3.92 10-8.75S19.52 2 12 2zm1.09 11h-2.18c-.28 0-.5-.22-.5-.5v-1.63H8.78c-.28 0-.5-.22-.5-.5V8.87c0-.28.22-.5.5h4.31c.28 0 .5.22.5.5v1.63h1.63c.28 0 .5.22.5.5v1.62c0 .28-.22.5-.5.5z" /></svg>
+            <MessageCircle className="w-4 h-4" />
             <span>跟 LINE 好友炫耀</span>
           </motion.button>
 
@@ -332,9 +379,13 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
 export default function App() {
   // Auth State
   const [authUser, setAuthUser] = useState<any>(null);
-  const [showAuthBar, setShowAuthBar] = useState(false);
 
   useEffect(() => {
+    if (!supabase) {
+      setAuthUser(null);
+      return;
+    }
+
     // 讀取 .kiwimu.com cookie session（跨網域共享）
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthUser(session?.user ?? null);
@@ -346,14 +397,35 @@ export default function App() {
   }, []);
 
   const handleGoogleLogin = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
+    if (!supabase) {
+      showTransientToast(supabaseEnvWarning || '會員登入目前暫時不可用。');
+      return;
+    }
+
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin },
+      });
+    } catch (error) {
+      console.error('Google login failed', error);
+      showTransientToast('Google 登入失敗，請稍後再試。');
+    }
   };
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    setAuthUser(null);
+    if (!supabase) {
+      setAuthUser(null);
+      return;
+    }
+
+    try {
+      await supabase.auth.signOut();
+      setAuthUser(null);
+      showTransientToast('已登出。');
+    } catch (error) {
+      console.error('Sign out failed', error);
+      showTransientToast('登出失敗，請稍後再試。');
+    }
   };
 
   // Gacha State
@@ -362,21 +434,42 @@ export default function App() {
   const [resultPrize, setResultPrize] = useState<typeof POINT_PRIZES[0] | null>(null);
   const [resultFortune, setResultFortune] = useState<typeof FORTUNES[0] | null>(null);
   const [isPlayedToday, setIsPlayedToday] = useState(false);
+  const [todayResultUnavailable, setTodayResultUnavailable] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const toastTimerRef = useRef<number | null>(null);
+
+  const showTransientToast = (message: string) => {
+    setToastMessage(message);
+    setShowToast(true);
+
+    if (toastTimerRef.current) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+
+    toastTimerRef.current = window.setTimeout(() => {
+      setShowToast(false);
+    }, 2400);
+  };
 
   // Load state
   useEffect(() => {
-    initLiff();
-    ReactGA.send({ hitType: "pageview", page: window.location.pathname });
+    trackGtagEvent('page_view', {
+      page_path: window.location.pathname,
+      page_title: document.title,
+    });
 
     // GA4 duration tracking
     const startTime = Date.now();
     const timer = setInterval(() => {
       const elapsed = Math.floor((Date.now() - startTime) / 1000);
       if ([10, 30, 60, 120, 300].includes(elapsed)) {
-        ReactGA.event({ category: "Engagement", action: "time_on_page", value: elapsed, label: `${elapsed}_seconds` });
+        trackGtagEvent('time_on_page', {
+          event_category: 'Engagement',
+          value: elapsed,
+          event_label: `${elapsed}_seconds`,
+        });
       }
     }, 1000);
 
@@ -388,11 +481,12 @@ export default function App() {
 
     // Check if played today
     const today = new Date().toLocaleDateString();
-    const lastPlayed = localStorage.getItem('moonmoon_gacha_last_played');
+    const lastPlayed = safeStorageGet('moonmoon_gacha_last_played');
 
     if (lastPlayed === today) {
       setIsPlayedToday(true);
-      const savedResult = localStorage.getItem('moonmoon_gacha_today_result');
+      setTodayResultUnavailable(false);
+      const savedResult = safeStorageGet('moonmoon_gacha_today_result');
       if (savedResult) {
         try {
           const parsed = JSON.parse(savedResult);
@@ -401,28 +495,82 @@ export default function App() {
             const fortune = FORTUNES.find(f => f.id === parsed.fortuneId) || FORTUNES[0];
             setResultPrize(prize);
             setResultFortune(fortune);
+          } else {
+            safeStorageRemove('moonmoon_gacha_today_result');
+            setTodayResultUnavailable(true);
           }
         } catch (e) {
-          console.error("Failed to parse saved result", e);
+          console.warn('Failed to parse saved result, clearing corrupted cache.', e);
+          safeStorageRemove('moonmoon_gacha_today_result');
+          setTodayResultUnavailable(true);
         }
+      } else {
+        setTodayResultUnavailable(true);
       }
     }
 
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) {
+        window.clearTimeout(toastTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const processPassportSyncAck = () => {
+      const ackTimestamp = consumePassportSyncAck();
+      if (ackTimestamp) {
+        showTransientToast('Passport 已確認同步這次積分。');
+      }
+    };
+
+    processPassportSyncAck();
+
+    const handleFocus = () => processPassportSyncAck();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        processPassportSyncAck();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   const handleGachaClick = () => {
     if (isSpinning) return;
 
-    if (isPlayedToday && resultPrize && resultFortune) {
-      ReactGA.event({ category: "Interaction", action: "view_today_result", label: "View Today's Result" });
-      setShowEventModal(true);
-      return;
+    if (isPlayedToday) {
+      if (resultPrize && resultFortune) {
+        trackGtagEvent('view_today_result', {
+          event_category: 'Interaction',
+          event_label: 'View Today\'s Result',
+        });
+        setShowEventModal(true);
+        return;
+      }
+
+      if (todayResultUnavailable) {
+        showTransientToast('今天已抽過，但今日結果讀取失敗；請重新整理後再查看。');
+        return;
+      }
     }
 
     // Start spin
     setIsSpinning(true);
-    ReactGA.event({ category: "Interaction", action: "spin_gacha", label: "Start Spin" });
+    trackGtagEvent('spin_gacha', {
+      event_category: 'Interaction',
+      event_label: 'Start Spin',
+    });
 
     // Weighted random selection
     const totalWeight = POINT_PRIZES.reduce((sum, prize) => sum + prize.weight, 0);
@@ -458,10 +606,21 @@ export default function App() {
       setIsSpinning(false);
       setShowEventModal(true);
       setIsPlayedToday(true);
+      setTodayResultUnavailable(false);
+
+      // GA4: gacha_drawn — 結果揭曉
+      trackGtagEvent('gacha_drawn', {
+        prize_id: selectedPrize.id,
+        prize_points: selectedPrize.points,
+        prize_label: selectedPrize.label,
+      });
 
       // Award points
       const newBalance = addPoints(selectedPrize.points, 'gacha_earn', `扭蛋獲得 ${selectedPrize.label}`);
       setTotalPoints(newBalance);
+      trackGtagEvent('reward_claimed', {
+        reward_name: selectedPrize.label,
+      });
 
       // 🎮 LIFF-4：廣播積分事件給 Passport（跨站同步）
       document.dispatchEvent(new CustomEvent('kiwimu:points_earned', {
@@ -475,17 +634,16 @@ export default function App() {
       }));
 
       // GA4 track
-      ReactGA.event({
-        category: "Points",
-        action: "points_earned",
+      trackGtagEvent('points_earned', {
+        event_category: 'Points',
         value: selectedPrize.points,
-        label: selectedPrize.label
+        event_label: selectedPrize.label,
       });
 
       // Save today's result
       const today = new Date().toLocaleDateString();
-      localStorage.setItem('moonmoon_gacha_last_played', today);
-      localStorage.setItem('moonmoon_gacha_today_result', JSON.stringify({
+      safeStorageSet('moonmoon_gacha_last_played', today);
+      safeStorageSet('moonmoon_gacha_today_result', JSON.stringify({
         prizeId: selectedPrize.id,
         fortuneId: randomFortune.id
       }));
@@ -493,16 +651,35 @@ export default function App() {
     }, 2500);
   };
 
+  const openPassportStore = (label: "Event Modal" | "Bottom Bar") => {
+    trackGtagEvent('go_to_passport_store', {
+      event_category: 'Conversion',
+      event_label: label,
+    });
+
+    const pendingSync = getPendingPassportSync();
+    const url = pendingSync
+      ? buildPassportSyncUrl(ASSETS.passportUrl, pendingSync.amount, 'gacha', pendingSync.latestTimestamp)
+      : ASSETS.passportUrl;
+
+    if (pendingSync) {
+      showTransientToast(`準備同步 ${pendingSync.amount} 積分到 Passport。`);
+    } else {
+      showTransientToast('目前沒有新的 Gacha 積分待同步，直接帶你前往 Passport。');
+    }
+
+    const passportWindow = window.open(url, '_blank', 'noopener');
+    if (!passportWindow) {
+      window.location.href = url;
+    }
+  };
+
   const handleGoToStore = () => {
-    ReactGA.event({ category: "Conversion", action: "go_to_passport_store", label: "Event Modal" });
-    const url = buildPassportSyncUrl(ASSETS.passportUrl, totalPoints, 'gacha');
-    window.open(url, '_blank');
+    openPassportStore("Event Modal");
   };
 
   const handleGoToStoreFromBar = () => {
-    ReactGA.event({ category: "Conversion", action: "go_to_passport_store", label: "Bottom Bar" });
-    const url = buildPassportSyncUrl(ASSETS.passportUrl, totalPoints, 'gacha');
-    window.open(url, '_blank');
+    openPassportStore("Bottom Bar");
   };
 
   return (
@@ -516,6 +693,10 @@ export default function App() {
             <button onClick={handleSignOut} className="flex items-center gap-1 text-stone-400 hover:text-stone-700 transition-colors">
               <LogOut size={13} /> 登出
             </button>
+          </div>
+        ) : !hasSupabaseEnv ? (
+          <div className="text-[11px] text-stone-500 bg-stone-100 px-3 py-1.5 rounded-full">
+            會員同步暫停中
           </div>
         ) : (
           <button onClick={handleGoogleLogin} className="flex items-center gap-1.5 text-xs bg-stone-800 text-white px-3 py-1.5 rounded-full hover:bg-stone-700 transition-colors">
@@ -580,6 +761,7 @@ export default function App() {
                 isPlayedToday={isPlayedToday}
                 totalPoints={totalPoints}
                 onGoToStore={handleGoToStore}
+                onShareResult={showTransientToast}
               />
             )}
           </AnimatePresence>
@@ -591,9 +773,17 @@ export default function App() {
             每日一轉・累積月島積分
           </p>
 
-          {/* Prize Ticker */}
-          <PointsPrizeTicker />
-        </motion.div>
+        {/* Prize Ticker */}
+        <PointsPrizeTicker />
+
+        {!hasSupabaseEnv && (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left text-xs leading-6 text-amber-800 shadow-sm">
+            <div className="font-bold mb-1">雲端同步暫時停用</div>
+            <div>{supabaseEnvWarning}</div>
+            <div>目前仍可正常體驗每日扭蛋與本地積分，待環境變數補齊後再恢復登入與雲端同步。</div>
+          </div>
+        )}
+      </motion.div>
 
         {/* --- Info Card --- */}
         <motion.div

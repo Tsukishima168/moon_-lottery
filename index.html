@@ -49,8 +49,6 @@
   }
 }
 </script>
-  <link rel="stylesheet" href="/index.css">
-
   <!-- Google Analytics (GA4) -->
   <script type="module">
     // Use the new Kiwimu-Core GA4 ID for unified funnel tracking
@@ -65,7 +63,7 @@
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-    gtag('config', gaId);
+    gtag('config', gaId, { send_page_view: false });
   </script>
 </head>
 

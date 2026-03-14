@@ -18,3 +18,14 @@ View your app in AI Studio: https://ai.studio/apps/drive/1sZqoW_eDuWzO-aCiUFvPIV
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+---
+
+## Phase 1 Gate (Current)
+**Goal: Validate traffic funnel**
+
+### Metrics
+- MBTI completions: 1000
+- Orders: 200
+- AOV: NT
+- Monthly revenue: NTk
