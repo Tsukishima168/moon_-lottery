@@ -16,6 +16,8 @@ const POINTS_KEY = 'moonmoon_points';
 const TRANSACTIONS_KEY = 'moonmoon_points_tx';
 const WEEKLY_LIMIT_PREFIX = 'kiwimu_weekly_limit_';
 const PASSPORT_SYNC_CURSOR_KEY = 'moonmoon_gacha_passport_sync_cursor_ts';
+const PASSPORT_SYNC_ACK_COOKIE = 'moonmoon_passport_sync_ack_ts';
+const COOKIE_DOMAIN = '.kiwimu.com';
 
 // ─── Types (對齊 gamification-types.ts PointAction) ───
 export type PointAction =
@@ -192,6 +194,50 @@ export function markPassportSyncPrepared(syncTimestamp: number): void {
   } catch (e) {
     console.error('Failed to persist Passport sync cursor:', e);
   }
+}
+
+function getCookie(name: string): string | null {
+  try {
+    const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+    return match ? decodeURIComponent(match[2]) : null;
+  } catch (e) {
+    console.error(`Failed to read cookie: ${name}`, e);
+    return null;
+  }
+}
+
+function deleteCookie(name: string) {
+  try {
+    document.cookie = `${name}=; domain=${COOKIE_DOMAIN}; path=/; max-age=0; SameSite=Lax`;
+  } catch (e) {
+    console.error(`Failed to delete cookie: ${name}`, e);
+  }
+}
+
+export function consumePassportSyncAck(): number | null {
+  const ackRaw = getCookie(PASSPORT_SYNC_ACK_COOKIE);
+  if (!ackRaw) return null;
+
+  deleteCookie(PASSPORT_SYNC_ACK_COOKIE);
+
+  const ackTimestamp = parseInt(ackRaw, 10);
+  if (isNaN(ackTimestamp) || ackTimestamp <= 0) {
+    return null;
+  }
+
+  try {
+    const cursorRaw = localStorage.getItem(PASSPORT_SYNC_CURSOR_KEY);
+    const cursor = cursorRaw ? parseInt(cursorRaw, 10) : 0;
+
+    if (ackTimestamp > cursor) {
+      localStorage.setItem(PASSPORT_SYNC_CURSOR_KEY, String(ackTimestamp));
+      return ackTimestamp;
+    }
+  } catch (e) {
+    console.error('Failed to persist Passport sync ack:', e);
+  }
+
+  return null;
 }
 
 // ─── Cross-Site Sync Helper ───

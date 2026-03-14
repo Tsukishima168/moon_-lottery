@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut } from 'lucide-react';
-import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, getPendingPassportSync, markPassportSyncPrepared, PointAction } from './pointsSystem';
+import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, consumePassportSyncAck, getPendingPassportSync, PointAction } from './pointsSystem';
 import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
 import { initLiff, sharePullToLine } from './src/lib/liffShare';
 
@@ -500,6 +500,32 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    const processPassportSyncAck = () => {
+      const ackTimestamp = consumePassportSyncAck();
+      if (ackTimestamp) {
+        showTransientToast('Passport 已確認同步這次積分。');
+      }
+    };
+
+    processPassportSyncAck();
+
+    const handleFocus = () => processPassportSyncAck();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        processPassportSyncAck();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   const handleGachaClick = () => {
     if (isSpinning) return;
 
@@ -609,7 +635,6 @@ export default function App() {
       : ASSETS.passportUrl;
 
     if (pendingSync) {
-      markPassportSyncPrepared(pendingSync.latestTimestamp);
       showTransientToast(`準備同步 ${pendingSync.amount} 積分到 Passport。`);
     } else {
       showTransientToast('目前沒有新的 Gacha 積分待同步，直接帶你前往 Passport。');
