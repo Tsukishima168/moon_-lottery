@@ -398,21 +398,10 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleGoogleLogin = async () => {
-    if (!supabase) {
-      showTransientToast(supabaseEnvWarning || '會員登入目前暫時不可用。');
-      return;
-    }
-
-    try {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin },
-      });
-    } catch (error) {
-      console.error('Google login failed', error);
-      showTransientToast('Google 登入失敗，請稍後再試。');
-    }
+  const handleGoogleLogin = () => {
+    // 統一走 Passport 登入中心（SSO）
+    const redirectTo = encodeURIComponent(window.location.origin);
+    window.location.href = `https://passport.kiwimu.com?redirect_to=${redirectTo}`;
   };
   const handleSignOut = async () => {
     if (!supabase) {
