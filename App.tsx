@@ -3,7 +3,10 @@ import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut, MessageCircle } from 'lucide-react';
 import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, consumePassportSyncAck, getPendingPassportSync, PointAction } from './pointsSystem';
 import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
+import GameCard from './components/GameCard';
+import LuckyWheel from './components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
+import { trackUserEvent } from './src/lib/eventTracker';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -392,25 +395,17 @@ export default function App() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setAuthUser(session?.user ?? null);
+      if (session?.user) {
+        supabase.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleGoogleLogin = async () => {
-    if (!supabase) {
-      showTransientToast(supabaseEnvWarning || '會員登入目前暫時不可用。');
-      return;
-    }
-
-    try {
-      await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: { redirectTo: window.location.origin },
-      });
-    } catch (error) {
-      console.error('Google login failed', error);
-      showTransientToast('Google 登入失敗，請稍後再試。');
-    }
+  const handleGoogleLogin = () => {
+    // 統一走 Passport 登入中心（SSO）
+    const redirectTo = encodeURIComponent(window.location.origin);
+    window.location.href = `https://passport.kiwimu.com?redirect_to=${redirectTo}`;
   };
   const handleSignOut = async () => {
     if (!supabase) {
@@ -427,6 +422,9 @@ export default function App() {
       showTransientToast('登出失敗，請稍後再試。');
     }
   };
+
+  // Wheel State
+  const [showWheelModal, setShowWheelModal] = useState(false);
 
   // Gacha State
   const [showEventModal, setShowEventModal] = useState(false);
@@ -614,6 +612,11 @@ export default function App() {
         prize_points: selectedPrize.points,
         prize_label: selectedPrize.label,
       });
+      trackUserEvent('gacha_played', {
+        prize_id: selectedPrize.id,
+        prize_label: selectedPrize.label,
+        points_earned: selectedPrize.points,
+      });
 
       // Award points
       const newBalance = addPoints(selectedPrize.points, 'gacha_earn', `扭蛋獲得 ${selectedPrize.label}`);
@@ -716,12 +719,12 @@ export default function App() {
       <main
         className="flex-grow w-full max-w-md mx-auto px-6 py-8 relative z-10 flex flex-col items-center"
         role="main"
-        aria-label="月島積分轉蛋互動區"
+        aria-label="月島遊戲中心"
       >
         {/* AI Semantic Context */}
         <section className="sr-only" aria-hidden="true">
           <h3>當前頁面核心功能</h3>
-          <p>月島甜點事務所的每日積分扭蛋互動介面，包含互動式搖珠轉蛋、積分獎勵、靈魂運籤與護照商店導流。積分可至護照商店兌換甜點與飲品。</p>
+          <p>月島甜點事務所的遊戲中心，包含每日免費搖珠機、幸運轉盤，以及積分兌換甜點咖啡。</p>
         </section>
 
         {/* --- Header Section --- */}
@@ -729,22 +732,55 @@ export default function App() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-8 w-full"
+          className="text-center mb-6 w-full"
         >
           {/* Points Badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full px-4 py-2 shadow-sm border border-stone-100 mb-4"
+            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full px-4 py-2 shadow-sm border border-stone-100 mb-3"
           >
             <Coins className="w-4 h-4 text-amber-500" />
             <span className="text-sm font-bold text-stone-700">我的積分</span>
             <span className="text-lg font-black text-amber-600">{totalPoints}</span>
           </motion.div>
 
-          {/* Garapon Animation */}
-          <div className="scale-90 sm:scale-100 origin-center">
+          <h2 className="text-xl sm:text-2xl font-black tracking-widest text-stone-900 mb-1">
+            月島・遊戲中心
+          </h2>
+          <p className="text-stone-500 text-[10px] sm:text-xs tracking-wide mb-5">
+            轉蛋賺積分・幸運轉盤花積分・換甜點
+          </p>
+
+          {/* 雙卡並列：搖珠機 + 轉盤 */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            <GameCard
+              icon="🎰"
+              title="每日搖珠機"
+              subtitle="免費賺 5~200 積分"
+              badge={isPlayedToday ? '今日已轉' : '免費'}
+              badgeColor={isPlayedToday ? 'bg-stone-100 text-stone-400' : 'bg-green-100 text-green-700'}
+              ctaLabel="轉一次"
+              ctaDisabled={isSpinning}
+              ctaDisabledLabel="轉動中..."
+              accentColor="from-red-700 to-red-500"
+              onClick={handleGachaClick}
+            />
+            <GameCard
+              icon="🎡"
+              title="幸運轉盤"
+              subtitle="30P / 次，獎品多元"
+              badge="新"
+              badgeColor="bg-purple-100 text-purple-700"
+              ctaLabel="轉一次"
+              accentColor="from-purple-500 to-violet-500"
+              onClick={() => setShowWheelModal(true)}
+            />
+          </div>
+
+          {/* 搖珠機本體（保持功能，縮在這裡觸發） */}
+          <div className="hidden">
             <GaraponAnimation
               onClick={handleGachaClick}
               isSpinning={isSpinning}
@@ -765,13 +801,6 @@ export default function App() {
               />
             )}
           </AnimatePresence>
-
-          <h2 className="text-xl sm:text-2xl font-black tracking-widest text-stone-900 mb-1">
-            月島・開運所
-          </h2>
-          <p className="text-stone-500 text-[10px] sm:text-xs tracking-wide mb-4">
-            每日一轉・累積月島積分
-          </p>
 
         {/* Prize Ticker */}
         <PointsPrizeTicker />
@@ -847,17 +876,47 @@ export default function App() {
           </div>
         </motion.div>
 
+        {/* Phase 2 預留：我的 Kiwimu */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="bg-stone-100/80 rounded-2xl p-4 border border-stone-200 border-dashed mb-6 w-full flex items-center gap-4"
+        >
+          <div className="w-12 h-12 rounded-xl bg-stone-200 flex items-center justify-center text-2xl shrink-0">
+            🎨
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h3 className="text-sm font-black text-stone-600">我的 Kiwimu</h3>
+              <span className="text-[10px] font-bold bg-stone-200 text-stone-500 px-2 py-0.5 rounded-full">即將推出</span>
+            </div>
+            <p className="text-[11px] text-stone-400 leading-tight">用積分解鎖背景、配件，收集 Bascat、Eggle 等夥伴角色</p>
+          </div>
+        </motion.div>
+
       </main>
+
+      {/* 幸運轉盤 Modal */}
+      <AnimatePresence>
+        {showWheelModal && (
+          <LuckyWheel
+            onClose={() => setShowWheelModal(false)}
+            onPointsChange={(newBalance) => setTotalPoints(newBalance)}
+            onToast={showTransientToast}
+          />
+        )}
+      </AnimatePresence>
 
       {/* --- Sticky Bottom Action Bar --- */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-stone-200 z-40 pb-8 sm:pb-4 safe-area-pb">
         {/* Step indicators */}
         <div className="max-w-md mx-auto w-full mb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-stone-500 text-center">
-          <span className="text-[11px] font-medium">① 每日轉蛋</span>
+          <span className="text-[11px] font-medium">① 遊戲賺積分</span>
           <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
-          <span className="text-[11px] font-medium">② 累積積分</span>
+          <span className="text-[11px] font-medium">② 轉盤花積分</span>
           <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
-          <span className="text-[11px] font-medium text-amber-600">③ 護照商店兌換甜點咖啡</span>
+          <span className="text-[11px] font-medium text-amber-600">③ 護照商店換甜點</span>
         </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
           {/* Points display */}

@@ -23,7 +23,9 @@ const COOKIE_DOMAIN = '.kiwimu.com';
 export type PointAction =
   | 'gacha_earn'      // 扭蛋獲得積分
   | 'daily_checkin'   // 每日簽到
-  | 'bonus';          // 其他獎勵
+  | 'bonus'           // 其他獎勵
+  | 'wheel_spend'     // 轉盤扣點
+  | 'wheel_earn';     // 轉盤獲得積分
 
 export interface PointTransaction {
   id: string;
@@ -107,6 +109,32 @@ export function addPoints(amount: number, type: PointTransaction['type'], descri
   return newBalance;
 }
 
+/**
+ * 扣除積分（轉盤用）。扣前先驗餘額，不足回傳 false。
+ */
+export function deductPoints(amount: number, type: PointTransaction['type'], description: string): { success: boolean; newBalance: number } {
+  const current = getPointsBalance();
+  if (current < amount) {
+    return { success: false, newBalance: current };
+  }
+  const newBalance = current - amount;
+  try {
+    localStorage.setItem(POINTS_KEY, String(newBalance));
+  } catch (e) {
+    console.error('Failed to write points:', e);
+  }
+  const tx: PointTransaction = {
+    id: crypto.randomUUID(),
+    type,
+    amount: -amount,
+    description,
+    timestamp: Date.now(),
+  };
+  appendTransaction(tx);
+  void syncTransactionToSupabase(getDeviceId(), -amount, type, description);
+  return { success: true, newBalance };
+}
+
 // ─── Supabase Sync ─────────────────────────────────────────────────────────────
 
 /**
@@ -121,15 +149,14 @@ async function syncTransactionToSupabase(
 ): Promise<void> {
   if (!supabase) return;
   try {
-    const { error } = await supabase
-      .from('point_transactions')
-      .insert({
-        device_id: deviceId,
-        points,
-        action,
-        description,
-        source: 'gacha',
-      });
+    // upsert_point_transaction 自動帶入 auth.uid()，讓積分與登入帳號綁定
+    const { error } = await supabase.rpc('upsert_point_transaction', {
+      p_device_id: deviceId,
+      p_points: points,
+      p_action: action,
+      p_description: description,
+      p_source: 'gacha',
+    });
     if (error) {
       console.warn('[pointsSystem] Supabase sync failed:', error.message);
     }
