@@ -394,6 +394,9 @@ export default function App() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
       setAuthUser(session?.user ?? null);
+      if (session?.user) {
+        supabase.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
