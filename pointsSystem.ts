@@ -23,7 +23,9 @@ const COOKIE_DOMAIN = '.kiwimu.com';
 export type PointAction =
   | 'gacha_earn'      // 扭蛋獲得積分
   | 'daily_checkin'   // 每日簽到
-  | 'bonus';          // 其他獎勵
+  | 'bonus'           // 其他獎勵
+  | 'wheel_spend'     // 轉盤扣點
+  | 'wheel_earn';     // 轉盤獲得積分
 
 export interface PointTransaction {
   id: string;
@@ -105,6 +107,32 @@ export function addPoints(amount: number, type: PointTransaction['type'], descri
   void syncTransactionToSupabase(getDeviceId(), amount, type, description);
 
   return newBalance;
+}
+
+/**
+ * 扣除積分（轉盤用）。扣前先驗餘額，不足回傳 false。
+ */
+export function deductPoints(amount: number, type: PointTransaction['type'], description: string): { success: boolean; newBalance: number } {
+  const current = getPointsBalance();
+  if (current < amount) {
+    return { success: false, newBalance: current };
+  }
+  const newBalance = current - amount;
+  try {
+    localStorage.setItem(POINTS_KEY, String(newBalance));
+  } catch (e) {
+    console.error('Failed to write points:', e);
+  }
+  const tx: PointTransaction = {
+    id: crypto.randomUUID(),
+    type,
+    amount: -amount,
+    description,
+    timestamp: Date.now(),
+  };
+  appendTransaction(tx);
+  void syncTransactionToSupabase(getDeviceId(), -amount, type, description);
+  return { success: true, newBalance };
 }
 
 // ─── Supabase Sync ─────────────────────────────────────────────────────────────
