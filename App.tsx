@@ -6,6 +6,7 @@ import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase
 import GameCard from './components/GameCard';
 import LuckyWheel from './components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
+import { trackUserEvent } from './src/lib/eventTracker';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -610,6 +611,11 @@ export default function App() {
         prize_id: selectedPrize.id,
         prize_points: selectedPrize.points,
         prize_label: selectedPrize.label,
+      });
+      trackUserEvent('gacha_played', {
+        prize_id: selectedPrize.id,
+        prize_label: selectedPrize.label,
+        points_earned: selectedPrize.points,
       });
 
       // Award points
