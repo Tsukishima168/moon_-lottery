@@ -149,15 +149,14 @@ async function syncTransactionToSupabase(
 ): Promise<void> {
   if (!supabase) return;
   try {
-    const { error } = await supabase
-      .from('point_transactions')
-      .insert({
-        device_id: deviceId,
-        points,
-        action,
-        description,
-        source: 'gacha',
-      });
+    // upsert_point_transaction 自動帶入 auth.uid()，讓積分與登入帳號綁定
+    const { error } = await supabase.rpc('upsert_point_transaction', {
+      p_device_id: deviceId,
+      p_points: points,
+      p_action: action,
+      p_description: description,
+      p_source: 'gacha',
+    });
     if (error) {
       console.warn('[pointsSystem] Supabase sync failed:', error.message);
     }
