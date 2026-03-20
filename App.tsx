@@ -7,6 +7,8 @@ import GameCard from './components/GameCard';
 import LuckyWheel from './components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
+import { KiwimuButton, KiwimuCard, KiwimuCardContent, KiwimuBadge, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
+import { Separator } from '@/components/ui/separator';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -337,41 +339,45 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
           )}
 
           {/* 3. Actions */}
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={async () => {
-              const result = await sharePullToLine(prize.label, prize.points);
-              if (result.ok) {
-                onShareResult('已開啟 LINE 分享。');
-                return;
-              }
+          <div className="w-full flex flex-col gap-2">
+            <KiwimuButton
+              variant="line"
+              size="md"
+              className="w-full py-3"
+              onClick={async () => {
+                const result = await sharePullToLine(prize.label, prize.points);
+                if (result.ok) {
+                  onShareResult('已開啟 LINE 分享。');
+                  return;
+                }
+                if ('message' in result) {
+                  onShareResult(result.message);
+                }
+              }}
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>跟 LINE 好友炫耀</span>
+            </KiwimuButton>
 
-              if ('message' in result) {
-                onShareResult(result.message);
-              }
-            }}
-            className="w-full py-3 bg-[#06C755] hover:bg-[#05b34c] text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-[#06C755]/30 active:scale-98 transition-all text-sm mb-3"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>跟 LINE 好友炫耀</span>
-          </motion.button>
+            <KiwimuButton
+              variant="accent"
+              size="md"
+              className="w-full py-3"
+              onClick={onGoToStore}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              <span>前往護照商店兌換</span>
+            </KiwimuButton>
 
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={onGoToStore}
-            className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-200 hover:shadow-amber-300 active:scale-98 transition-all text-sm mb-3"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span>前往護照商店兌換</span>
-          </motion.button>
-
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={onClose}
-            className="w-full py-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl font-bold text-sm transition-colors"
-          >
-            收下祝福
-          </motion.button>
+            <KiwimuButton
+              variant="ghost"
+              size="md"
+              className="w-full py-3"
+              onClick={onClose}
+            >
+              收下祝福
+            </KiwimuButton>
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -760,7 +766,7 @@ export default function App() {
               title="每日搖珠機"
               subtitle="免費賺 5~200 積分"
               badge={isPlayedToday ? '今日已轉' : '免費'}
-              badgeColor={isPlayedToday ? 'bg-stone-100 text-stone-400' : 'bg-green-100 text-green-700'}
+              badgeVariant={isPlayedToday ? 'done' : 'free'}
               ctaLabel="轉一次"
               ctaDisabled={isSpinning}
               ctaDisabledLabel="轉動中..."
@@ -772,7 +778,7 @@ export default function App() {
               title="幸運轉盤"
               subtitle="30P / 次，獎品多元"
               badge="新"
-              badgeColor="bg-purple-100 text-purple-700"
+              badgeVariant="new"
               ctaLabel="轉一次"
               accentColor="from-purple-500 to-violet-500"
               onClick={() => setShowWheelModal(true)}
@@ -920,24 +926,31 @@ export default function App() {
         </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
           {/* Points display */}
-          <div className="flex-1 py-3.5 px-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-600 font-bold shadow-sm flex items-center justify-center gap-2">
+          <KiwimuButton
+            variant="default"
+            size="lg"
+            className="flex-1 py-3.5 px-4 cursor-default hover:bg-white"
+            disabled
+          >
             <Coins className="w-4 h-4 text-amber-500" />
             <span className="text-sm">{totalPoints} 積分</span>
-          </div>
+          </KiwimuButton>
 
           {/* Go to store */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
+          <KiwimuButton
+            variant="accent"
+            size="lg"
+            className="flex-[2] py-3.5 px-4"
             onClick={handleGoToStoreFromBar}
-            className="flex-[2] py-3.5 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold shadow-lg shadow-amber-400/30 hover:shadow-amber-400/50 active:bg-orange-600 transition-all flex items-center justify-center gap-2"
           >
             <ShoppingBag className="w-4 h-4" />
             <span className="text-sm tracking-wide">前往護照商店</span>
-          </motion.button>
+          </KiwimuButton>
         </div>
       </div>
 
       <Toast show={showToast} message={toastMessage} />
+      <KiwimuToaster />
     </div>
   );
 }
