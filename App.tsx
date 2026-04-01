@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, Sparkles, ShoppingBag, TrendingUp, LogIn, LogOut, MessageCircle } from 'lucide-react';
+import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, ShoppingBag, TrendingUp, LogIn, LogOut, MessageCircle } from 'lucide-react';
 import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, consumePassportSyncAck, getPendingPassportSync, PointAction } from './pointsSystem';
 import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
-import GameCard from './components/GameCard';
-import LuckyWheel from './components/LuckyWheel';
+import GameCard from './src/components/GameCard';
+import LuckyWheel from './src/components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
-import { KiwimuButton, KiwimuCard, KiwimuCardContent, KiwimuBadge, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
-import { Separator } from '@/components/ui/separator';
+import { KiwimuButton, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -231,23 +230,6 @@ const PointsPrizeTicker = () => (
   </div>
 );
 
-// Toast 通知
-const Toast = ({ show, message }: { show: boolean, message: string }) => (
-  <AnimatePresence>
-    {show && (
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 20 }}
-        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 bg-stone-900 text-stone-50 rounded-full shadow-lg flex items-center gap-2"
-      >
-        <Sparkles className="w-4 h-4 text-yellow-400" />
-        <span className="text-sm font-medium">{message}</span>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
-
 // 點擊轉蛋後的結果 Modal：積分 + 運籤
 const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoToStore, onShareResult }: {
   onClose: () => void,
@@ -440,21 +422,9 @@ export default function App() {
   const [isPlayedToday, setIsPlayedToday] = useState(false);
   const [todayResultUnavailable, setTodayResultUnavailable] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const toastTimerRef = useRef<number | null>(null);
 
   const showTransientToast = (message: string) => {
-    setToastMessage(message);
-    setShowToast(true);
-
-    if (toastTimerRef.current) {
-      window.clearTimeout(toastTimerRef.current);
-    }
-
-    toastTimerRef.current = window.setTimeout(() => {
-      setShowToast(false);
-    }, 2400);
+    kiwimuToast(message);
   };
 
   // Load state
@@ -514,14 +484,6 @@ export default function App() {
     }
 
     return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimerRef.current) {
-        window.clearTimeout(toastTimerRef.current);
-      }
-    };
   }, []);
 
   useEffect(() => {
@@ -949,7 +911,6 @@ export default function App() {
         </div>
       </div>
 
-      <Toast show={showToast} message={toastMessage} />
       <KiwimuToaster />
     </div>
   );

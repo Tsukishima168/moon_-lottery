@@ -17,9 +17,9 @@ import {
   grantFreeSpin,
   grantDoubleCheckin,
   WheelPrize,
-} from '../wheelService';
-import { getPointsBalance, addPoints, deductPoints } from '../pointsSystem';
-import { sharePullToLine } from '../src/lib/liffShare';
+} from '../../wheelService';
+import { getPointsBalance, addPoints, deductPoints } from '../../pointsSystem';
+import { sharePullToLine } from '../lib/liffShare';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
