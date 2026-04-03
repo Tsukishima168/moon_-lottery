@@ -6,6 +6,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Coins, ChevronDown, ChevronUp, ShoppingBag, MessageCircle, RotateCcw } from 'lucide-react';
+import { KiwimuButton } from '@/components/kiwimu';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   WHEEL_PRIZES,
   WHEEL_CONFIG,
@@ -15,9 +17,9 @@ import {
   grantFreeSpin,
   grantDoubleCheckin,
   WheelPrize,
-} from '../wheelService';
-import { getPointsBalance, addPoints, deductPoints } from '../pointsSystem';
-import { sharePullToLine } from '../src/lib/liffShare';
+} from '../../wheelService';
+import { getPointsBalance, addPoints, deductPoints } from '../../pointsSystem';
+import { sharePullToLine } from '../lib/liffShare';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -163,19 +165,22 @@ const ResultModal: React.FC<{
           <div className="w-full flex flex-col gap-2">
             {/* 再轉一次 */}
             {(isFreeSpin || hasEnoughForNextSpin) && (
-              <motion.button
-                whileTap={{ scale: 0.97 }}
+              <KiwimuButton
+                variant="accent"
+                size="md"
+                className="w-full py-3"
                 onClick={onSpinAgain}
-                className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-md"
               >
                 <RotateCcw className="w-4 h-4" />
                 {isFreeSpin ? '免費再轉一次！' : `再轉一次（${WHEEL_CONFIG.costPerSpin}P）`}
-              </motion.button>
+              </KiwimuButton>
             )}
 
             {/* LINE 分享 */}
-            <motion.button
-              whileTap={{ scale: 0.97 }}
+            <KiwimuButton
+              variant="line"
+              size="md"
+              className="w-full py-3"
               onClick={async () => {
                 const result = await sharePullToLine(prize.name, prize.value);
                 if (result.ok) {
@@ -184,19 +189,19 @@ const ResultModal: React.FC<{
                   onShare(result.message);
                 }
               }}
-              className="w-full py-3 bg-[#06C755] text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-4 h-4" />
               炫耀給 LINE 好友
-            </motion.button>
+            </KiwimuButton>
 
-            <motion.button
-              whileTap={{ scale: 0.97 }}
+            <KiwimuButton
+              variant="ghost"
+              size="md"
+              className="w-full py-3"
               onClick={onClose}
-              className="w-full py-3 bg-stone-100 text-stone-600 rounded-xl font-bold text-sm"
             >
               收下，繼續看
-            </motion.button>
+            </KiwimuButton>
           </div>
         </div>
       </motion.div>
@@ -316,16 +321,17 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
         </div>
 
         {/* CTA */}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
+        <KiwimuButton
+          variant={isSpinning ? 'ghost' : (canAfford || hasFreeSpinBuff) ? 'accent' : 'ghost'}
+          size="lg"
           onClick={() => handleSpin(false)}
           disabled={isSpinning || (!canAfford && !hasFreeSpinBuff)}
-          className={`w-full max-w-xs py-4 rounded-2xl font-black text-base shadow-lg transition-all flex items-center justify-center gap-2 mb-2 ${
+          className={`w-full max-w-xs py-4 rounded-2xl font-black text-base mb-2 ${
             isSpinning
               ? 'bg-stone-200 text-stone-400 cursor-wait'
-              : canAfford || hasFreeSpinBuff
-              ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-amber-200'
-              : 'bg-stone-100 text-stone-400 cursor-not-allowed'
+              : !(canAfford || hasFreeSpinBuff)
+              ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+              : ''
           }`}
         >
           {isSpinning ? (
@@ -343,7 +349,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
           ) : (
             <span>積分不足（需 {WHEEL_CONFIG.costPerSpin}P）</span>
           )}
-        </motion.button>
+        </KiwimuButton>
 
         {!canAfford && !hasFreeSpinBuff && (
           <p className="text-xs text-stone-400 text-center mb-4">
@@ -352,40 +358,34 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
         )}
 
         {/* 獎品一覽（可收合） */}
-        <div className="w-full max-w-xs mt-2">
-          <button
-            onClick={() => setShowPrizeList((v) => !v)}
-            className="w-full flex items-center justify-between text-xs text-stone-500 font-bold py-2 px-1"
+        <Collapsible
+          open={showPrizeList}
+          onOpenChange={setShowPrizeList}
+          className="w-full max-w-xs mt-2"
+        >
+          <CollapsibleTrigger
+            className="w-full flex items-center justify-between text-xs text-stone-500 font-bold py-2 px-1 cursor-pointer"
           >
             <span>獎品機率一覽</span>
             {showPrizeList ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+          </CollapsibleTrigger>
 
-          <AnimatePresence>
-            {showPrizeList && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="bg-white rounded-xl border border-stone-100 divide-y divide-stone-50">
-                  {WHEEL_PRIZES.map((prize) => (
-                    <div key={prize.id} className="flex items-center justify-between px-3 py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">{prize.icon}</span>
-                        <span className="text-xs font-medium text-stone-700">{prize.name}</span>
-                      </div>
-                      <span className="text-[11px] text-stone-400 font-bold">
-                        {((prize.weight / 1000) * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                  ))}
+          <CollapsibleContent>
+            <div className="bg-white rounded-xl border border-stone-100 divide-y divide-stone-50">
+              {WHEEL_PRIZES.map((prize) => (
+                <div key={prize.id} className="flex items-center justify-between px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{prize.icon}</span>
+                    <span className="text-xs font-medium text-stone-700">{prize.name}</span>
+                  </div>
+                  <span className="text-[11px] text-stone-400 font-bold">
+                    {((prize.weight / 1000) * 100).toFixed(1)}%
+                  </span>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+              ))}
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
 
       {/* 結果 Modal */}
