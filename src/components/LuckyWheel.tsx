@@ -51,14 +51,14 @@ const WheelDisk: React.FC<{ rotation: number; isSpinning: boolean }> = ({ rotati
           style={{
             borderLeft: '8px solid transparent',
             borderRight: '8px solid transparent',
-            borderTop: '20px solid #1C1917',
+            borderTop: '20px solid #111111',
           }}
         />
       </div>
 
       {/* 轉盤本體 */}
       <motion.div
-        className="w-full h-full rounded-full shadow-xl border-4 border-stone-800 relative overflow-hidden"
+        className="w-full h-full rounded-full shadow-[6px_6px_0px_#111111] border-4 border-[#111111] relative overflow-hidden"
         style={{ background: buildConicGradient() }}
         animate={{ rotate: rotation }}
         transition={isSpinning ? { duration: 4, ease: [0.17, 0.67, 0.12, 0.99] } : { duration: 0 }}
@@ -94,8 +94,8 @@ const WheelDisk: React.FC<{ rotation: number; isSpinning: boolean }> = ({ rotati
       </motion.div>
 
       {/* 中心圓 */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-stone-900 border-4 border-white shadow-lg z-10 flex items-center justify-center">
-        <span className="text-white text-xs font-black">GO</span>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#111111] border-4 border-[#D4FF00] shadow-lg z-10 flex items-center justify-center">
+        <span className="text-[#F4F4F0] text-xs font-black">GO</span>
       </div>
     </div>
   );
@@ -117,7 +117,7 @@ const ResultModal: React.FC<{
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-stone-900/70 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-[#111111]/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -125,7 +125,7 @@ const ResultModal: React.FC<{
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.92, y: 10, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[320px] bg-white rounded-2xl shadow-2xl overflow-hidden"
+        className="w-full max-w-[320px] bg-[#FFFDF7] rounded-xl border-2 border-[#111111] shadow-[6px_6px_0px_#D4FF00] overflow-hidden"
       >
         {/* 頂部色條 */}
         <div className="h-1.5 w-full" style={{ background: prize.color }} />
@@ -136,29 +136,29 @@ const ResultModal: React.FC<{
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', damping: 10, delay: 0.1 }}
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-3 text-4xl shadow-inner"
+            className="w-16 h-16 rounded-lg border-2 border-[#111111] flex items-center justify-center mb-3 text-4xl shadow-inner"
             style={{ background: prize.color }}
           >
             {prize.icon}
           </motion.div>
 
-          <p className="text-xs text-stone-400 mb-1">恭喜獲得</p>
-          <h2 className="text-2xl font-black text-stone-900 mb-1">{prize.name}</h2>
-          <p className="text-sm text-stone-500 text-center mb-4">{prize.description}</p>
+          <p className="kiwimu-mono text-[11px] text-[#666666] mb-1 uppercase">wheel reward</p>
+          <h2 className="kiwimu-heading text-2xl font-black text-[#111111] mb-1">{prize.name}</h2>
+          <p className="text-sm text-[#666666] text-center mb-4">{prize.description}</p>
 
           {/* coupon 類：額外顯示提示 */}
           {prize.type === 'coupon' && (
-            <div className="w-full bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 text-center">
-              <p className="text-xs font-bold text-amber-700 mb-1">{prize.couponLabel}</p>
-              <p className="text-[11px] text-amber-600">請在店員面前出示此畫面核銷</p>
+            <div className="w-full bg-[#F4F4F0] border-2 border-[#111111] rounded-lg px-4 py-3 mb-4 text-center">
+              <p className="text-xs font-bold text-[#111111] mb-1">{prize.couponLabel}</p>
+              <p className="text-[11px] text-[#666666]">請在店員面前出示此畫面核銷</p>
             </div>
           )}
 
           {/* 積分餘額 */}
-          <div className="flex items-center gap-2 bg-stone-50 rounded-full px-4 py-2 mb-5">
-            <Coins className="w-4 h-4 text-amber-500" />
-            <span className="text-sm text-stone-600">積分餘額：</span>
-            <span className="text-sm font-black text-stone-800">{newBalance}</span>
+          <div className="flex items-center gap-2 bg-[#F4F4F0] rounded-lg border border-[#111111] px-4 py-2 mb-5">
+            <Coins className="w-4 h-4 text-[#111111]" />
+            <span className="text-sm text-[#666666]">積分餘額：</span>
+            <span className="text-sm font-black text-[#111111]">{newBalance}</span>
           </div>
 
           {/* CTA 群組 */}
@@ -291,22 +291,22 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-[#F9F8F2] flex flex-col overflow-y-auto"
+      className="kiwimu-page-bg fixed inset-0 z-50 flex flex-col overflow-y-auto"
     >
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#F9F8F2]/95 backdrop-blur-sm border-b border-stone-200 flex items-center justify-between px-5 py-3">
+      <div className="sticky top-0 z-10 bg-[#F4F4F0]/95 backdrop-blur-sm border-b-2 border-[#111111] flex items-center justify-between px-5 py-3">
         <div>
-          <h2 className="text-base font-black text-stone-900">幸運轉盤</h2>
-          <p className="text-[11px] text-stone-500">每次 {WHEEL_CONFIG.costPerSpin} 積分</p>
+          <h2 className="kiwimu-heading text-base font-black text-[#111111]">幸運轉盤</h2>
+          <p className="kiwimu-mono text-[11px] text-[#666666]">每次 {WHEEL_CONFIG.costPerSpin} 積分</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 border border-stone-200 shadow-sm">
-            <Coins className="w-3.5 h-3.5 text-amber-500" />
-            <span className="text-sm font-black text-stone-800">{currentBalance}</span>
+          <div className="flex items-center gap-1.5 bg-[#FFFDF7] rounded-lg px-3 py-1.5 border-2 border-[#111111] shadow-[2px_2px_0px_#111111]">
+            <Coins className="w-3.5 h-3.5 text-[#111111]" />
+            <span className="text-sm font-black text-[#111111]">{currentBalance}</span>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 hover:bg-stone-200 transition-colors"
+            className="w-8 h-8 rounded-lg bg-[#FFFDF7] border-2 border-[#111111] flex items-center justify-center text-[#111111] hover:bg-[#E5E5E5] transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -326,11 +326,11 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
           size="lg"
           onClick={() => handleSpin(false)}
           disabled={isSpinning || (!canAfford && !hasFreeSpinBuff)}
-          className={`w-full max-w-xs py-4 rounded-2xl font-black text-base mb-2 ${
+          className={`w-full max-w-xs py-4 rounded-lg font-black text-base mb-2 ${
             isSpinning
-              ? 'bg-stone-200 text-stone-400 cursor-wait'
+              ? 'bg-[#E5E5E5] text-[#666666] cursor-wait'
               : !(canAfford || hasFreeSpinBuff)
-              ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+              ? 'bg-[#E5E5E5] text-[#666666] cursor-not-allowed'
               : ''
           }`}
         >
@@ -338,7 +338,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
             <span>轉動中...</span>
           ) : hasFreeSpinBuff ? (
             <>
-              <span>🎡</span>
+              <span className="kiwimu-mono">FREE</span>
               <span>免費轉一次！</span>
             </>
           ) : canAfford ? (
@@ -352,7 +352,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
         </KiwimuButton>
 
         {!canAfford && !hasFreeSpinBuff && (
-          <p className="text-xs text-stone-400 text-center mb-4">
+          <p className="text-xs text-[#666666] text-center mb-4">
             每日簽到或免費轉蛋可累積積分
           </p>
         )}
@@ -364,21 +364,21 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
           className="w-full max-w-xs mt-2"
         >
           <CollapsibleTrigger
-            className="w-full flex items-center justify-between text-xs text-stone-500 font-bold py-2 px-1 cursor-pointer"
+            className="w-full flex items-center justify-between text-xs text-[#666666] font-bold py-2 px-1 cursor-pointer"
           >
             <span>獎品機率一覽</span>
             {showPrizeList ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </CollapsibleTrigger>
 
           <CollapsibleContent>
-            <div className="bg-white rounded-xl border border-stone-100 divide-y divide-stone-50">
+            <div className="bg-[#FFFDF7] rounded-lg border-2 border-[#111111] divide-y divide-[#111111]/10">
               {WHEEL_PRIZES.map((prize) => (
                 <div key={prize.id} className="flex items-center justify-between px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{prize.icon}</span>
-                    <span className="text-xs font-medium text-stone-700">{prize.name}</span>
+                    <span className="text-xs font-medium text-[#111111]">{prize.name}</span>
                   </div>
-                  <span className="text-[11px] text-stone-400 font-bold">
+                  <span className="text-[11px] text-[#666666] font-bold">
                     {((prize.weight / 1000) * 100).toFixed(1)}%
                   </span>
                 </div>

@@ -16,18 +16,18 @@ function KiwimuBadge({
   ...props
 }: KiwimuBadgeProps) {
   const variantClasses = {
-    free: "bg-green-100 text-green-700 border-green-200",
-    done: "bg-stone-100 text-stone-400 border-stone-200",
-    new: "bg-purple-100 text-purple-700 border-purple-200",
-    rare: "bg-amber-400 text-white border-amber-500",
-    coming: "bg-stone-200 text-stone-500 border-stone-300",
+    free: "bg-[#D4FF00] text-[#111111] border-[#111111]",
+    done: "bg-[#E5E5E5] text-[#666666] border-[#111111]",
+    new: "bg-[#111111] text-[#F4F4F0] border-[#111111]",
+    rare: "bg-[#FFFDF7] text-[#111111] border-[#111111]",
+    coming: "bg-[#E5E5E5] text-[#666666] border-[#111111]",
   }
 
   return (
     <Badge
       variant="outline"
       className={cn(
-        "rounded-full text-[10px] font-bold px-2 py-0.5 border",
+        "rounded-md text-[10px] font-black px-2 py-0.5 border tracking-wider",
         variantClasses[variant],
         className
       )}

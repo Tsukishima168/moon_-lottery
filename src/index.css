@@ -1,8 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@500;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
 /*
  * moonmoon-gacha — Design System Variables
- * Aligned with kiwimu.com brand: warm paper, ink black, amber accent
+ * Aligned with the Kiwimu ecosystem: paper, ink black, lime accent
  */
 
 @custom-variant dark (&:is(.dark *));
@@ -12,41 +13,45 @@
   --radius: 0.75rem;
 
   /* Brand Colors */
-  --paper: oklch(0.970 0.010 90);       /* #F9F8F2 — warm cream background */
-  --ink:   oklch(0.145 0.005 285.823);   /* #1C1917 — stone-900, the brand ink */
+  --paper: #F4F4F0;
+  --paper-raised: #FFFDF7;
+  --ink: #111111;
+  --lime: #D4FF00;
+  --moon-gray: #E5E5E5;
+  --moon-muted: #666666;
 
   /* shadcn CSS variable system (light theme) */
   --background: var(--paper);
   --foreground: var(--ink);
 
-  --card: oklch(0.985 0.003 90);         /* white with warmth */
+  --card: var(--paper-raised);
   --card-foreground: var(--ink);
 
-  --popover: oklch(1 0 0);
+  --popover: var(--paper-raised);
   --popover-foreground: var(--ink);
 
-  --primary: oklch(0.655 0.150 55);      /* amber-500 */
-  --primary-foreground: oklch(1 0 0);
+  --primary: var(--ink);
+  --primary-foreground: var(--paper);
 
-  --secondary: oklch(0.970 0.005 90);    /* stone-50 warm */
+  --secondary: var(--moon-gray);
   --secondary-foreground: var(--ink);
 
-  --muted: oklch(0.950 0.005 90);
-  --muted-foreground: oklch(0.500 0.010 90);
+  --muted: var(--moon-gray);
+  --muted-foreground: var(--moon-muted);
 
-  --accent: oklch(0.655 0.150 55);       /* amber-500 (brand accent) */
-  --accent-foreground: oklch(1 0 0);
+  --accent: var(--lime);
+  --accent-foreground: var(--ink);
 
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.922 0.005 90);       /* stone-200 warm */
-  --input: oklch(0.922 0.005 90);
-  --ring: oklch(0.655 0.150 55);         /* amber-500 focus ring */
+  --border: var(--ink);
+  --input: #D8D8D2;
+  --ring: var(--lime);
 
   /* Chart colors */
-  --chart-1: oklch(0.655 0.150 55);  /* amber */
-  --chart-2: oklch(0.600 0.180 25);  /* red-700 */
+  --chart-1: #D4FF00;
+  --chart-2: #111111;
   --chart-3: oklch(0.650 0.170 300); /* purple */
   --chart-4: oklch(0.700 0.130 150); /* emerald */
   --chart-5: oklch(0.750 0.120 70);  /* orange */
@@ -65,9 +70,10 @@
 /* ─── Base Styles ─── */
 
 body {
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans TC', system-ui, sans-serif;
   background-color: var(--background);
   color: var(--foreground);
+  letter-spacing: 0.02em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -80,10 +86,26 @@ body {
 
 /* Selection color */
 ::selection {
-  background-color: oklch(0.800 0.100 25 / 0.3); /* red tinted selection */
+  background-color: rgb(212 255 0 / 0.45);
 }
 
 /* Safe area padding for iOS */
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.kiwimu-heading {
+  font-family: 'Space Grotesk', 'Noto Sans TC', system-ui, sans-serif;
+}
+
+.kiwimu-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+.kiwimu-page-bg {
+  background:
+    linear-gradient(rgba(17, 17, 17, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 17, 17, 0.035) 1px, transparent 1px),
+    #F4F4F0;
+  background-size: 28px 28px;
 }

@@ -50,12 +50,12 @@ const ASSETS = {
 
 // ─── Points Prize Pool (replaces physical prizes) ───
 const POINT_PRIZES = [
-  { id: 'bronze', label: '銅球', points: 5, weight: 45, color: 'bg-amber-700', border: 'border-amber-800', glow: 'shadow-amber-200' },
-  { id: 'silver', label: '銀球', points: 10, weight: 30, color: 'bg-slate-300', border: 'border-slate-400', glow: 'shadow-slate-200' },
-  { id: 'gold', label: '金球', points: 25, weight: 15, color: 'bg-yellow-400', border: 'border-yellow-500', glow: 'shadow-yellow-200' },
-  { id: 'rainbow', label: '彩虹球', points: 50, weight: 5, color: 'bg-gradient-to-br from-pink-400 via-purple-400 to-blue-400', border: 'border-pink-500', glow: 'shadow-pink-200' },
-  { id: 'lucky', label: '幸運球', points: 100, weight: 3, color: 'bg-red-500', border: 'border-red-600', glow: 'shadow-red-200' },
-  { id: 'jackpot', label: '極光球', points: 200, weight: 2, color: 'bg-emerald-400', border: 'border-emerald-500', glow: 'shadow-emerald-200' },
+  { id: 'bronze', label: '銅球', points: 5, weight: 45, color: 'bg-[#C9A46A]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
+  { id: 'silver', label: '銀球', points: 10, weight: 30, color: 'bg-[#E5E5E5]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
+  { id: 'gold', label: '金球', points: 25, weight: 15, color: 'bg-[#D4AF37]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
+  { id: 'rainbow', label: '青球', points: 50, weight: 5, color: 'bg-[#2A9D8F]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
+  { id: 'lucky', label: '黑球', points: 100, weight: 3, color: 'bg-[#111111]', border: 'border-[#D4FF00]', glow: 'shadow-lime-200' },
+  { id: 'jackpot', label: '月光球', points: 200, weight: 2, color: 'bg-[#D4FF00]', border: 'border-[#111111]', glow: 'shadow-lime-200' },
 ];
 
 // 詩籤 Kiwimu Blessing (unchanged)
@@ -125,7 +125,7 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
         onClick={onClick}
         disabled={isSpinning}
         aria-label="點擊轉蛋獲得月島積分"
-        className="absolute inset-0 z-40 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-4 disabled:cursor-wait"
+        className="absolute inset-0 z-40 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4FF00] focus-visible:ring-offset-4 disabled:cursor-wait"
       />
       <motion.div
         className="pointer-events-none relative w-full h-full flex items-center justify-center"
@@ -133,7 +133,7 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
       >
         {/* 點擊提示 */}
         {!isSpinning && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-red-600/90 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-md whitespace-nowrap animate-pulse">
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#111111] text-[#F4F4F0] text-[10px] font-bold px-2 py-1 rounded-md shadow-[2px_2px_0px_#D4FF00] whitespace-nowrap animate-pulse">
             一天一次・轉出積分好運
           </div>
         )}
@@ -149,8 +149,8 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
           animate={drumControls}
         >
           <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
-            <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#B91C1C" stroke="#991B1B" strokeWidth="2" />
-            <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#F59E0B" fillOpacity="0.2" />
+            <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#111111" stroke="#D4FF00" strokeWidth="2" />
+            <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#D4FF00" fillOpacity="0.42" />
             <circle cx="50" cy="50" r="5" fill="#1C1917" />
           </svg>
         </motion.div>
@@ -194,36 +194,36 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
 const PointsPrizeTicker = () => (
   <div className="w-full mt-2 pb-2">
     <div className="flex items-center justify-between mb-3 px-2">
-      <h3 className="text-xs font-bold text-stone-500 uppercase tracking-widest flex items-center gap-1">
+      <h3 className="kiwimu-mono text-[11px] font-bold text-[#666666] uppercase tracking-widest flex items-center gap-1">
         <Coins className="w-3 h-3" /> 積分獎池
       </h3>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] text-stone-400 font-medium">往右看可兌換品項</span>
-        <ArrowRight className="w-3 h-3 text-stone-400" />
+        <span className="text-[10px] text-[#666666] font-medium">往右看可兌換品項</span>
+        <ArrowRight className="w-3 h-3 text-[#666666]" />
       </div>
     </div>
     <div className="flex gap-3 overflow-x-auto pb-6 px-4 snap-x snap-mandatory items-end pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       {/* Prize balls */}
       {POINT_PRIZES.map((prize) => (
-        <div key={prize.id} className={`snap-center shrink-0 w-[100px] bg-white rounded-xl p-3 border ${prize.points >= 100 ? 'border-amber-400 shadow-md ring-1 ring-amber-100' : 'border-stone-100 shadow-sm'} flex flex-col items-center relative`}>
+        <div key={prize.id} className={`snap-center shrink-0 w-[100px] bg-[#FFFDF7] rounded-lg p-3 border-2 ${prize.points >= 100 ? 'border-[#111111] shadow-[3px_3px_0px_#D4FF00]' : 'border-[#111111] shadow-[3px_3px_0px_#111111]'} flex flex-col items-center relative`}>
           {prize.points >= 100 && (
-            <div className="absolute top-0 right-0 bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-bl-lg rounded-tr-lg shadow-sm">稀有</div>
+            <div className="absolute top-0 right-0 bg-[#D4FF00] text-[#111111] text-[9px] font-black px-1.5 py-0.5 rounded-bl-md border-b-2 border-l-2 border-[#111111]">稀有</div>
           )}
           <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
-          <p className="font-bold text-stone-800 text-xs mb-0.5 text-center whitespace-nowrap">{prize.label}</p>
-          <p className="text-[10px] text-amber-600 font-bold">+{prize.points} 積分</p>
+          <p className="font-bold text-[#111111] text-xs mb-0.5 text-center whitespace-nowrap">{prize.label}</p>
+          <p className="text-[10px] text-[#111111] font-black">+{prize.points} 積分</p>
         </div>
       ))}
 
       {/* Divider */}
-      <div className="snap-center shrink-0 w-[1px] h-16 bg-stone-200 self-center mx-1"></div>
+      <div className="snap-center shrink-0 w-[2px] h-16 bg-[#111111] self-center mx-1"></div>
 
       {/* Redeem preview */}
       {REDEEM_PREVIEW.map((item) => (
-        <div key={item.name} className="snap-center shrink-0 w-[100px] bg-stone-50 rounded-xl p-3 border border-dashed border-stone-300 flex flex-col items-center relative">
-          <ShoppingBag className="w-6 h-6 text-stone-400 mb-2" />
-          <p className="font-medium text-stone-600 text-xs mb-0.5 text-center whitespace-nowrap">{item.name}</p>
-          <p className="text-[10px] text-red-600 font-bold">{item.cost} 積分兌換</p>
+        <div key={item.name} className="snap-center shrink-0 w-[100px] bg-[#E5E5E5] rounded-lg p-3 border-2 border-dashed border-[#111111] flex flex-col items-center relative">
+          <ShoppingBag className="w-6 h-6 text-[#111111] mb-2" />
+          <p className="font-medium text-[#111111] text-xs mb-0.5 text-center whitespace-nowrap">{item.name}</p>
+          <p className="text-[10px] text-[#666666] font-bold">{item.cost} 積分兌換</p>
         </div>
       ))}
     </div>
@@ -253,7 +253,7 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-stone-900/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#111111]/70 backdrop-blur-sm"
       onClick={onClose}
     >
       <motion.div
@@ -261,15 +261,14 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
         animate={{ scale: 1, y: 0, opacity: 1 }}
         exit={{ scale: 0.95, y: 10, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[320px] bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/60 overflow-hidden relative flex flex-col items-center"
+        className="w-full max-w-[320px] bg-[#FFFDF7] rounded-xl shadow-[6px_6px_0px_#D4FF00] border-2 border-[#111111] overflow-hidden relative flex flex-col items-center"
       >
-        {/* Card Top Accent */}
-        <div className={`absolute top-0 w-full h-1.5 bg-gradient-to-r ${prize.points >= 100 ? 'from-amber-400 via-yellow-300 to-amber-500' : prize.points >= 25 ? 'from-yellow-400 via-amber-300 to-yellow-400' : 'from-red-800 via-red-600 to-red-800'} opacity-90`}></div>
+        <div className={`absolute top-0 w-full h-1.5 ${prize.points >= 100 ? 'bg-[#D4FF00]' : prize.points >= 25 ? 'bg-[#D4AF37]' : 'bg-[#111111]'} opacity-100`}></div>
 
         <div className="p-8 w-full flex flex-col items-center">
           {/* 1. Points Earned */}
           <div className="text-center mb-6 relative w-full">
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl -z-10 opacity-60 ${prize.points >= 100 ? 'bg-amber-100' : prize.points >= 25 ? 'bg-yellow-50' : 'bg-red-50'}`}></div>
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full -z-10 opacity-40 ${prize.points >= 100 ? 'bg-[#D4FF00]' : prize.points >= 25 ? 'bg-[#D4AF37]' : 'bg-[#E5E5E5]'}`}></div>
 
             {/* Prize Ball */}
             <motion.div
@@ -279,45 +278,45 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
               className={`w-14 h-14 rounded-full ${prize.color} ${prize.border} border-2 shadow-lg ${prize.glow} mx-auto mb-4`}
             ></motion.div>
 
-            <p className="text-xs text-stone-400 mb-1">恭喜獲得</p>
+            <p className="kiwimu-mono text-[11px] text-[#666666] mb-1 uppercase">reward unlocked</p>
             <motion.p
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", delay: 0.4 }}
-              className="text-3xl font-black text-amber-600 mb-1"
+              className="kiwimu-heading text-3xl font-black text-[#111111] mb-1"
             >
               +{prize.points}
               <span className="text-lg ml-1">積分</span>
             </motion.p>
-            <p className="text-xs text-stone-500">{prize.label}</p>
+            <p className="text-xs text-[#666666]">{prize.label}</p>
 
             {/* Total Balance */}
-            <div className="mt-4 bg-stone-50 rounded-lg px-4 py-2 inline-flex items-center gap-2">
-              <Coins className="w-4 h-4 text-amber-500" />
-              <span className="text-sm text-stone-600">累計積分：</span>
-              <span className="text-sm font-bold text-stone-800">{totalPoints}</span>
+            <div className="mt-4 bg-[#F4F4F0] rounded-lg px-4 py-2 inline-flex items-center gap-2 border border-[#111111]">
+              <Coins className="w-4 h-4 text-[#111111]" />
+              <span className="text-sm text-[#666666]">累計積分：</span>
+              <span className="text-sm font-black text-[#111111]">{totalPoints}</span>
             </div>
           </div>
 
           {/* Divider */}
-          <div className="w-12 h-[1px] bg-stone-200 mb-6"></div>
+          <div className="w-12 h-[2px] bg-[#111111] mb-6"></div>
 
           {/* 2. Fortune */}
           <div className="text-center mb-6">
-            <span className={`inline-block px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-3 border ${fortune.level === '隱藏版' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-              fortune.level === '大吉' ? 'bg-red-50 text-red-800 border-red-200' :
-                fortune.level === '中吉' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                  'bg-stone-50 text-stone-600 border-stone-200'
+            <span className={`inline-block px-4 py-1 rounded-md text-xs font-black tracking-[0.2em] mb-3 border-2 ${fortune.level === '隱藏版' ? 'bg-[#D4FF00] text-[#111111] border-[#111111]' :
+              fortune.level === '大吉' ? 'bg-[#111111] text-[#F4F4F0] border-[#111111]' :
+                fortune.level === '中吉' ? 'bg-[#D4AF37] text-[#111111] border-[#111111]' :
+                  'bg-[#E5E5E5] text-[#111111] border-[#111111]'
               }`}>
               {fortune.level}
             </span>
-            <p className="text-stone-600 font-serif font-medium text-base leading-relaxed tracking-wide px-2 italic">
+            <p className="text-[#111111] font-serif font-medium text-base leading-relaxed tracking-wide px-2 italic">
               「{fortune.text}」
             </p>
           </div>
 
           {isPlayedToday && (
-            <p className="text-xs text-stone-400 mb-4">( 這是您今天的運勢，明天再來轉喔！ )</p>
+            <p className="text-xs text-[#666666] mb-4">( 這是您今天的運勢，明天再來轉喔！ )</p>
           )}
 
           {/* 3. Actions */}
@@ -654,23 +653,23 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen font-sans text-stone-800 selection:bg-red-200 overflow-x-hidden bg-[#F9F8F2] flex flex-col pb-24">
+    <div className="kiwimu-page-bg relative min-h-screen font-sans text-[#111111] overflow-x-hidden flex flex-col pb-24">
 
       {/* Auth 狀態浮動列 */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex justify-end px-4 py-2 bg-white/80 backdrop-blur-sm border-b border-stone-100">
+      <div className="fixed top-0 left-0 right-0 z-50 flex justify-end px-4 py-2 bg-[#F4F4F0]/90 backdrop-blur-sm border-b-2 border-[#111111]">
         {authUser ? (
-          <div className="flex items-center gap-2 text-xs text-stone-600">
+          <div className="flex items-center gap-2 text-xs text-[#111111]">
             <span className="truncate max-w-[120px]">{authUser.email?.split('@')[0]}</span>
-            <button onClick={handleSignOut} className="flex items-center gap-1 text-stone-400 hover:text-stone-700 transition-colors">
+            <button onClick={handleSignOut} className="flex items-center gap-1 text-[#666666] hover:text-[#111111] transition-colors">
               <LogOut size={13} /> 登出
             </button>
           </div>
         ) : !hasSupabaseEnv ? (
-          <div className="text-[11px] text-stone-500 bg-stone-100 px-3 py-1.5 rounded-full">
+          <div className="text-[11px] text-[#666666] bg-[#E5E5E5] border border-[#111111] px-3 py-1.5 rounded-md">
             會員同步暫停中
           </div>
         ) : (
-          <button onClick={handleGoogleLogin} className="flex items-center gap-1.5 text-xs bg-stone-800 text-white px-3 py-1.5 rounded-full hover:bg-stone-700 transition-colors">
+          <button onClick={handleGoogleLogin} className="flex items-center gap-1.5 text-xs bg-[#111111] text-[#F4F4F0] px-3 py-1.5 rounded-md hover:bg-black transition-colors">
             <LogIn size={13} /> Google 登入
           </button>
         )}
@@ -679,11 +678,6 @@ export default function App() {
       <div className="h-10" />
 
       {/* Background Pattern */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-40"
-        style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E")` }}
-      />
-
       <main
         className="flex-grow w-full max-w-md mx-auto px-6 py-8 relative z-10 flex flex-col items-center"
         role="main"
@@ -707,24 +701,24 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-md rounded-full px-4 py-2 shadow-sm border border-stone-100 mb-3"
+            className="inline-flex items-center gap-2 bg-[#FFFDF7] rounded-lg px-4 py-2 shadow-[3px_3px_0px_#111111] border-2 border-[#111111] mb-3"
           >
-            <Coins className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-bold text-stone-700">我的積分</span>
-            <span className="text-lg font-black text-amber-600">{totalPoints}</span>
+            <Coins className="w-4 h-4 text-[#111111]" />
+            <span className="text-sm font-bold text-[#111111]">我的積分</span>
+            <span className="kiwimu-heading text-lg font-black text-[#111111]">{totalPoints}</span>
           </motion.div>
 
-          <h2 className="text-xl sm:text-2xl font-black tracking-widest text-stone-900 mb-1">
+          <h2 className="kiwimu-heading text-2xl sm:text-3xl font-black tracking-widest text-[#111111] mb-1">
             月島・遊戲中心
           </h2>
-          <p className="text-stone-500 text-[10px] sm:text-xs tracking-wide mb-5">
+          <p className="kiwimu-mono text-[#666666] text-[10px] sm:text-xs tracking-widest mb-5 uppercase">
             轉蛋賺積分・幸運轉盤花積分・換甜點
           </p>
 
           {/* 雙卡並列：搖珠機 + 轉盤 */}
           <div className="grid grid-cols-2 gap-3 mb-5">
             <GameCard
-              icon="🎰"
+              icon="01"
               title="每日搖珠機"
               subtitle="免費賺 5~200 積分"
               badge={isPlayedToday ? '今日已轉' : '免費'}
@@ -732,17 +726,17 @@ export default function App() {
               ctaLabel="轉一次"
               ctaDisabled={isSpinning}
               ctaDisabledLabel="轉動中..."
-              accentColor="from-red-700 to-red-500"
+              accentColor="bg-[#D4FF00]"
               onClick={handleGachaClick}
             />
             <GameCard
-              icon="🎡"
+              icon="02"
               title="幸運轉盤"
               subtitle="30P / 次，獎品多元"
               badge="新"
               badgeVariant="new"
               ctaLabel="轉一次"
-              accentColor="from-purple-500 to-violet-500"
+              accentColor="bg-[#111111] text-[#F4F4F0]"
               onClick={() => setShowWheelModal(true)}
             />
           </div>
@@ -774,7 +768,7 @@ export default function App() {
         <PointsPrizeTicker />
 
         {!hasSupabaseEnv && (
-          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-left text-xs leading-6 text-amber-800 shadow-sm">
+          <div className="mt-4 rounded-lg border-2 border-[#111111] bg-[#FFFDF7] px-4 py-3 text-left text-xs leading-6 text-[#111111] shadow-[3px_3px_0px_#D4FF00]">
             <div className="font-bold mb-1">雲端同步暫時停用</div>
             <div>{supabaseEnvWarning}</div>
             <div>目前仍可正常體驗每日扭蛋與本地積分，待環境變數補齊後再恢復登入與雲端同步。</div>
@@ -787,46 +781,46 @@ export default function App() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="bg-white/80 backdrop-blur-xl rounded-2xl p-5 shadow-xl border border-white/50 mb-6 relative w-full"
+          className="bg-[#FFFDF7] rounded-xl p-5 shadow-[4px_4px_0px_#111111] border-2 border-[#111111] mb-6 relative w-full"
         >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500/0 via-amber-500/50 to-amber-500/0 opacity-50 rounded-t-2xl"></div>
+          <div className="absolute top-0 left-0 w-full h-1.5 bg-[#D4FF00] rounded-t-[10px]"></div>
 
           <div className="flex flex-col items-center w-full">
             {/* How it works */}
-            <h3 className="text-sm font-bold text-stone-700 mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-amber-500" />
+            <h3 className="kiwimu-heading text-sm font-black text-[#111111] mb-4 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-[#111111]" />
               積分攻略
             </h3>
 
-            <div className="w-full space-y-3 text-sm text-stone-600">
-              <div className="flex items-start gap-3 bg-stone-50 rounded-lg p-3">
-                <span className="text-lg">🎰</span>
+            <div className="w-full space-y-3 text-sm text-[#111111]">
+              <div className="flex items-start gap-3 bg-[#F4F4F0] rounded-lg p-3 border border-[#111111]/20">
+                <Gift className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
                 <div>
-                  <p className="font-bold text-stone-700">每日轉蛋</p>
-                  <p className="text-xs text-stone-500">每天一次免費轉蛋，積分直接入帳</p>
+                  <p className="font-bold text-[#111111]">每日轉蛋</p>
+                  <p className="text-xs text-[#666666]">每天一次免費轉蛋，積分直接入帳</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 bg-stone-50 rounded-lg p-3">
-                <span className="text-lg">📋</span>
+              <div className="flex items-start gap-3 bg-[#F4F4F0] rounded-lg p-3 border border-[#111111]/20">
+                <Star className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
                 <div>
-                  <p className="font-bold text-stone-700">護照簽到</p>
-                  <p className="text-xs text-stone-500">連續簽到加成積分，7天/30天/100天里程碑</p>
+                  <p className="font-bold text-[#111111]">護照簽到</p>
+                  <p className="text-xs text-[#666666]">連續簽到加成積分，7天/30天/100天里程碑</p>
                 </div>
               </div>
-              <div className="flex items-start gap-3 bg-stone-50 rounded-lg p-3">
-                <span className="text-lg">🛍️</span>
+              <div className="flex items-start gap-3 bg-[#F4F4F0] rounded-lg p-3 border border-[#111111]/20">
+                <ShoppingBag className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
                 <div>
-                  <p className="font-bold text-stone-700">積分兌換</p>
-                  <p className="text-xs text-stone-500">到護照商店用積分兌換甜點、咖啡及周邊</p>
+                  <p className="font-bold text-[#111111]">積分兌換</p>
+                  <p className="text-xs text-[#666666]">到護照商店用積分兌換甜點、咖啡及周邊</p>
                 </div>
               </div>
             </div>
 
             {/* Kiwimu character */}
             <div className="mt-4 flex items-end justify-center gap-3">
-              <div className="relative bg-white border border-stone-200 text-stone-600 text-[10px] px-3 py-2 rounded-2xl rounded-br-none shadow-sm max-w-[180px] text-right leading-relaxed">
+              <div className="relative bg-[#F4F4F0] border-2 border-[#111111] text-[#111111] text-[10px] px-3 py-2 rounded-lg rounded-br-none shadow-[3px_3px_0px_#D4FF00] max-w-[180px] text-right leading-relaxed">
                 <p>
-                  每天來轉轉好運，積分越多、離免費甜點越近喔 ✨
+                  每天來轉轉好運，積分越多、離免費甜點越近。
                 </p>
               </div>
               <motion.div
@@ -849,17 +843,17 @@ export default function App() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.6 }}
-          className="bg-stone-100/80 rounded-2xl p-4 border border-stone-200 border-dashed mb-6 w-full flex items-center gap-4"
+          className="bg-[#E5E5E5] rounded-xl p-4 border-2 border-[#111111] border-dashed mb-6 w-full flex items-center gap-4"
         >
-          <div className="w-12 h-12 rounded-xl bg-stone-200 flex items-center justify-center text-2xl shrink-0">
-            🎨
+          <div className="w-12 h-12 rounded-lg bg-[#FFFDF7] border-2 border-[#111111] flex items-center justify-center text-sm font-black shrink-0">
+            K
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <h3 className="text-sm font-black text-stone-600">我的 Kiwimu</h3>
-              <span className="text-[10px] font-bold bg-stone-200 text-stone-500 px-2 py-0.5 rounded-full">即將推出</span>
+              <h3 className="kiwimu-heading text-sm font-black text-[#111111]">我的 Kiwimu</h3>
+              <span className="text-[10px] font-bold bg-[#FFFDF7] text-[#666666] border border-[#111111] px-2 py-0.5 rounded-md">即將推出</span>
             </div>
-            <p className="text-[11px] text-stone-400 leading-tight">用積分解鎖背景、配件，收集 Bascat、Eggle 等夥伴角色</p>
+            <p className="text-[11px] text-[#666666] leading-tight">用積分解鎖背景、配件，收集 Bascat、Eggle 等夥伴角色</p>
           </div>
         </motion.div>
 
@@ -877,14 +871,14 @@ export default function App() {
       </AnimatePresence>
 
       {/* --- Sticky Bottom Action Bar --- */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-stone-200 z-40 pb-8 sm:pb-4 safe-area-pb">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F4F4F0]/95 backdrop-blur-md border-t-2 border-[#111111] z-40 pb-8 sm:pb-4 safe-area-pb">
         {/* Step indicators */}
-        <div className="max-w-md mx-auto w-full mb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-stone-500 text-center">
+        <div className="max-w-md mx-auto w-full mb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[#666666] text-center">
           <span className="text-[11px] font-medium">① 遊戲賺積分</span>
-          <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
+          <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
           <span className="text-[11px] font-medium">② 轉盤花積分</span>
-          <ChevronRight className="w-3 h-3 text-stone-300 shrink-0" />
-          <span className="text-[11px] font-medium text-amber-600">③ 護照商店換甜點</span>
+          <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
+          <span className="text-[11px] font-black text-[#111111]">③ 護照商店換甜點</span>
         </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
           {/* Points display */}
@@ -894,7 +888,7 @@ export default function App() {
             className="flex-1 py-3.5 px-4 cursor-default hover:bg-white"
             disabled
           >
-            <Coins className="w-4 h-4 text-amber-500" />
+            <Coins className="w-4 h-4 text-[#111111]" />
             <span className="text-sm">{totalPoints} 積分</span>
           </KiwimuButton>
 
