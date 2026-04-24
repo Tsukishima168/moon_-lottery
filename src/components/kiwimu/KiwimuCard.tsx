@@ -21,10 +21,10 @@ function KiwimuCard({ className, variant = "white", ...props }: KiwimuCardProps)
   return (
     <Card
       className={cn(
-        "rounded-2xl border-[1.5px] border-stone-200/60 shadow-md",
-        "backdrop-blur-sm transition-[box-shadow,transform] duration-300",
-        "hover:shadow-lg hover:-translate-y-0.5",
-        variant === "paper" ? "bg-[#F9F8F2]" : "bg-white/90",
+        "rounded-xl border-2 border-[#111111] shadow-[4px_4px_0px_#111111]",
+        "transition-[box-shadow,transform] duration-300",
+        "hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_#111111]",
+        variant === "paper" ? "bg-[#F4F4F0]" : "bg-[#FFFDF7]",
         className
       )}
       {...props}

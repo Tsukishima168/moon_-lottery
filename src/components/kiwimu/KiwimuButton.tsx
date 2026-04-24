@@ -27,13 +27,13 @@ function KiwimuButton({
 
   const variantClasses = {
     default: [
-      "bg-white border-[1.5px] border-stone-200 text-stone-800",
-      "shadow-sm hover:bg-stone-50 hover:shadow-md",
+      "bg-[#FFFDF7] border-2 border-[#111111] text-[#111111]",
+      "shadow-[3px_3px_0px_#111111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#111111]",
       "active:scale-[0.98] transition-all",
     ].join(" "),
     accent: [
-      "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0",
-      "shadow-lg shadow-amber-400/30 hover:shadow-amber-400/50",
+      "bg-[#D4FF00] text-[#111111] border-2 border-[#111111]",
+      "shadow-[3px_3px_0px_#111111] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#111111]",
       "active:scale-[0.98] transition-all",
     ].join(" "),
     line: [
@@ -42,7 +42,7 @@ function KiwimuButton({
       "active:scale-[0.98] transition-all",
     ].join(" "),
     ghost: [
-      "bg-stone-100 hover:bg-stone-200 text-stone-600 border-0",
+      "bg-[#E5E5E5] hover:bg-[#d8d8d2] text-[#111111] border-2 border-transparent",
       "transition-colors",
     ].join(" "),
   }
@@ -52,7 +52,7 @@ function KiwimuButton({
       asChild={asChild}
       variant="outline"
       className={cn(
-        "rounded-xl font-bold cursor-pointer select-none",
+        "rounded-lg font-black cursor-pointer select-none tracking-wide",
         sizeClasses[size],
         variantClasses[variant],
         className

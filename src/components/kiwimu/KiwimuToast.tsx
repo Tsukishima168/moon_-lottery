@@ -12,7 +12,7 @@ function KiwimuToaster() {
       offset={96}
       toastOptions={{
         className:
-          "bg-stone-900 text-stone-50 rounded-full shadow-lg border-0 px-6 py-3 text-sm font-medium",
+          "bg-[#111111] text-[#F4F4F0] rounded-lg shadow-[4px_4px_0px_#D4FF00] border border-[#D4FF00] px-5 py-3 text-sm font-bold",
       }}
     />
   )

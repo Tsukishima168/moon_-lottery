@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils"
 
 type KiwimuDialogContentProps = React.ComponentProps<typeof DialogContent> & {
-  /** 頂部色條顏色（CSS class），例如 "bg-gradient-to-r from-amber-400 to-orange-400" */
+  /** 頂部色條顏色（CSS class），例如 "bg-[#D4FF00]" */
   accentColor?: string
 }
 
@@ -34,7 +34,7 @@ function KiwimuDialogContent({
   return (
     <DialogContent
       className={cn(
-        "rounded-2xl border-0 shadow-2xl bg-white/95 backdrop-blur-xl",
+        "rounded-xl border-2 border-[#111111] shadow-[6px_6px_0px_#D4FF00] bg-[#FFFDF7]",
         "w-full max-w-[340px] p-0 overflow-hidden gap-0",
         className
       )}
