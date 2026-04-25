@@ -7,6 +7,7 @@ import GameCard from './src/components/GameCard';
 import LuckyWheel from './src/components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
+import { buildPassportLoginUrl } from './src/lib/authStorage';
 import { KiwimuButton, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
@@ -389,10 +390,8 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const handleGoogleLogin = () => {
-    // 統一走 Passport 登入中心（SSO）
-    const redirectTo = encodeURIComponent(window.location.origin);
-    window.location.href = `https://passport.kiwimu.com?redirect_to=${redirectTo}`;
+  const handlePassportLogin = () => {
+    window.location.href = buildPassportLoginUrl();
   };
   const handleSignOut = async () => {
     if (!supabase) {
@@ -669,8 +668,8 @@ export default function App() {
             會員同步暫停中
           </div>
         ) : (
-          <button onClick={handleGoogleLogin} className="flex items-center gap-1.5 text-xs bg-[#111111] text-[#F4F4F0] px-3 py-1.5 rounded-md hover:bg-black transition-colors">
-            <LogIn size={13} /> Google 登入
+          <button onClick={handlePassportLogin} className="flex items-center gap-1.5 text-xs bg-[#111111] text-[#F4F4F0] px-3 py-1.5 rounded-md hover:bg-black transition-colors">
+            <LogIn size={13} /> Passport 登入
           </button>
         )}
       </div>
