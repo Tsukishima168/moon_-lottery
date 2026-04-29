@@ -380,11 +380,24 @@ export default function App() {
     // 讀取 .kiwimu.com cookie session（跨網域共享）
     supabase.auth.getSession().then(({ data: { session } }) => {
       setAuthUser(session?.user ?? null);
-    });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
-      setAuthUser(session?.user ?? null);
       if (session?.user) {
         supabase.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
+        trackUserEvent('site_visited', {
+          site_id: 'gacha',
+          source: 'initial_session',
+          path: window.location.pathname,
+        });
+      }
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setAuthUser(session?.user ?? null);
+      if (session?.user && event === 'SIGNED_IN') {
+        supabase.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
+        trackUserEvent('site_visited', {
+          site_id: 'gacha',
+          source: 'auth_session',
+          path: window.location.pathname,
+        });
       }
     });
     return () => subscription.unsubscribe();
@@ -669,7 +682,7 @@ export default function App() {
           </div>
         ) : (
           <button onClick={handlePassportLogin} className="flex items-center gap-1.5 text-xs bg-[#111111] text-[#F4F4F0] px-3 py-1.5 rounded-md hover:bg-black transition-colors">
-            <LogIn size={13} /> Passport 登入
+            <LogIn size={13} /> Google 登入
           </button>
         )}
       </div>
