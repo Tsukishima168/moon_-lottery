@@ -1,21 +1,16 @@
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
-import { createSharedAuthStorage } from './authStorage'
+/**
+ * supabase.ts — re-exports auth.ts singleton，確保全站只有一個 Supabase client 實例
+ * 不要在這裡再 createClient()；所有 auth 設定集中在 auth.ts
+ */
+import { getAuthClient } from './auth';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+export const hasSupabaseEnv = Boolean(
+  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
-export const hasSupabaseEnv = Boolean(supabaseUrl && supabaseAnonKey)
-
-export const supabase: SupabaseClient | null = hasSupabaseEnv
-  ? createClient(supabaseUrl as string, supabaseAnonKey as string, {
-      auth: {
-        persistSession: true,
-        detectSessionInUrl: true,
-        storage: createSharedAuthStorage(),
-      },
-    })
-  : null
+/** 全站唯一 Supabase client（來自 auth.ts singleton） */
+export const supabase = getAuthClient();
 
 export const supabaseEnvWarning = hasSupabaseEnv
   ? null
-  : 'Supabase 環境變數未設定，會員登入與雲端同步已暫時停用。'
+  : 'Supabase 環境變數未設定，會員登入與雲端同步已暫時停用。';
