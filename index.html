@@ -12,6 +12,41 @@
   <link rel="canonical" href="https://gacha.kiwimu.com/" />
   <link rel="llms" type="text/plain" href="/llms.txt" />
 
+  <script>
+    (() => {
+      window.__GACHA_INITIAL_SEARCH__ = window.location.search;
+
+      const url = new URL(window.location.href);
+      const trackingParams = [
+        'utm_source',
+        'utm_medium',
+        'utm_campaign',
+        'utm_content',
+        'utm_term',
+        'from',
+        'source',
+        'source_site',
+        'origin_path',
+        'entry_surface',
+        'destination_type'
+      ];
+      const hasTrackingParam = trackingParams.some((param) => url.searchParams.has(param));
+
+      if (hasTrackingParam) {
+        trackingParams.forEach((param) => url.searchParams.delete(param));
+        const nextSearch = url.searchParams.toString();
+        window.history.replaceState({}, '', `${url.pathname}${nextSearch ? `?${nextSearch}` : ''}${url.hash}`);
+      }
+
+      if (Array.from(url.searchParams.keys()).length > 0) {
+        const robots = document.querySelector('meta[name="robots"]') || document.createElement('meta');
+        robots.setAttribute('name', 'robots');
+        robots.setAttribute('content', 'noindex,nofollow');
+        document.head.appendChild(robots);
+      }
+    })();
+  </script>
+
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Kiwimu Gacha" />
