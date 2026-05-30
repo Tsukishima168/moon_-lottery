@@ -8,11 +8,12 @@ import LuckyWheel from './src/components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
 import { buildPassportLoginUrl } from './src/lib/authStorage';
+import { trackUtmLanding, trackOutboundClick } from './src/lib/crossSiteTracking';
 import { KiwimuButton, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('event', eventName, params);
+    (window as any).gtag('event', eventName, { site_id: 'gacha', ...params });
   }
 };
 
@@ -404,7 +405,9 @@ export default function App() {
   }, []);
 
   const handlePassportLogin = () => {
-    window.location.href = buildPassportLoginUrl();
+    const loginUrl = buildPassportLoginUrl();
+    trackOutboundClick(loginUrl, 'passport_login');
+    window.location.href = loginUrl;
   };
   const handleSignOut = async () => {
     if (!supabase) {
@@ -444,6 +447,7 @@ export default function App() {
       page_path: window.location.pathname,
       page_title: document.title,
     });
+    trackUtmLanding();
 
     // GA4 duration tracking
     const startTime = Date.now();
@@ -643,6 +647,8 @@ export default function App() {
     const url = pendingSync
       ? buildPassportSyncUrl(ASSETS.passportUrl, pendingSync.amount, 'gacha', pendingSync.latestTimestamp)
       : ASSETS.passportUrl;
+
+    trackOutboundClick(url, `passport_store:${label}`);
 
     if (pendingSync) {
       showTransientToast(`準備同步 ${pendingSync.amount} 積分到 Passport。`);
