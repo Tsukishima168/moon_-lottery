@@ -1,3 +1,22 @@
+# Kiwimu Gacha (月島・遊戲中心) - robots.txt
+# Public discovery policy:
+# - Allow search crawlers and OAI-SearchBot to read the public game page.
+# - Disallow GPTBot for model-training crawl while still allowing ChatGPT Search.
+# - Block query-string URLs (tracking params are scrubbed client-side).
+
+User-agent: OAI-SearchBot
+Allow: /
+Allow: /llms.txt
+Disallow: /*?*
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /llms.txt
+Disallow: /*?*
+
 User-agent: *
 Allow: /
 Allow: /llms.txt

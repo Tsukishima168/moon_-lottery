@@ -9,6 +9,12 @@
   <meta name="keywords" content="月島甜點, Kiwimu, 奇威鳥, 月島遊戲中心, 每日搖珠機, 幸運轉盤, Kiwimu 積分, Passport 商店, 甜點兌換" />
   <meta name="robots" content="index, follow" />
   <meta name="google-site-verification" content="2RFBMYJ30DsIGKJ9nRS1286s4lbJNFMOsK7s_QDQhSs" />
+
+  <!-- 地理標記（與 map / kiwimu / passport 同一 NAP） -->
+  <meta name="geo.placename" content="台南市安南區本原街一段97巷168號" />
+  <meta name="geo.region" content="TW-TN" />
+  <meta name="geo.position" content="23.0473181;120.1987003" />
+  <meta name="ICBM" content="23.0473181, 120.1987003" />
   <link rel="canonical" href="https://gacha.kiwimu.com/" />
   <link rel="llms" type="text/plain" href="/llms.txt" />
 
@@ -70,13 +76,40 @@
       "@context": "https://schema.org",
       "@graph": [
         {
-          "@type": "Organization",
-          "@id": "https://gacha.kiwimu.com/#organization",
-          "name": "月島甜點事務所 MoonMoon Dessert",
-          "url": "https://gacha.kiwimu.com/",
+          "@type": ["Bakery", "CafeOrCoffeeShop"],
+          "@id": "https://map.kiwimu.com/#moonmoon",
+          "name": "Moon Moon 月島甜點",
+          "alternateName": ["月島甜點店", "MOON MOON", "月島甜點事務所"],
+          "description": "位於台南市安南區本原街一段97巷168號的療癒系甜點品牌，以甜點、Kiwimu 角色與心理學敘事陪伴情緒。",
+          "url": "https://map.kiwimu.com/",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "本原街一段97巷168號",
+            "addressLocality": "台南市",
+            "addressRegion": "安南區",
+            "addressCountry": "TW"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 23.0473181,
+            "longitude": 120.1987003
+          },
+          "hasMenu": "https://map.kiwimu.com/menu",
+          "servesCuisine": "Dessert",
+          "priceRange": "$$",
           "sameAs": [
-            "https://www.instagram.com/moon_moon_dessert/"
+            "https://www.instagram.com/moon_moon_dessert/",
+            "https://lin.ee/MndRHE2",
+            "https://kiwimu.com"
           ]
+        },
+        {
+          "@type": "Thing",
+          "@id": "https://kiwimu.com/#kiwimu",
+          "name": "Kiwimu",
+          "description": "Moon Moon 月島甜點的敘事角色。圓潤白色鳥型生物，由鮮奶油誕生，以 16 型 MBTI 人格化身，承載品牌的情緒敘事。",
+          "isPartOf": { "@id": "https://map.kiwimu.com/#moonmoon" },
+          "url": "https://kiwimu.com"
         },
         {
           "@type": "WebApplication",
@@ -87,14 +120,9 @@
           "applicationCategory": "GameApplication",
           "operatingSystem": "Web",
           "inLanguage": "zh-TW",
-          "isPartOf": {
-            "@type": "WebSite",
-            "@id": "https://kiwimu.com/#website",
-            "name": "Kiwimu"
-          },
-          "publisher": {
-            "@id": "https://gacha.kiwimu.com/#organization"
-          },
+          "isPartOf": { "@id": "https://map.kiwimu.com/#moonmoon" },
+          "publisher": { "@id": "https://map.kiwimu.com/#moonmoon" },
+          "about": { "@id": "https://kiwimu.com/#kiwimu" },
           "description": "Kiwimu 的月島・遊戲中心，提供每日搖珠機、幸運轉盤與 Passport 商店兌換導流。",
           "offers": {
             "@type": "Offer",
