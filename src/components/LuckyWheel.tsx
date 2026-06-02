@@ -81,7 +81,12 @@ const WheelDisk: React.FC<{ rotation: number; isSpinning: boolean }> = ({ rotati
                 width: 52,
               }}
             >
-              <span className="text-base leading-none">{prize.icon}</span>
+              <span
+                className="kiwimu-mono rounded-sm border border-[#111111]/30 bg-[#FFFDF7]/70 px-1 text-[8px] font-black leading-tight"
+                style={{ color: prize.textColor }}
+              >
+                {prize.icon}
+              </span>
               <span
                 className="text-[9px] font-bold leading-tight text-center mt-0.5 whitespace-nowrap"
                 style={{ color: prize.textColor }}
@@ -136,7 +141,7 @@ const ResultModal: React.FC<{
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', damping: 10, delay: 0.1 }}
-            className="w-16 h-16 rounded-lg border-2 border-[#111111] flex items-center justify-center mb-3 text-4xl shadow-inner"
+            className="kiwimu-mono w-16 h-16 rounded-lg border-2 border-[#111111] flex items-center justify-center mb-3 px-2 text-center text-xl font-black tracking-tight shadow-inner"
             style={{ background: prize.color }}
           >
             {prize.icon}
@@ -375,7 +380,9 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
               {WHEEL_PRIZES.map((prize) => (
                 <div key={prize.id} className="flex items-center justify-between px-3 py-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{prize.icon}</span>
+                    <span className="kiwimu-mono min-w-10 rounded border border-[#111111]/20 bg-[#F4F4F0] px-1.5 py-0.5 text-center text-[10px] font-black text-[#111111]">
+                      {prize.icon}
+                    </span>
                     <span className="text-xs font-medium text-[#111111]">{prize.name}</span>
                   </div>
                   <span className="text-[11px] text-[#666666] font-bold">
