@@ -608,7 +608,7 @@ export default function App() {
         reward_name: selectedPrize.label,
       });
 
-      // 🎮 LIFF-4：廣播積分事件給 Passport（跨站同步）
+      // LIFF-4：廣播積分事件給 Passport（跨站同步）
       document.dispatchEvent(new CustomEvent('kiwimu:points_earned', {
         detail: {
           points: selectedPrize.points,

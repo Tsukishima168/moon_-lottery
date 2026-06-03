@@ -15,7 +15,7 @@ export interface WheelPrize {
   weight: number;         // 加權機率（所有格子總和 = 1000）
   color: string;          // 轉盤扇形顏色
   textColor: string;      // 文字顏色
-  icon: string;           // emoji
+  icon: string;           // short display code
   description: string;    // 結果彈窗說明
   buffKey?: string;       // buff 類：localStorage key
   couponLabel?: string;   // coupon 類：顯示名稱
@@ -49,7 +49,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 300,
     color: '#E5E5E5',
     textColor: '#111111',
-    icon: '🪙',
+    icon: 'P5',
     description: '獲得 5 積分，繼續累積！',
   },
   {
@@ -60,7 +60,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 220,
     color: '#FFFDF7',
     textColor: '#111111',
-    icon: '✨',
+    icon: 'P10',
     description: '獲得 10 積分！',
   },
   {
@@ -71,7 +71,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 150,
     color: '#D4AF37',
     textColor: '#111111',
-    icon: '⭐',
+    icon: 'P25',
     description: '獲得 25 積分，不錯的收穫！',
   },
   {
@@ -82,7 +82,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 100,
     color: '#D4FF00',
     textColor: '#111111',
-    icon: '🌿',
+    icon: '2X',
     description: '明日簽到積分加倍！好好利用它。',
     buffKey: WHEEL_CONFIG.doubleCheckinBuffKey,
   },
@@ -94,7 +94,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 80,
     color: '#F4F4F0',
     textColor: '#111111',
-    icon: '🎡',
+    icon: 'FS',
     description: '下一次轉盤免費！運氣來了擋不住。',
   },
   {
@@ -105,7 +105,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 60,
     color: '#C9A46A',
     textColor: '#111111',
-    icon: '🌟',
+    icon: 'P50',
     description: '獲得 50 積分！今天手氣不錯。',
   },
   {
@@ -116,7 +116,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 50,
     color: '#2A9D8F',
     textColor: '#111111',
-    icon: '☕',
+    icon: 'D80',
     description: '可折抵飲品 80 元，出示給店員確認。',
     couponLabel: '飲品折扣 80 元',
   },
@@ -128,7 +128,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 25,
     color: '#111111',
     textColor: '#F4F4F0',
-    icon: '💫',
+    icon: 'P100',
     description: '大獎！獲得 100 積分！',
   },
   {
@@ -139,7 +139,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 10,
     color: '#111111',
     textColor: '#D4FF00',
-    icon: '🔮',
+    icon: 'ST',
     description: '稀有轉盤限定印章，集章任務加一！',
   },
   {
@@ -150,7 +150,7 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     weight: 5,
     color: '#D4FF00',
     textColor: '#111111',
-    icon: '🍮',
+    icon: 'D200',
     description: '免費甜點一份！快點到店核銷。',
     couponLabel: '免費甜點兌換券',
   },
