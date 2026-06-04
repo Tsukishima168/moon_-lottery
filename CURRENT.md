@@ -1,0 +1,61 @@
+# Gacha Current
+
+Last updated: 2026-06-04
+
+## Status
+
+- Repository: `/Users/pensoair/Desktop/Web-Projects/sites/gacha-kiwimu-com`
+- Current branch: `main`
+- Remote tracking: `origin/main`
+- Latest checked commit: `3559adc fix(gacha): replace wheel emoji with reward codes`
+- Working tree at handoff: clean before this documentation pass
+- Production role: campaign/game center, daily points draw, lucky wheel, Passport point sync, LINE share surface
+
+## Stack
+
+- App runtime: React 19 + Vite 6
+- Styling: Tailwind CSS 4 plus Kiwimu/shadcn-style local components
+- Motion: Framer Motion
+- Data/auth: Supabase anon client and shared Passport SSO cookie/session
+- Analytics: GA4 through `react-ga4` and local tracking helpers
+- PWA: vite-plugin-pwa
+- LINE: LIFF share is lazy-initialized when the user shares
+
+## Operational Boundary
+
+- Gacha owns campaign/game mechanics and point-award UX.
+- Passport owns identity, persistent profile, and reward redemption surface.
+- Shop owns checkout, payment, and order fulfillment.
+- Map owns store/menu/location browsing.
+- MBTI/Kiwimu owns quiz and content discovery.
+
+## UI Language Rule
+
+- Do not reintroduce emoji into customer-facing Gacha UI.
+- Reward identifiers should be text labels, reward codes, icons, point values, colors, or structured badges.
+- The latest checked code replaced wheel emoji with reward codes; preserve that direction in future changes.
+
+## Important Files
+
+- `App.tsx`: daily draw, point balance, sync prompts, main layout.
+- `src/components/LuckyWheel.tsx`: wheel spend/earn flow and reward display.
+- `pointsSystem.ts`: local point ledger and Passport sync URL helpers.
+- `wheelService.ts`: wheel prize/config service logic.
+- `src/lib/auth.ts`: shared Supabase auth client.
+- `src/lib/liffShare.ts`: LINE share flow.
+- `src/lib/crossSiteTracking.ts`: cross-site attribution.
+
+## Known Risks
+
+- Daily limit is localStorage based and can be bypassed by clearing storage.
+- Unauthenticated users can use local points, but cloud sync requires Passport/Supabase session.
+- LIFF behavior must be tested inside LINE before public claims.
+- README still contains AI Studio boilerplate and is not the main operational source.
+- Older BOOT content includes a historical feature-branch snapshot; use the 2026-06-04 overlay first.
+
+## Next Work Queue
+
+- Add fixture-backed smoke tests for daily draw and wheel result states.
+- Keep point transaction action names aligned with shared Supabase schema.
+- Validate production LIFF share once `VITE_LINE_LIFF_ID` is set.
+- Keep Gacha campaign CTAs pointed to Passport redemption or Shop purchase flow as appropriate.

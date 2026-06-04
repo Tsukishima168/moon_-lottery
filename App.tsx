@@ -892,11 +892,11 @@ export default function App() {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F4F4F0]/95 backdrop-blur-md border-t-2 border-[#111111] z-40 pb-8 sm:pb-4 safe-area-pb">
         {/* Step indicators */}
         <div className="max-w-md mx-auto w-full mb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[#666666] text-center">
-          <span className="text-[11px] font-medium">① 遊戲賺積分</span>
+          <span className="text-[11px] font-medium">Step 1 遊戲賺積分</span>
           <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
-          <span className="text-[11px] font-medium">② 轉盤花積分</span>
+          <span className="text-[11px] font-medium">Step 2 轉盤花積分</span>
           <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
-          <span className="text-[11px] font-black text-[#111111]">③ 護照商店換甜點</span>
+          <span className="text-[11px] font-black text-[#111111]">Step 3 護照商店換甜點</span>
         </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
           {/* Points display */}
