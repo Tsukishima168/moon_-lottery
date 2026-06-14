@@ -5,7 +5,7 @@
 
 // ─── Types ───
 
-export type WheelPrizeType = 'points' | 'buff' | 'free_spin' | 'coupon' | 'stamp';
+export type WheelPrizeType = 'points' | 'free_spin' | 'coupon' | 'stamp';
 
 export interface WheelPrize {
   id: string;
@@ -17,7 +17,6 @@ export interface WheelPrize {
   textColor: string;      // 文字顏色
   icon: string;           // short display code
   description: string;    // 結果彈窗說明
-  buffKey?: string;       // buff 類：localStorage key
   couponLabel?: string;   // coupon 類：顯示名稱
 }
 
@@ -34,7 +33,6 @@ export interface WheelSpinResult {
 export const WHEEL_CONFIG = {
   costPerSpin: 30,
   freeSpinBuffKey: 'moonmoon_wheel_free_spin',
-  doubleCheckinBuffKey: 'moonmoon_wheel_buff_double_checkin',
 };
 
 // ─── Prize Pool ───
@@ -75,16 +73,15 @@ export const WHEEL_PRIZES: WheelPrize[] = [
     description: '獲得 25 積分，不錯的收穫！',
   },
   {
-    id: 'buff_double_checkin',
-    name: '雙倍簽到',
-    type: 'buff',
-    value: 0,
+    id: 'points_20',
+    name: '+20 積分',
+    type: 'points',
+    value: 20,
     weight: 100,
-    color: '#D4FF00',
+    color: '#D9CBA3',
     textColor: '#111111',
-    icon: '2X',
-    description: '明日簽到積分加倍！好好利用它。',
-    buffKey: WHEEL_CONFIG.doubleCheckinBuffKey,
+    icon: 'P20',
+    description: '獲得 20 積分！',
   },
   {
     id: 'free_spin',
@@ -208,19 +205,5 @@ export function grantFreeSpin(): void {
     localStorage.setItem(WHEEL_CONFIG.freeSpinBuffKey, 'true');
   } catch (e) {
     console.error('Failed to grant free spin:', e);
-  }
-}
-
-/**
- * 設定雙倍簽到 buff（明天簽到用）
- */
-export function grantDoubleCheckin(): void {
-  try {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const dateStr = tomorrow.toISOString().split('T')[0];
-    localStorage.setItem(WHEEL_CONFIG.doubleCheckinBuffKey, dateStr);
-  } catch (e) {
-    console.error('Failed to grant double checkin buff:', e);
   }
 }

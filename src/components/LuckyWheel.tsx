@@ -15,7 +15,6 @@ import {
   calculateTargetAngle,
   consumeFreeSpin,
   grantFreeSpin,
-  grantDoubleCheckin,
   WheelPrize,
 } from '../../wheelService';
 import { getPointsBalance, addPoints, deductPoints } from '../../pointsSystem';
@@ -272,8 +271,6 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
         const updated = addPoints(prize.value, 'wheel_earn', `轉盤獲得 ${prize.name}`);
         finalBalance = updated;
         onPointsChange(updated);
-      } else if (prize.type === 'buff') {
-        grantDoubleCheckin();
       } else if (prize.type === 'free_spin') {
         grantFreeSpin();
       }
