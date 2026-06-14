@@ -1,6 +1,6 @@
 /**
- * wheelService.ts — 幸運轉盤服務
- * 獎品池定義、加權隨機、角度計算
+ * wheelService.ts — 扭蛋機服務
+ * 獎品池定義、加權隨機
  */
 
 // ─── Types ───
@@ -13,19 +13,11 @@ export interface WheelPrize {
   type: WheelPrizeType;
   value: number;          // points 數量（coupon 面額，其他為 0）
   weight: number;         // 加權機率（所有格子總和 = 1000）
-  color: string;          // 轉盤扇形顏色
+  color: string;          // 扭蛋 / 獎品顏色
   textColor: string;      // 文字顏色
   icon: string;           // short display code
   description: string;    // 結果彈窗說明
   couponLabel?: string;   // coupon 類：顯示名稱
-}
-
-export interface WheelSpinResult {
-  prize: WheelPrize;
-  prizeIndex: number;     // 0-based 獎品 index
-  targetAngle: number;    // 最終旋轉角度（供動畫用）
-  newBalance: number;     // 扣點後 + 獎品後的積分餘額
-  isFreeSpin: boolean;    // 本次是否免費轉
 }
 
 // ─── Config ───
@@ -85,14 +77,14 @@ export const WHEEL_PRIZES: WheelPrize[] = [
   },
   {
     id: 'free_spin',
-    name: '免費再轉',
+    name: '免費再扭',
     type: 'free_spin',
     value: 30,
     weight: 80,
     color: '#F4F4F0',
     textColor: '#111111',
     icon: 'FS',
-    description: '下一次轉盤免費！運氣來了擋不住。',
+    description: '下一次扭蛋免費！運氣來了擋不住。',
   },
   {
     id: 'points_50',
@@ -156,7 +148,6 @@ export const WHEEL_PRIZES: WheelPrize[] = [
 // ─── Utils ───
 
 const TOTAL_WEIGHT = WHEEL_PRIZES.reduce((sum, p) => sum + p.weight, 0);
-const SEGMENT_ANGLE = 360 / WHEEL_PRIZES.length;
 
 /**
  * 加權隨機抽取獎品
@@ -173,19 +164,7 @@ export function drawPrize(): { prize: WheelPrize; prizeIndex: number } {
 }
 
 /**
- * 計算轉盤停止角度
- * 轉至少 5 圈 + 停在 prizeIndex 對應的扇形中心
- * 指針固定在 12 點鐘方向（頂部）
- */
-export function calculateTargetAngle(prizeIndex: number, currentRotation: number): number {
-  const prizeCenter = prizeIndex * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
-  const targetInCircle = (360 - prizeCenter + 360) % 360;
-  const fullSpins = 5 * 360;
-  return currentRotation + fullSpins + targetInCircle - (currentRotation % 360);
-}
-
-/**
- * 檢查是否有免費轉機會
+ * 檢查是否有免費扭蛋機會
  */
 export function consumeFreeSpin(): boolean {
   try {
