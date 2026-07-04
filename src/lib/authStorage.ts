@@ -212,6 +212,11 @@ export function openPassportLogin(options: OpenPassportLoginOptions = {}): boole
 
   const returnTo = options.returnTo || window.location.href;
   const sourceSite = options.sourceSite || 'gacha';
+  const fallbackUrl = buildPassportLoginUrl(returnTo, {
+    ...options,
+    sourceSite,
+    presentation: 'redirect',
+  });
   const popupUrl = buildPassportLoginUrl(returnTo, {
     ...options,
     sourceSite,
@@ -223,8 +228,12 @@ export function openPassportLogin(options: OpenPassportLoginOptions = {}): boole
     options.onError?.({
       type: PASSPORT_SSO_MESSAGE_TYPE,
       status: 'error',
-      message: '登入視窗被瀏覽器阻擋，請允許彈出視窗後再試一次。',
+      redirectTo: fallbackUrl,
+      message: '登入視窗被瀏覽器阻擋，正在改用整頁登入…',
     });
+    // Popup blocked by the browser: fall back to a full-page redirect so the
+    // user can still complete login, instead of leaving them on an error toast.
+    window.location.href = fallbackUrl;
     return false;
   }
 
