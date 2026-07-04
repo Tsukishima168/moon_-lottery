@@ -23,7 +23,7 @@ import { sharePullToLine } from '../lib/liffShare';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('event', eventName, params);
+    (window as any).gtag('event', eventName, { site_id: 'gacha', ...params });
   }
 };
 
