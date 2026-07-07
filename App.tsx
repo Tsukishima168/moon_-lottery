@@ -7,7 +7,7 @@ import GameCard from './src/components/GameCard';
 import LuckyWheel from './src/components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
-import { buildPassportLoginUrl } from './src/lib/authStorage';
+import { openPassportLogin, PASSPORT_AUTH_COMPLETE_EVENT } from './src/lib/authStorage';
 import { trackUtmLanding, trackOutboundClick } from './src/lib/crossSiteTracking';
 import { KiwimuButton, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
 
@@ -401,13 +401,34 @@ export default function App() {
         });
       }
     });
-    return () => subscription.unsubscribe();
+
+    const handlePassportAuthComplete = () => {
+      void supabase.auth.getSession().then(({ data: { session } }) => {
+        setAuthUser(session?.user ?? null);
+        if (session?.user) {
+          supabase.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
+          trackUserEvent('site_visited', {
+            site_id: 'gacha',
+            source: 'passport_popup',
+            path: window.location.pathname,
+          });
+        }
+      });
+    };
+    window.addEventListener(PASSPORT_AUTH_COMPLETE_EVENT, handlePassportAuthComplete);
+
+    return () => {
+      window.removeEventListener(PASSPORT_AUTH_COMPLETE_EVENT, handlePassportAuthComplete);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handlePassportLogin = () => {
-    const loginUrl = buildPassportLoginUrl();
-    trackOutboundClick(loginUrl, 'passport_login');
-    window.location.href = loginUrl;
+    trackOutboundClick('https://passport.kiwimu.com', 'passport_login');
+    openPassportLogin({
+      intent: 'gacha_login',
+      onError: (detail) => showTransientToast(detail.message || '登入失敗，請再試一次。'),
+    });
   };
   const handleSignOut = async () => {
     if (!supabase) {

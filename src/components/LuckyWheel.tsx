@@ -1,21 +1,21 @@
 /**
- * LuckyWheel.tsx — 幸運轉盤
- * 全螢幕 Modal：CSS conic-gradient 轉盤 + framer-motion 旋轉動畫 + 結果展示
+ * LuckyWheel.tsx — 扭蛋機
+ * 全螢幕 Modal：framer-motion + CSS 扭蛋機（轉鈕 → 扭蛋掉落 → 結果展示）
+ * 抽獎邏輯沿用 wheelService（drawPrize / 發獎 / 機率不變），僅替換前端揭曉呈現。
+ * 注意：GA event 名稱（wheel_spin_*）刻意保留，維持分析資料連續性。
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Coins, ChevronDown, ChevronUp, ShoppingBag, MessageCircle, RotateCcw } from 'lucide-react';
+import { X, Coins, ChevronDown, ChevronUp, MessageCircle, RotateCcw } from 'lucide-react';
 import { KiwimuButton } from '@/components/kiwimu';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   WHEEL_PRIZES,
   WHEEL_CONFIG,
   drawPrize,
-  calculateTargetAngle,
   consumeFreeSpin,
   grantFreeSpin,
-  grantDoubleCheckin,
   WheelPrize,
 } from '../../wheelService';
 import { getPointsBalance, addPoints, deductPoints } from '../../pointsSystem';
@@ -23,85 +23,113 @@ import { sharePullToLine } from '../lib/liffShare';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('event', eventName, params);
+    (window as any).gtag('event', eventName, { site_id: 'gacha', ...params });
   }
 };
 
-// ─── 轉盤本體 ───────────────────────────────────────────────
+// 扭蛋掉落動畫總時長（ms）— 與 handleSpin 的結果延遲對齊
+const DISPENSE_MS = 2600;
 
-const SEGMENT_COUNT = WHEEL_PRIZES.length;
-const SEGMENT_ANGLE = 360 / SEGMENT_COUNT;
+// ─── 扭蛋機本體 ─────────────────────────────────────────────
 
-function buildConicGradient(): string {
-  const parts = WHEEL_PRIZES.map((prize, i) => {
-    const start = i * SEGMENT_ANGLE;
-    const end = (i + 1) * SEGMENT_ANGLE;
-    return `${prize.color} ${start}deg ${end}deg`;
-  });
-  return `conic-gradient(from 0deg, ${parts.join(', ')})`;
-}
+// 玻璃罩內漂浮的扭蛋（品牌色，避免破壞黑白極簡視覺）
+const DOME_CAPSULES = [
+  { x: 34, y: 60, top: '#D4FF00' },
+  { x: 92, y: 44, top: '#FFFDF7' },
+  { x: 150, y: 62, top: '#E5E5E5' },
+  { x: 60, y: 104, top: '#D4AF37' },
+  { x: 118, y: 102, top: '#D4FF00' },
+  { x: 92, y: 128, top: '#FFFDF7' },
+];
 
-const WheelDisk: React.FC<{ rotation: number; isSpinning: boolean }> = ({ rotation, isSpinning }) => {
+const Capsule: React.FC<{ size: number; topColor: string }> = ({ size, topColor }) => (
+  <div
+    className="rounded-full border-2 border-[#111111] overflow-hidden relative shrink-0"
+    style={{ width: size, height: size }}
+  >
+    <div className="absolute inset-x-0 top-0 h-1/2" style={{ background: topColor }} />
+    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[#FFFDF7]" />
+    <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[2px] bg-[#111111]/70" />
+  </div>
+);
+
+const CapsuleMachine: React.FC<{ isSpinning: boolean; dispenseColor: string }> = ({
+  isSpinning,
+  dispenseColor,
+}) => {
   return (
-    <div className="relative w-64 h-64 mx-auto">
-      {/* 指針（固定在頂部） */}
-      <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center">
-        <div
-          className="w-0 h-0"
-          style={{
-            borderLeft: '8px solid transparent',
-            borderRight: '8px solid transparent',
-            borderTop: '20px solid #111111',
-          }}
-        />
+    <div className="relative w-64 h-[320px] mx-auto select-none">
+      {/* ── 玻璃罩 ── */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full border-4 border-[#111111] bg-gradient-to-b from-[#FFFFFF] to-[#F4F4F0] shadow-[5px_5px_0px_#111111] overflow-hidden">
+        {/* 高光 */}
+        <div className="absolute top-4 left-6 w-10 h-10 rounded-full bg-white/70 blur-[2px]" />
+        {/* 罩內扭蛋 */}
+        {DOME_CAPSULES.map((c, i) => (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{ left: c.x, top: c.y }}
+            animate={
+              isSpinning
+                ? { y: [0, -6, 4, -3, 0], x: [0, 3, -3, 2, 0], rotate: [0, 8, -8, 4, 0] }
+                : { y: [0, -2, 0], rotate: [0, 2, 0] }
+            }
+            transition={{
+              duration: isSpinning ? 0.5 : 2.4,
+              repeat: Infinity,
+              delay: i * 0.12,
+              ease: 'easeInOut',
+            }}
+          >
+            <Capsule size={26} topColor={c.top} />
+          </motion.div>
+        ))}
       </div>
 
-      {/* 轉盤本體 */}
-      <motion.div
-        className="w-full h-full rounded-full shadow-[6px_6px_0px_#111111] border-4 border-[#111111] relative overflow-hidden"
-        style={{ background: buildConicGradient() }}
-        animate={{ rotate: rotation }}
-        transition={isSpinning ? { duration: 4, ease: [0.17, 0.67, 0.12, 0.99] } : { duration: 0 }}
-      >
-        {/* 扇形文字標籤 */}
-        {WHEEL_PRIZES.map((prize, i) => {
-          const angle = i * SEGMENT_ANGLE + SEGMENT_ANGLE / 2;
-          const rad = ((angle - 90) * Math.PI) / 180;
-          const r = 88;
-          const x = 128 + r * Math.cos(rad);
-          const y = 128 + r * Math.sin(rad);
-          return (
-            <div
-              key={prize.id}
-              className="absolute pointer-events-none flex flex-col items-center"
-              style={{
-                left: x,
-                top: y,
-                transform: `translate(-50%, -50%) rotate(${angle}deg)`,
-                width: 52,
-              }}
-            >
-              <span
-                className="kiwimu-mono rounded-sm border border-[#111111]/30 bg-[#FFFDF7]/70 px-1 text-[8px] font-black leading-tight"
-                style={{ color: prize.textColor }}
-              >
-                {prize.icon}
-              </span>
-              <span
-                className="text-[9px] font-bold leading-tight text-center mt-0.5 whitespace-nowrap"
-                style={{ color: prize.textColor }}
-              >
-                {prize.name}
-              </span>
-            </div>
-          );
-        })}
-      </motion.div>
+      {/* ── 機身 ── */}
+      <div className="absolute top-[176px] left-1/2 -translate-x-1/2 w-44 h-32 rounded-2xl bg-[#111111] shadow-[5px_5px_0px_#D4FF00] flex flex-col items-center pt-4">
+        <span className="kiwimu-mono text-[10px] font-black tracking-[0.2em] text-[#D4FF00]">
+          KIWIMU GACHA
+        </span>
 
-      {/* 中心圓 */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-[#111111] border-4 border-[#D4FF00] shadow-lg z-10 flex items-center justify-center">
-        <span className="text-[#F4F4F0] text-xs font-black">GO</span>
+        {/* 轉鈕 */}
+        <motion.div
+          className="mt-2 w-12 h-12 rounded-full bg-[#D4FF00] border-4 border-[#FFFDF7] flex items-center justify-center"
+          animate={{ rotate: isSpinning ? 720 : 0 }}
+          transition={{ duration: DISPENSE_MS / 1000 - 0.6, ease: 'easeInOut' }}
+        >
+          <div className="relative w-5 h-5">
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[3px] bg-[#111111] rounded-full" />
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-[3px] bg-[#111111] rounded-full" />
+          </div>
+        </motion.div>
+
+        {/* 出蛋口 */}
+        <div className="mt-3 w-20 h-7 rounded-md bg-[#000000] border-2 border-[#333333]" />
       </div>
+
+      {/* ── 接蛋盤 ── */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-32 h-6 rounded-b-xl bg-[#FFFDF7] border-2 border-[#111111] border-t-0" />
+
+      {/* ── 掉落的扭蛋（僅轉動時出現）── */}
+      <AnimatePresence>
+        {isSpinning && (
+          <motion.div
+            className="absolute z-10"
+            style={{ left: '50%', x: '-50%', top: 248 }}
+            initial={{ y: -10, opacity: 0, scale: 0.5 }}
+            animate={{
+              y: [-10, 44, 30, 40, 36],
+              opacity: [0, 1, 1, 1, 1],
+              scale: [0.5, 1, 1, 1, 1],
+            }}
+            exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.2 } }}
+            transition={{ duration: 1.5, delay: 0.7, times: [0, 0.55, 0.72, 0.88, 1], ease: 'easeOut' }}
+          >
+            <Capsule size={34} topColor={dispenseColor} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
@@ -147,7 +175,7 @@ const ResultModal: React.FC<{
             {prize.icon}
           </motion.div>
 
-          <p className="kiwimu-mono text-[11px] text-[#666666] mb-1 uppercase">wheel reward</p>
+          <p className="kiwimu-mono text-[11px] text-[#666666] mb-1 uppercase">gacha capsule</p>
           <h2 className="kiwimu-heading text-2xl font-black text-[#111111] mb-1">{prize.name}</h2>
           <p className="text-sm text-[#666666] text-center mb-4">{prize.description}</p>
 
@@ -168,7 +196,7 @@ const ResultModal: React.FC<{
 
           {/* CTA 群組 */}
           <div className="w-full flex flex-col gap-2">
-            {/* 再轉一次 */}
+            {/* 再扭一次 */}
             {(isFreeSpin || hasEnoughForNextSpin) && (
               <KiwimuButton
                 variant="accent"
@@ -177,7 +205,7 @@ const ResultModal: React.FC<{
                 onClick={onSpinAgain}
               >
                 <RotateCcw className="w-4 h-4" />
-                {isFreeSpin ? '免費再轉一次！' : `再轉一次（${WHEEL_CONFIG.costPerSpin}P）`}
+                {isFreeSpin ? '免費再扭一次！' : `再扭一次（${WHEEL_CONFIG.costPerSpin}P）`}
               </KiwimuButton>
             )}
 
@@ -223,16 +251,14 @@ interface LuckyWheelProps {
 }
 
 const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToast }) => {
-  const [rotation, setRotation] = useState(0);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [dispenseColor, setDispenseColor] = useState('#D4FF00');
   const [resultPrize, setResultPrize] = useState<WheelPrize | null>(null);
   const [resultBalance, setResultBalance] = useState(0);
   const [isFreeSpin, setIsFreeSpin] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [showPrizeList, setShowPrizeList] = useState(false);
   const currentBalance = getPointsBalance();
-  const rotationRef = useRef(rotation);
-  rotationRef.current = rotation;
 
   const canAfford = currentBalance >= WHEEL_CONFIG.costPerSpin;
   const hasFreeSpinBuff = !!localStorage.getItem(WHEEL_CONFIG.freeSpinBuffKey);
@@ -245,7 +271,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
     if (!isFree) {
       const result = deductPoints(WHEEL_CONFIG.costPerSpin, 'wheel_spend', '幸運轉盤消費');
       if (!result.success) {
-        onToast('積分不足，無法轉盤！');
+        onToast('積分不足，無法扭蛋！');
         return;
       }
       onPointsChange(result.newBalance);
@@ -257,10 +283,9 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
 
     trackGtagEvent('wheel_spin_start', { is_free: isFree });
 
-    const { prize, prizeIndex } = drawPrize();
-    const targetAngle = calculateTargetAngle(prizeIndex, rotationRef.current);
-
-    setRotation(targetAngle);
+    const { prize } = drawPrize();
+    // 掉落的扭蛋顏色反映獎品（白色獎品改用 lime，避免在淺背景上看不見）
+    setDispenseColor(prize.color === '#FFFDF7' ? '#D4FF00' : prize.color);
 
     setTimeout(() => {
       setIsSpinning(false);
@@ -269,11 +294,9 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
 
       // 發獎
       if (prize.type === 'points') {
-        const updated = addPoints(prize.value, 'wheel_earn', `轉盤獲得 ${prize.name}`);
+        const updated = addPoints(prize.value, 'wheel_earn', `扭蛋獲得 ${prize.name}`);
         finalBalance = updated;
         onPointsChange(updated);
-      } else if (prize.type === 'buff') {
-        grantDoubleCheckin();
       } else if (prize.type === 'free_spin') {
         grantFreeSpin();
       }
@@ -288,7 +311,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
       setResultPrize(prize);
       setResultBalance(finalBalance);
       setShowResult(true);
-    }, 4200);
+    }, DISPENSE_MS);
   };
 
   return (
@@ -301,7 +324,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
       {/* Header */}
       <div className="sticky top-0 z-10 bg-[#F4F4F0]/95 backdrop-blur-sm border-b-2 border-[#111111] flex items-center justify-between px-5 py-3">
         <div>
-          <h2 className="kiwimu-heading text-base font-black text-[#111111]">幸運轉盤</h2>
+          <h2 className="kiwimu-heading text-base font-black text-[#111111]">扭蛋機</h2>
           <p className="kiwimu-mono text-[11px] text-[#666666]">每次 {WHEEL_CONFIG.costPerSpin} 積分</p>
         </div>
         <div className="flex items-center gap-3">
@@ -318,11 +341,11 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
         </div>
       </div>
 
-      {/* 轉盤區 */}
+      {/* 扭蛋機區 */}
       <div className="flex-1 flex flex-col items-center justify-start px-5 pt-8 pb-6 max-w-md mx-auto w-full">
-        {/* 轉盤本體 */}
+        {/* 扭蛋機本體 */}
         <div className="mb-8">
-          <WheelDisk rotation={rotation} isSpinning={isSpinning} />
+          <CapsuleMachine isSpinning={isSpinning} dispenseColor={dispenseColor} />
         </div>
 
         {/* CTA */}
@@ -340,15 +363,15 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
           }`}
         >
           {isSpinning ? (
-            <span>轉動中...</span>
+            <span>扭蛋中...</span>
           ) : hasFreeSpinBuff ? (
             <>
               <span className="kiwimu-mono">FREE</span>
-              <span>免費轉一次！</span>
+              <span>免費扭一次！</span>
             </>
           ) : canAfford ? (
             <>
-              <span>轉一次</span>
+              <span>扭一次</span>
               <span className="text-sm font-bold opacity-80">（{WHEEL_CONFIG.costPerSpin}P）</span>
             </>
           ) : (
@@ -358,7 +381,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
 
         {!canAfford && !hasFreeSpinBuff && (
           <p className="text-xs text-[#666666] text-center mb-4">
-            每日簽到或免費轉蛋可累積積分
+            每日簽到或免費扭蛋可累積積分
           </p>
         )}
 
