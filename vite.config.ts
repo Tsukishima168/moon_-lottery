@@ -22,8 +22,7 @@ export default defineConfig(({ mode }) => {
             if (
               id.includes('/react/') ||
               id.includes('/react-dom/') ||
-              id.includes('scheduler') ||
-              id.includes('react-ga4')
+              id.includes('scheduler')
             ) {
               return 'react-vendor'
             }
