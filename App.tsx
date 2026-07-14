@@ -377,12 +377,13 @@ export default function App() {
       setAuthUser(null);
       return;
     }
+    const sb = supabase;
 
     // 讀取 .kiwimu.com cookie session（跨網域共享）
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    sb.auth.getSession().then(({ data: { session } }) => {
       setAuthUser(session?.user ?? null);
       if (session?.user) {
-        supabase.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
+        sb.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
         trackUserEvent('site_visited', {
           site_id: 'gacha',
           source: 'initial_session',
@@ -390,10 +391,10 @@ export default function App() {
         });
       }
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
       setAuthUser(session?.user ?? null);
       if (session?.user && event === 'SIGNED_IN') {
-        supabase.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
+        sb.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
         trackUserEvent('site_visited', {
           site_id: 'gacha',
           source: 'auth_session',
@@ -403,10 +404,10 @@ export default function App() {
     });
 
     const handlePassportAuthComplete = () => {
-      void supabase.auth.getSession().then(({ data: { session } }) => {
+      void sb.auth.getSession().then(({ data: { session } }) => {
         setAuthUser(session?.user ?? null);
         if (session?.user) {
-          supabase.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
+          sb.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
           trackUserEvent('site_visited', {
             site_id: 'gacha',
             source: 'passport_popup',

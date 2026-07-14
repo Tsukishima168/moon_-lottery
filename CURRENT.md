@@ -59,3 +59,8 @@ Last updated: 2026-06-04
 - Keep point transaction action names aligned with shared Supabase schema.
 - Validate production LIFF share once `VITE_LINE_LIFF_ID` is set.
 - Keep Gacha campaign CTAs pointed to Passport redemption or Shop purchase flow as appropriate.
+
+## 2026-07-08 升級輪（全面升級指令）
+- 目標：S1 — TypeScript 升 6 + 計畫內修正
+- 狀態：✅ 完成並簽收（60a50cf deps + ad8c3aa 源碼；tsc 0 錯、build 綠、react-ga4 移除）。未 push
+- 下一步：Penso 同意後 push
