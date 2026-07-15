@@ -696,7 +696,7 @@ export default function App() {
     <div className="kiwimu-page-bg relative min-h-screen font-sans text-[#111111] overflow-x-hidden flex flex-col pb-24">
 
       {/* Auth 狀態浮動列 */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex justify-end px-4 py-2 bg-[#F4F4F0]/90 backdrop-blur-sm border-b-2 border-[#111111]">
+      <div className="sticky top-0 z-50 flex min-h-10 justify-end border-b-2 border-[#111111] bg-[#F4F4F0]/90 px-4 py-2 backdrop-blur-sm">
         {authUser ? (
           <div className="flex items-center gap-2 text-xs text-[#111111]">
             <span className="truncate max-w-[120px]">{authUser.email?.split('@')[0]}</span>
@@ -714,8 +714,6 @@ export default function App() {
           </button>
         )}
       </div>
-      {/* Auth 列佔位 */}
-      <div className="h-10" />
 
       {/* Background Pattern */}
       <main
@@ -736,6 +734,10 @@ export default function App() {
           transition={{ duration: 0.8 }}
           className="text-center mb-6 w-full"
         >
+          <div className="mb-4">
+            <p className="ku-site-kicker">04 / Play &amp; fortune</p>
+          </div>
+
           {/* Points Badge */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
