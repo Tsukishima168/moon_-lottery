@@ -334,7 +334,8 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-[#FFFDF7] border-2 border-[#111111] flex items-center justify-center text-[#111111] hover:bg-[#E5E5E5] transition-colors"
+            className="flex h-11 w-11 items-center justify-center rounded-lg border-2 border-[#111111] bg-[#FFFDF7] text-[#111111] transition-colors hover:bg-[#E5E5E5]"
+            aria-label="關閉扭蛋機"
           >
             <X className="w-4 h-4" />
           </button>

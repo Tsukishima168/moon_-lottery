@@ -1,6 +1,15 @@
 # Gacha Current
 
-Last updated: 2026-06-04
+Last updated: 2026-07-15
+
+## Five-site visual system · 2026-07-15
+
+- Added the shared Kiwimu Universe rail and `04 / Play & fortune` role label while preserving Gacha's paper-grid and heavy-border game language.
+- Converted the auth bar to sticky flow and separated the role label from the points badge to avoid desktop/mobile collisions.
+- Fresh-context review found the wheel's full-screen close header could sit under the rail; the shared rail now yields to full-screen gameplay, and the close control has a labelled 44px touch target.
+- Verified `npx tsc --noEmit --pretty false`, `npm run build`, desktop and 390px browser QA, active-site centering, and zero page-level horizontal overflow/runtime console errors.
+- No draw, wheel, points, Passport sync, or LIFF mutation was executed.
+- Status: source changes are local and uncommitted; the pre-existing branch divergence (`ahead 3, behind 1`) remains untouched and no push/deployment was performed.
 
 ## Status
 
