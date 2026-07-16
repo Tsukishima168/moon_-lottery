@@ -9,12 +9,31 @@ import { createSharedAuthStorage, openPassportLogin, type OpenPassportLoginOptio
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+export const EXPECTED_SUPABASE_PROJECT_REF = 'xlqwfaailjyvsycjnzkz';
+
+export function getSupabaseConfigurationIssue(): string | null {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    return 'Supabase 環境變數未設定，會員登入與 Economy v2 已安全停用。';
+  }
+
+  try {
+    const url = new URL(SUPABASE_URL);
+    const expectedHost = `${EXPECTED_SUPABASE_PROJECT_REF}.supabase.co`;
+    if (url.protocol !== 'https:' || url.hostname !== expectedHost) {
+      return 'Supabase 專案識別不符，會員登入與 Economy v2 已安全停用。';
+    }
+  } catch {
+    return 'Supabase URL 無效，會員登入與 Economy v2 已安全停用。';
+  }
+
+  return null;
+}
 // ── Auth Client（cookie storage，單例）───────────────────────────────────────
 
 let _authClient: SupabaseClient | null = null;
 
 export function getAuthClient(): SupabaseClient | null {
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return null;
+  if (getSupabaseConfigurationIssue()) return null;
   if (_authClient) return _authClient;
 
   _authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
