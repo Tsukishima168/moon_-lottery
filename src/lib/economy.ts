@@ -118,12 +118,7 @@ const GAME_DATA_KEYS = [
   'balance',
   'event',
 ] as const;
-const GAME_REPLAY_DATA_KEYS = [
-  'play_id',
-  'outcome',
-  'cost_points',
-  'reward_points',
-] as const;
+const GAME_REPLAY_DATA_KEYS = GAME_DATA_KEYS;
 const OUTCOME_KEYS = ['prize_code', 'label', 'metadata'] as const;
 const LEDGER_ENTRY_KEYS = [
   'id',
@@ -245,10 +240,7 @@ function parseGameSuccessData(value: unknown): EconomyGameData | null {
 
 function parseGameReplayData(value: unknown): EconomyGameData | null {
   if (!isExactRecord(value, GAME_REPLAY_DATA_KEYS)) return null;
-  const core = parseGameCore(value);
-  if (!core) return null;
-
-  return { ...core, balance: null, event: null };
+  return parseGameSuccessData(value);
 }
 
 function failClosed<TData>(requestId: string): EconomyResult<TData> {

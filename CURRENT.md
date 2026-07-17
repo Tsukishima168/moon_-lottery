@@ -2,7 +2,7 @@
 
 Last updated: 2026-07-16
 
-## Economy v2 adapter · Draft
+## Economy v2 adapter · release candidate
 
 - Branch: `codex/gacha-economy-v2-adapter-20260716`
 - Gacha no longer treats localStorage, a device id, URL parameters, CustomEvent, or client RPC amounts as point authority.
@@ -11,7 +11,12 @@ Last updated: 2026-07-16
 - A `0` server balance remains `0`; there is no fallback to anonymous/local points.
 - The Supabase client fails closed unless it targets `xlqwfaailjyvsycjnzkz.supabase.co`.
 - Static prize data is presentation-only. Unknown server prize codes use a neutral Kiwimu style and never create an asset.
-- Status: implementation and review in progress. Do not merge or deploy before the Shop migration/rollout gates below pass.
+- Canonical `ALREADY_PROCESSED` replay now requires the same committed balance
+  and event fields as the original success; a truncated replay fails closed
+  instead of leaving animation state split from the ledger.
+- Status: implementation, 28 Economy tests, production build, diff review and
+  shared hosted staging gates pass. Draft PR #19 remains unmerged and production
+  rollout remains off pending explicit migration/merge/deploy authorization.
 
 ## Release gates
 
@@ -48,7 +53,11 @@ Last updated: 2026-07-16
 ## Known limitations
 
 - Canonical Economy migrations are not deployed to production yet; rollout flags remain off.
-- Supabase preview branches are unavailable on the current plan (HTTP 402 / Pro required), so hosted validation needs an approved alternative before production push.
+- A dedicated hosted staging project was used instead of paid Supabase
+  Branching. The production-compatible baseline plus all six migrations passed
+  Supabase lint, Auth/RLS/PostgREST, replay, 100 deduction requests, 20 stock
+  requests and 20 lifetime-activation requests; staging was reset clean after
+  the run.
 - LIFF sharing still requires a real LINE client smoke test before public claims.
 - Old anonymous/local points are intentionally not imported 1:1.
 

@@ -198,16 +198,14 @@ describe('Economy response validation', () => {
     });
   });
 
-  it('parses the canonical replay result without a balance', async () => {
+  it('parses the canonical replay result with committed balance and event data', async () => {
     mocks.rpc.mockImplementation(async (_rpcName, params) => {
-      const replay = gameData();
-      const { balance: _balance, event: _event, ...replayWithoutBalance } = replay;
       return {
         data: {
           ok: false,
           code: 'ALREADY_PROCESSED',
           request_id: getRequestId(params),
-          data: replayWithoutBalance,
+          data: gameData(),
         },
         error: null,
       };
@@ -218,10 +216,29 @@ describe('Economy response validation', () => {
     expect(result.ok).toBe(false);
     expect(result.code).toBe('ALREADY_PROCESSED');
     if (result.code === 'ALREADY_PROCESSED') {
-      expect(result.data.balance).toBeNull();
-      expect(result.data.event).toBeNull();
+      expect(result.data.balance).toBe(140);
+      expect(result.data.event).toEqual({ event_id: PLAY_ID });
       expect(result.data.playId).toBe(PLAY_ID);
     }
+  });
+
+  it('fails closed when a replay omits committed balance or event data', async () => {
+    mocks.rpc.mockImplementation(async (_rpcName, params) => {
+      const replay = gameData();
+      const { balance: _balance, event: _event, ...truncatedReplay } = replay;
+      return {
+        data: {
+          ok: false,
+          code: 'ALREADY_PROCESSED',
+          request_id: getRequestId(params),
+          data: truncatedReplay,
+        },
+        error: null,
+      };
+    });
+
+    const result = await playDailyGacha();
+    expect(result.code).toBe('ROLLOUT_DISABLED');
   });
 
   it('fails closed on an unknown server code', async () => {
