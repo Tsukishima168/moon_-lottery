@@ -1,75 +1,71 @@
 # Gacha Current
 
-Last updated: 2026-07-15
+Last updated: 2026-07-16
 
-## Five-site visual system · 2026-07-15
+## Economy v2 adapter · release candidate
 
-- Added the shared Kiwimu Universe rail and `04 / Play & fortune` role label while preserving Gacha's paper-grid and heavy-border game language.
-- Converted the auth bar to sticky flow and separated the role label from the points badge to avoid desktop/mobile collisions.
-- Fresh-context review found the wheel's full-screen close header could sit under the rail; the shared rail now yields to full-screen gameplay, and the close control has a labelled 44px touch target.
-- Verified `npx tsc --noEmit --pretty false`, `npm run build`, desktop and 390px browser QA, active-site centering, and zero page-level horizontal overflow/runtime console errors.
-- No draw, wheel, points, Passport sync, or LIFF mutation was executed.
-- Status: source changes are local and uncommitted; the pre-existing branch divergence (`ahead 3, behind 1`) remains untouched and no push/deployment was performed.
+- Branch: `codex/gacha-economy-v2-adapter-20260716`
+- Gacha no longer treats localStorage, a device id, URL parameters, CustomEvent, or client RPC amounts as point authority.
+- Daily Gacha calls `play_daily_gacha`; the wheel calls `spin_reward_wheel`; wallet display calls `economy_get_wallet`.
+- The client sends only a request UUID. Daily limits, costs, weighted RNG, point spends, rewards and idempotency are canonical Shop/Supabase responsibilities.
+- A `0` server balance remains `0`; there is no fallback to anonymous/local points.
+- The Supabase client fails closed unless it targets `xlqwfaailjyvsycjnzkz.supabase.co`.
+- Static prize data is presentation-only. Unknown server prize codes use a neutral Kiwimu style and never create an asset.
+- Canonical `ALREADY_PROCESSED` replay now requires the same committed balance
+  and event fields as the original success; a truncated replay fails closed
+  instead of leaving animation state split from the ledger.
+- Status: implementation, 28 Economy tests, production build, diff review and
+  shared hosted staging gates pass. Draft PR #19 remains unmerged and production
+  rollout remains off pending explicit migration/merge/deploy authorization.
 
-## Status
+## Release gates
 
-- Repository: `/Users/pensoair/Desktop/Web-Projects/sites/gacha-kiwimu-com`
-- Current branch: `main`
-- Remote tracking: `origin/main`
-- Latest checked commit: `3559adc fix(gacha): replace wheel emoji with reward codes`
-- Working tree at handoff: clean before this documentation pass
-- Production role: campaign/game center, daily points draw, lucky wheel, Passport point sync, LINE share surface
+1. Shop remains the only shared migration publisher.
+2. Hosted migration history, dry-run, RLS, grants, search path and PostgREST exposure must pass.
+3. Gacha configs and prize rows are seeded but disabled until dedicated-account canary.
+4. Test replay, concurrent spend/reward and ledger reconciliation; mismatch must remain zero.
+5. Enable `gacha` read/write by dedicated account, then 10% → 50% → 100%, at least 24 hours and 20 valid events per stage.
+6. Any duplicate reward, negative balance, unknown project ref or ledger mismatch closes the rollout flag immediately.
 
-## Stack
+## Five-site visual system · shipped 2026-07-15
 
-- App runtime: React 19 + Vite 6
-- Styling: Tailwind CSS 4 plus Kiwimu/shadcn-style local components
-- Motion: Framer Motion
-- Data/auth: Supabase anon client and shared Passport SSO cookie/session
-- Analytics: GA4 through `react-ga4` and local tracking helpers
-- PWA: vite-plugin-pwa
-- LINE: LIFF share is lazy-initialized when the user shares
+- Shared Kiwimu Universe rail and `04 / Play & fortune` role label are live while preserving Gacha's paper-grid and heavy-border language.
+- The sticky auth bar, mobile rail, wheel overlay stacking and 44px close target passed desktop and 390px QA.
+- Visual PR #18 merged as `b859f279d5f14e6317af0c5ea949fd29f29ff476`.
 
-## Operational Boundary
+## Operational boundary
 
-- Gacha owns campaign/game mechanics and point-award UX.
-- Passport owns identity, persistent profile, and reward redemption surface.
-- Shop owns checkout, payment, and order fulfillment.
-- Map owns store/menu/location browsing.
-- MBTI/Kiwimu owns quiz and content discovery.
+- Gacha owns campaign presentation and game animation.
+- Shop/Supabase owns game rules, RNG, point ledger, costs, rewards, idempotency and rollout flags.
+- Passport owns identity, wallet history and reward redemption.
+- Map owns store/location presentation and staff-confirmed visit proof UX.
+- Kiwimu owns quiz/content UX and submits completion evidence without choosing a reward amount.
 
-## UI Language Rule
+## Important files
 
-- Do not reintroduce emoji into customer-facing Gacha UI.
-- Reward identifiers should be text labels, reward codes, icons, point values, colors, or structured badges.
-- The latest checked code replaced wheel emoji with reward codes; preserve that direction in future changes.
+- `App.tsx`: authenticated daily-game UX and authoritative wallet display.
+- `src/components/LuckyWheel.tsx`: server-result wheel animation.
+- `src/lib/economy.ts`: strict Economy RPC adapter and response parser.
+- `wheelService.ts`: presentation-only prize-code styles; no RNG or asset mutation.
+- `src/lib/auth.ts`: shared Supabase auth client and target-project validation.
+- `docs/ECONOMY_V2_ADAPTER.md`: contract, security boundary and release dependencies.
 
-## Important Files
+## Known limitations
 
-- `App.tsx`: daily draw, point balance, sync prompts, main layout.
-- `src/components/LuckyWheel.tsx`: wheel spend/earn flow and reward display.
-- `pointsSystem.ts`: local point ledger and Passport sync URL helpers.
-- `wheelService.ts`: wheel prize/config service logic.
-- `src/lib/auth.ts`: shared Supabase auth client.
-- `src/lib/liffShare.ts`: LINE share flow.
-- `src/lib/crossSiteTracking.ts`: cross-site attribution.
+- Canonical Economy migrations are not deployed to production yet; rollout flags remain off.
+- A dedicated hosted staging project was used instead of paid Supabase
+  Branching. The production-compatible baseline plus all six migrations passed
+  Supabase lint, Auth/RLS/PostgREST, replay, 100 deduction requests, 20 stock
+  requests and 20 lifetime-activation requests; staging was reset clean after
+  the run.
+- LIFF sharing still requires a real LINE client smoke test before public claims.
+- Old anonymous/local points are intentionally not imported 1:1.
 
-## Known Risks
+## Verification
 
-- Daily limit is localStorage based and can be bypassed by clearing storage.
-- Unauthenticated users can use local points, but cloud sync requires Passport/Supabase session.
-- LIFF behavior must be tested inside LINE before public claims.
-- README still contains AI Studio boilerplate and is not the main operational source.
-- Older BOOT content includes a historical feature-branch snapshot; use the 2026-06-04 overlay first.
+```bash
+npm run test:economy
+npm run build
+```
 
-## Next Work Queue
-
-- Add fixture-backed smoke tests for daily draw and wheel result states.
-- Keep point transaction action names aligned with shared Supabase schema.
-- Validate production LIFF share once `VITE_LINE_LIFF_ID` is set.
-- Keep Gacha campaign CTAs pointed to Passport redemption or Shop purchase flow as appropriate.
-
-## 2026-07-08 升級輪（全面升級指令）
-- 目標：S1 — TypeScript 升 6 + 計畫內修正
-- 狀態：✅ 完成並簽收（60a50cf deps + ad8c3aa 源碼；tsc 0 錯、build 綠、react-ga4 移除）。未 push
-- 下一步：Penso 同意後 push
+Also scan production source for `Math.random`, local point writes, `p_points`, Passport `amount` URLs and `kiwimu:points_earned`; none may remain on an asset path.
