@@ -21,6 +21,9 @@ export function getAuthClient(): SupabaseClient | null {
     auth: {
       persistSession: true,
       detectSessionInUrl: true,
+      // Passport 是唯一登入權威且走 PKCE；本站只讀共用 session，
+      // 明確指定 pkce 以免落到 supabase-js 的 implicit 預設。
+      flowType: 'pkce',
       storage: createSharedAuthStorage(),
     },
   });
