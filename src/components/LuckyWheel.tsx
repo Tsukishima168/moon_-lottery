@@ -1,24 +1,20 @@
 /**
  * LuckyWheel.tsx — 扭蛋機
  * 全螢幕 Modal：framer-motion + CSS 扭蛋機（轉鈕 → 扭蛋掉落 → 結果展示）
- * 抽獎邏輯沿用 wheelService（drawPrize / 發獎 / 機率不變），僅替換前端揭曉呈現。
+ * 經濟結果完全由 spin_reward_wheel RPC 決定；前端只負責動畫與呈現。
  * 注意：GA event 名稱（wheel_spin_*）刻意保留，維持分析資料連續性。
  */
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Coins, ChevronDown, ChevronUp, MessageCircle, RotateCcw } from 'lucide-react';
+import { X, Coins, MessageCircle, ShieldCheck } from 'lucide-react';
 import { KiwimuButton } from '@/components/kiwimu';
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 import {
-  WHEEL_PRIZES,
-  WHEEL_CONFIG,
-  drawPrize,
-  consumeFreeSpin,
-  grantFreeSpin,
-  WheelPrize,
+  presentWheelPrize,
+  WHEEL_PRESENTATION_NOTICE,
+  type WheelPrizePresentation,
 } from '../../wheelService';
-import { getPointsBalance, addPoints, deductPoints } from '../../pointsSystem';
+import { getEconomyWallet, spinRewardWheel } from '../lib/economy';
 import { sharePullToLine } from '../lib/liffShare';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
@@ -29,6 +25,22 @@ const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {})
 
 // 扭蛋掉落動畫總時長（ms）— 與 handleSpin 的結果延遲對齊
 const DISPENSE_MS = 2600;
+
+const economyErrorMessage = (code: string): string => {
+  switch (code) {
+    case 'AUTH_REQUIRED':
+      return '請先登入 Passport，再使用幸運轉盤。';
+    case 'INSUFFICIENT_POINTS':
+      return '目前積分不足，無法使用幸運轉盤。';
+    case 'LIMIT_REACHED':
+    case 'ALREADY_PROCESSED':
+      return '今天的幸運轉盤結果已經產生。';
+    case 'ROLLOUT_DISABLED':
+      return '幸運轉盤制度升級中，暫時不會扣除積分。';
+    default:
+      return '幸運轉盤暫時無法使用，請稍後再試。';
+  }
+};
 
 // ─── 扭蛋機本體 ─────────────────────────────────────────────
 
@@ -137,14 +149,11 @@ const CapsuleMachine: React.FC<{ isSpinning: boolean; dispenseColor: string }> =
 // ─── 結果彈窗 ───────────────────────────────────────────────
 
 const ResultModal: React.FC<{
-  prize: WheelPrize;
+  prize: WheelPrizePresentation;
   newBalance: number;
-  isFreeSpin: boolean;
-  hasEnoughForNextSpin: boolean;
-  onSpinAgain: () => void;
   onClose: () => void;
   onShare: (msg: string) => void;
-}> = ({ prize, newBalance, isFreeSpin, hasEnoughForNextSpin, onSpinAgain, onClose, onShare }) => {
+}> = ({ prize, newBalance, onClose, onShare }) => {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -179,14 +188,6 @@ const ResultModal: React.FC<{
           <h2 className="kiwimu-heading text-2xl font-black text-[#111111] mb-1">{prize.name}</h2>
           <p className="text-sm text-[#666666] text-center mb-4">{prize.description}</p>
 
-          {/* coupon 類：額外顯示提示 */}
-          {prize.type === 'coupon' && (
-            <div className="w-full bg-[#F4F4F0] border-2 border-[#111111] rounded-lg px-4 py-3 mb-4 text-center">
-              <p className="text-xs font-bold text-[#111111] mb-1">{prize.couponLabel}</p>
-              <p className="text-[11px] text-[#666666]">請在店員面前出示此畫面核銷</p>
-            </div>
-          )}
-
           {/* 積分餘額 */}
           <div className="flex items-center gap-2 bg-[#F4F4F0] rounded-lg border border-[#111111] px-4 py-2 mb-5">
             <Coins className="w-4 h-4 text-[#111111]" />
@@ -196,26 +197,13 @@ const ResultModal: React.FC<{
 
           {/* CTA 群組 */}
           <div className="w-full flex flex-col gap-2">
-            {/* 再扭一次 */}
-            {(isFreeSpin || hasEnoughForNextSpin) && (
-              <KiwimuButton
-                variant="accent"
-                size="md"
-                className="w-full py-3"
-                onClick={onSpinAgain}
-              >
-                <RotateCcw className="w-4 h-4" />
-                {isFreeSpin ? '免費再扭一次！' : `再扭一次（${WHEEL_CONFIG.costPerSpin}P）`}
-              </KiwimuButton>
-            )}
-
             {/* LINE 分享 */}
             <KiwimuButton
               variant="line"
               size="md"
               className="w-full py-3"
               onClick={async () => {
-                const result = await sharePullToLine(prize.name, prize.value);
+                const result = await sharePullToLine(prize.name, prize.rewardPoints);
                 if (result.ok) {
                   onShare('已開啟 LINE 分享。');
                 } else if ('message' in result) {
@@ -248,70 +236,82 @@ interface LuckyWheelProps {
   onClose: () => void;
   onPointsChange: (newBalance: number) => void;
   onToast: (msg: string) => void;
+  authenticated: boolean;
+  balance: number;
+  onLogin: () => void;
 }
 
-const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToast }) => {
+const LuckyWheel: React.FC<LuckyWheelProps> = ({
+  onClose,
+  onPointsChange,
+  onToast,
+  authenticated,
+  balance,
+  onLogin,
+}) => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [dispenseColor, setDispenseColor] = useState('#D4FF00');
-  const [resultPrize, setResultPrize] = useState<WheelPrize | null>(null);
+  const [resultPrize, setResultPrize] = useState<WheelPrizePresentation | null>(null);
   const [resultBalance, setResultBalance] = useState(0);
-  const [isFreeSpin, setIsFreeSpin] = useState(false);
   const [showResult, setShowResult] = useState(false);
-  const [showPrizeList, setShowPrizeList] = useState(false);
-  const currentBalance = getPointsBalance();
 
-  const canAfford = currentBalance >= WHEEL_CONFIG.costPerSpin;
-  const hasFreeSpinBuff = !!localStorage.getItem(WHEEL_CONFIG.freeSpinBuffKey);
-
-  const handleSpin = (freeSpinMode = false) => {
+  const handleSpin = async () => {
     if (isSpinning) return;
 
-    const isFree = freeSpinMode || consumeFreeSpin();
-
-    if (!isFree) {
-      const result = deductPoints(WHEEL_CONFIG.costPerSpin, 'wheel_spend', '幸運轉盤消費');
-      if (!result.success) {
-        onToast('積分不足，無法扭蛋！');
-        return;
-      }
-      onPointsChange(result.newBalance);
+    if (!authenticated) {
+      onToast('請先登入 Passport，再使用幸運轉盤。');
+      onLogin();
+      return;
     }
 
-    setIsFreeSpin(isFree);
     setIsSpinning(true);
     setShowResult(false);
+    const startedAt = Date.now();
+    trackGtagEvent('wheel_spin_start', { authority: 'server' });
 
-    trackGtagEvent('wheel_spin_start', { is_free: isFree });
+    const response = await spinRewardWheel();
+    const isCommittedResult = response.ok || response.code === 'ALREADY_PROCESSED';
 
-    const { prize } = drawPrize();
-    // 掉落的扭蛋顏色反映獎品（白色獎品改用 lime，避免在淺背景上看不見）
+    if (!isCommittedResult || !response.data) {
+      setIsSpinning(false);
+      onToast(economyErrorMessage(response.code));
+      if (response.code === 'AUTH_REQUIRED') onLogin();
+      return;
+    }
+
+    const prize = presentWheelPrize(
+      response.data.outcome.prizeCode,
+      response.data.outcome.label,
+      response.data.rewardPoints,
+    );
     setDispenseColor(prize.color === '#FFFDF7' ? '#D4FF00' : prize.color);
 
-    setTimeout(() => {
+    let authoritativeBalance = response.data.balance;
+    if (authoritativeBalance === null) {
+      const wallet = await getEconomyWallet();
+      authoritativeBalance = wallet.ok && wallet.data ? wallet.data.balance : balance;
+    }
+
+    const remainingAnimationMs = Math.max(0, DISPENSE_MS - (Date.now() - startedAt));
+    window.setTimeout(() => {
       setIsSpinning(false);
-
-      let finalBalance = getPointsBalance();
-
-      // 發獎
-      if (prize.type === 'points') {
-        const updated = addPoints(prize.value, 'wheel_earn', `扭蛋獲得 ${prize.name}`);
-        finalBalance = updated;
-        onPointsChange(updated);
-      } else if (prize.type === 'free_spin') {
-        grantFreeSpin();
-      }
+      setResultPrize(prize);
+      setResultBalance(authoritativeBalance);
+      onPointsChange(authoritativeBalance);
+      setShowResult(true);
 
       trackGtagEvent('wheel_spin_result', {
-        prize_id: prize.id,
-        prize_type: prize.type,
-        prize_value: prize.value,
-        is_free: isFree,
+        prize_id: response.data?.outcome.prizeCode,
+        reward_points: response.data?.rewardPoints,
+        cost_points: response.data?.costPoints,
+        response_code: response.code,
+        authority: 'server',
       });
 
-      setResultPrize(prize);
-      setResultBalance(finalBalance);
-      setShowResult(true);
-    }, DISPENSE_MS);
+      if (response.code === 'ALREADY_PROCESSED') {
+        onToast('已載入今天由伺服器保存的轉盤結果。');
+      }
+    }, remainingAnimationMs);
   };
 
   return (
@@ -325,12 +325,12 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
       <div className="sticky top-0 z-10 bg-[#F4F4F0]/95 backdrop-blur-sm border-b-2 border-[#111111] flex items-center justify-between px-5 py-3">
         <div>
           <h2 className="kiwimu-heading text-base font-black text-[#111111]">扭蛋機</h2>
-          <p className="kiwimu-mono text-[11px] text-[#666666]">每次 {WHEEL_CONFIG.costPerSpin} 積分</p>
+          <p className="kiwimu-mono text-[11px] text-[#666666]">每日一次・伺服器核定</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 bg-[#FFFDF7] rounded-lg px-3 py-1.5 border-2 border-[#111111] shadow-[2px_2px_0px_#111111]">
             <Coins className="w-3.5 h-3.5 text-[#111111]" />
-            <span className="text-sm font-black text-[#111111]">{currentBalance}</span>
+            <span className="text-sm font-black text-[#111111]">{balance}</span>
           </div>
           <button
             onClick={onClose}
@@ -351,72 +351,27 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
 
         {/* CTA */}
         <KiwimuButton
-          variant={isSpinning ? 'ghost' : (canAfford || hasFreeSpinBuff) ? 'accent' : 'ghost'}
+          variant={isSpinning ? 'ghost' : 'accent'}
           size="lg"
-          onClick={() => handleSpin(false)}
-          disabled={isSpinning || (!canAfford && !hasFreeSpinBuff)}
+          onClick={() => void handleSpin()}
+          disabled={isSpinning}
           className={`w-full max-w-xs py-4 rounded-lg font-black text-base mb-2 ${
             isSpinning
               ? 'bg-[#E5E5E5] text-[#666666] cursor-wait'
-              : !(canAfford || hasFreeSpinBuff)
-              ? 'bg-[#E5E5E5] text-[#666666] cursor-not-allowed'
               : ''
           }`}
         >
           {isSpinning ? (
             <span>扭蛋中...</span>
-          ) : hasFreeSpinBuff ? (
-            <>
-              <span className="kiwimu-mono">FREE</span>
-              <span>免費扭一次！</span>
-            </>
-          ) : canAfford ? (
-            <>
-              <span>扭一次</span>
-              <span className="text-sm font-bold opacity-80">（{WHEEL_CONFIG.costPerSpin}P）</span>
-            </>
           ) : (
-            <span>積分不足（需 {WHEEL_CONFIG.costPerSpin}P）</span>
+            <span>{authenticated ? '扭一次' : '登入後扭一次'}</span>
           )}
         </KiwimuButton>
 
-        {!canAfford && !hasFreeSpinBuff && (
-          <p className="text-xs text-[#666666] text-center mb-4">
-            每日簽到或免費扭蛋可累積積分
-          </p>
-        )}
-
-        {/* 獎品一覽（可收合） */}
-        <Collapsible
-          open={showPrizeList}
-          onOpenChange={setShowPrizeList}
-          className="w-full max-w-xs mt-2"
-        >
-          <CollapsibleTrigger
-            className="w-full flex items-center justify-between text-xs text-[#666666] font-bold py-2 px-1 cursor-pointer"
-          >
-            <span>獎品機率一覽</span>
-            {showPrizeList ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <div className="bg-[#FFFDF7] rounded-lg border-2 border-[#111111] divide-y divide-[#111111]/10">
-              {WHEEL_PRIZES.map((prize) => (
-                <div key={prize.id} className="flex items-center justify-between px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <span className="kiwimu-mono min-w-10 rounded border border-[#111111]/20 bg-[#F4F4F0] px-1.5 py-0.5 text-center text-[10px] font-black text-[#111111]">
-                      {prize.icon}
-                    </span>
-                    <span className="text-xs font-medium text-[#111111]">{prize.name}</span>
-                  </div>
-                  <span className="text-[11px] text-[#666666] font-bold">
-                    {((prize.weight / 1000) * 100).toFixed(1)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
+        <div className="mt-3 flex w-full max-w-xs items-start gap-2 rounded-lg border-2 border-[#111111] bg-[#FFFDF7] px-3 py-3 text-left text-xs leading-5 text-[#666666]">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
+          <span>{WHEEL_PRESENTATION_NOTICE}</span>
+        </div>
       </div>
 
       {/* 結果 Modal */}
@@ -425,12 +380,6 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
           <ResultModal
             prize={resultPrize}
             newBalance={resultBalance}
-            isFreeSpin={!!localStorage.getItem(WHEEL_CONFIG.freeSpinBuffKey)}
-            hasEnoughForNextSpin={resultBalance >= WHEEL_CONFIG.costPerSpin}
-            onSpinAgain={() => {
-              setShowResult(false);
-              handleSpin(false);
-            }}
             onClose={() => setShowResult(false)}
             onShare={onToast}
           />

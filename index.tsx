@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client';
 import './src/index.css';
 import App from './App';
 import KiwimuUniverseRail from './src/components/KiwimuUniverseRail';
+import { trackEvent } from './src/lib/crossSiteTracking';
+import { supabase } from './src/lib/supabase';
 import './src/styles/kiwimu-universe.css';
 
 const rootElement = document.getElementById('root');
@@ -13,7 +15,11 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <KiwimuUniverseRail currentSite="gacha" />
+    <KiwimuUniverseRail
+      currentSite="gacha"
+      authClient={supabase}
+      onTrack={trackEvent}
+    />
     <App />
   </React.StrictMode>
 );

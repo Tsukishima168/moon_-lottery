@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, ShoppingBag, TrendingUp, LogIn, LogOut, MessageCircle } from 'lucide-react';
-import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, consumePassportSyncAck, getPendingPassportSync, PointAction } from './pointsSystem';
+import type { User } from '@supabase/supabase-js';
 import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
+import { getEconomyWallet, playDailyGacha } from './src/lib/economy';
 import GameCard from './src/components/GameCard';
 import LuckyWheel from './src/components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
@@ -17,31 +18,6 @@ const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {})
   }
 };
 
-const safeStorageGet = (key: string): string | null => {
-  try {
-    return localStorage.getItem(key);
-  } catch (error) {
-    console.error(`Failed to read localStorage key: ${key}`, error);
-    return null;
-  }
-};
-
-const safeStorageSet = (key: string, value: string) => {
-  try {
-    localStorage.setItem(key, value);
-  } catch (error) {
-    console.error(`Failed to write localStorage key: ${key}`, error);
-  }
-};
-
-const safeStorageRemove = (key: string) => {
-  try {
-    localStorage.removeItem(key);
-  } catch (error) {
-    console.error(`Failed to remove localStorage key: ${key}`, error);
-  }
-};
-
 // --- Assets & Data ---
 const ASSETS = {
   mainImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-03_juymmq.webp",
@@ -50,15 +26,42 @@ const ASSETS = {
   passportUrl: "https://passport.kiwimu.com",
 };
 
-// ─── Points Prize Pool (replaces physical prizes) ───
-const POINT_PRIZES = [
-  { id: 'bronze', label: '銅球', points: 5, weight: 45, color: 'bg-[#C9A46A]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
-  { id: 'silver', label: '銀球', points: 10, weight: 30, color: 'bg-[#E5E5E5]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
-  { id: 'gold', label: '金球', points: 25, weight: 15, color: 'bg-[#D4AF37]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
-  { id: 'rainbow', label: '青球', points: 50, weight: 5, color: 'bg-[#2A9D8F]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
-  { id: 'lucky', label: '黑球', points: 100, weight: 3, color: 'bg-[#111111]', border: 'border-[#D4FF00]', glow: 'shadow-lime-200' },
-  { id: 'jackpot', label: '月光球', points: 200, weight: 2, color: 'bg-[#D4FF00]', border: 'border-[#111111]', glow: 'shadow-lime-200' },
+type DailyPrize = {
+  id: string;
+  label: string;
+  points: number;
+  color: string;
+  border: string;
+  glow: string;
+};
+
+// 純顯示樣式；獎勵點數與抽選機率只存在於伺服器規則。
+const DAILY_PRIZE_PRESENTATIONS: Array<Omit<DailyPrize, 'points'>> = [
+  { id: 'bronze', label: '銅球', color: 'bg-[#C9A46A]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
+  { id: 'silver', label: '銀球', color: 'bg-[#E5E5E5]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
+  { id: 'gold', label: '金球', color: 'bg-[#D4AF37]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
+  { id: 'rainbow', label: '青球', color: 'bg-[#2A9D8F]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
+  { id: 'lucky', label: '黑球', color: 'bg-[#111111]', border: 'border-[#D4FF00]', glow: 'shadow-lime-200' },
+  { id: 'jackpot', label: '月光球', color: 'bg-[#D4FF00]', border: 'border-[#111111]', glow: 'shadow-lime-200' },
 ];
+
+const DAILY_PRIZE_FALLBACK: Omit<DailyPrize, 'points'> = {
+  id: 'kiwimu',
+  label: 'Kiwimu 好運球',
+  color: 'bg-[#D4FF00]',
+  border: 'border-[#111111]',
+  glow: 'shadow-lime-200',
+};
+
+const presentDailyPrize = (prizeCode: string, label: string, rewardPoints: number): DailyPrize => {
+  const style = DAILY_PRIZE_PRESENTATIONS.find((prize) => prize.id === prizeCode) ?? DAILY_PRIZE_FALLBACK;
+  return {
+    ...style,
+    id: prizeCode,
+    label: label.trim().slice(0, 80) || style.label,
+    points: rewardPoints,
+  };
+};
 
 // 詩籤 Kiwimu Blessing (unchanged)
 const FORTUNES = [
@@ -73,6 +76,43 @@ const FORTUNES = [
   { id: 9, level: "大吉", text: "金銀財寶滿滿滿，今年的你就是行走的招財貓！" },
   { id: 10, level: "隱藏版", text: "Kiwimu 賜予你隱藏版好運，心想事成，萬事如意。" }
 ];
+
+type Fortune = (typeof FORTUNES)[number];
+
+const presentFortune = (metadata: Record<string, unknown>, prizeCode: string): Fortune => {
+  const fortuneId = metadata.fortune_id;
+  if (typeof fortuneId === 'number' && Number.isSafeInteger(fortuneId)) {
+    const fortune = FORTUNES.find((candidate) => candidate.id === fortuneId);
+    if (fortune) return fortune;
+  }
+
+  if (prizeCode === 'jackpot') {
+    return {
+      id: 999,
+      level: '隱藏版',
+      text: 'Kiwimu 極光降臨！這份伺服器核定的幸運非你莫屬。',
+    };
+  }
+
+  return {
+    id: 0,
+    level: '吉',
+    text: '今天的好運與獎勵已由 Kiwimu 安全記錄。',
+  };
+};
+
+const economyErrorMessage = (code: string): string => {
+  switch (code) {
+    case 'AUTH_REQUIRED':
+      return '請先登入 Passport，再進行每日搖珠。';
+    case 'ROLLOUT_DISABLED':
+      return '每日搖珠制度升級中，暫時不會產生或扣除任何積分。';
+    case 'LIMIT_REACHED':
+      return '今天的每日搖珠次數已用完。';
+    default:
+      return '每日搖珠暫時無法使用，請稍後再試。';
+  }
+};
 
 // ─── Points Redemption Items (preview for the ticker) ───
 const REDEEM_PREVIEW = [
@@ -206,14 +246,11 @@ const PointsPrizeTicker = () => (
     </div>
     <div className="flex gap-3 overflow-x-auto pb-6 px-4 snap-x snap-mandatory items-end pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       {/* Prize balls */}
-      {POINT_PRIZES.map((prize) => (
-        <div key={prize.id} className={`snap-center shrink-0 w-[100px] bg-[#FFFDF7] rounded-lg p-3 border-2 ${prize.points >= 100 ? 'border-[#111111] shadow-[3px_3px_0px_#D4FF00]' : 'border-[#111111] shadow-[3px_3px_0px_#111111]'} flex flex-col items-center relative`}>
-          {prize.points >= 100 && (
-            <div className="absolute top-0 right-0 bg-[#D4FF00] text-[#111111] text-[9px] font-black px-1.5 py-0.5 rounded-bl-md border-b-2 border-l-2 border-[#111111]">稀有</div>
-          )}
+      {DAILY_PRIZE_PRESENTATIONS.map((prize) => (
+        <div key={prize.id} className="snap-center shrink-0 w-[100px] bg-[#FFFDF7] rounded-lg p-3 border-2 border-[#111111] shadow-[3px_3px_0px_#111111] flex flex-col items-center relative">
           <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
           <p className="font-bold text-[#111111] text-xs mb-0.5 text-center whitespace-nowrap">{prize.label}</p>
-          <p className="text-[10px] text-[#111111] font-black">+{prize.points} 積分</p>
+          <p className="text-[10px] text-[#666666] font-bold">伺服器抽選</p>
         </div>
       ))}
 
@@ -235,8 +272,8 @@ const PointsPrizeTicker = () => (
 // 點擊轉蛋後的結果 Modal：積分 + 運籤
 const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoToStore, onShareResult }: {
   onClose: () => void,
-  prize: typeof POINT_PRIZES[0],
-  fortune: typeof FORTUNES[0],
+  prize: DailyPrize,
+  fortune: Fortune,
   isPlayedToday: boolean,
   totalPoints: number,
   onGoToStore: () => void,
@@ -370,7 +407,7 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
 // ─── Main App ───
 export default function App() {
   // Auth State
-  const [authUser, setAuthUser] = useState<any>(null);
+  const [authUser, setAuthUser] = useState<User | null>(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -453,10 +490,9 @@ export default function App() {
   // Gacha State
   const [showEventModal, setShowEventModal] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [resultPrize, setResultPrize] = useState<typeof POINT_PRIZES[0] | null>(null);
-  const [resultFortune, setResultFortune] = useState<typeof FORTUNES[0] | null>(null);
+  const [resultPrize, setResultPrize] = useState<DailyPrize | null>(null);
+  const [resultFortune, setResultFortune] = useState<Fortune | null>(null);
   const [isPlayedToday, setIsPlayedToday] = useState(false);
-  const [todayResultUnavailable, setTodayResultUnavailable] = useState(false);
   const [totalPoints, setTotalPoints] = useState(0);
 
   const showTransientToast = (message: string) => {
@@ -484,179 +520,112 @@ export default function App() {
       }
     }, 1000);
 
-    // Initialize device ID
-    getDeviceId();
-
-    // Load points balance
-    setTotalPoints(getPointsBalance());
-
-    // Check if played today
-    const today = new Date().toLocaleDateString();
-    const lastPlayed = safeStorageGet('moonmoon_gacha_last_played');
-
-    if (lastPlayed === today) {
-      setIsPlayedToday(true);
-      setTodayResultUnavailable(false);
-      const savedResult = safeStorageGet('moonmoon_gacha_today_result');
-      if (savedResult) {
-        try {
-          const parsed = JSON.parse(savedResult);
-          if (parsed.prizeId && parsed.fortuneId) {
-            const prize = POINT_PRIZES.find(p => p.id === parsed.prizeId) || POINT_PRIZES[0];
-            const fortune = FORTUNES.find(f => f.id === parsed.fortuneId) || FORTUNES[0];
-            setResultPrize(prize);
-            setResultFortune(fortune);
-          } else {
-            safeStorageRemove('moonmoon_gacha_today_result');
-            setTodayResultUnavailable(true);
-          }
-        } catch (e) {
-          console.warn('Failed to parse saved result, clearing corrupted cache.', e);
-          safeStorageRemove('moonmoon_gacha_today_result');
-          setTodayResultUnavailable(true);
-        }
-      } else {
-        setTodayResultUnavailable(true);
-      }
-    }
-
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    const processPassportSyncAck = () => {
-      const ackTimestamp = consumePassportSyncAck();
-      if (ackTimestamp) {
-        showTransientToast('Passport 已確認同步這次積分。');
-      }
-    };
-
-    processPassportSyncAck();
-
-    const handleFocus = () => processPassportSyncAck();
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        processPassportSyncAck();
-      }
-    };
-
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
-  const handleGachaClick = () => {
-    if (isSpinning) return;
-
-    if (isPlayedToday) {
-      if (resultPrize && resultFortune) {
-        trackGtagEvent('view_today_result', {
-          event_category: 'Interaction',
-          event_label: 'View Today\'s Result',
-        });
-        setShowEventModal(true);
-        return;
-      }
-
-      if (todayResultUnavailable) {
-        showTransientToast('今天已抽過，但今日結果讀取失敗；請重新整理後再查看。');
-        return;
-      }
-    }
-
-    // Start spin
-    setIsSpinning(true);
-    trackGtagEvent('spin_gacha', {
-      event_category: 'Interaction',
-      event_label: 'Start Spin',
-    });
-
-    // Weighted random selection
-    const totalWeight = POINT_PRIZES.reduce((sum, prize) => sum + prize.weight, 0);
-    let randomVal = Math.random() * totalWeight;
-    let selectedPrize = POINT_PRIZES[0];
-
-    for (const prize of POINT_PRIZES) {
-      if (randomVal < prize.weight) {
-        selectedPrize = prize;
-        break;
-      }
-      randomVal -= prize.weight;
-    }
-
-    // Random fortune
-    let randomFortune = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
-
-    // Jackpot override
-    if (selectedPrize.id === 'jackpot') {
-      randomFortune = {
-        ...randomFortune,
-        id: 999,
-        level: "隱藏版",
-        text: "Kiwimu 極光降臨！這份幸運非你莫屬，200 積分直達帳戶！"
+    let active = true;
+    if (!authUser) {
+      setTotalPoints(0);
+      setIsPlayedToday(false);
+      setResultPrize(null);
+      setResultFortune(null);
+      return () => {
+        active = false;
       };
     }
 
-    setResultPrize(selectedPrize);
-    setResultFortune(randomFortune);
+    void getEconomyWallet().then((wallet) => {
+      if (!active) return;
+      if (wallet.ok && wallet.data) {
+        // 0 是正式遠端餘額，不得回退到 localStorage。
+        setTotalPoints(wallet.data.balance);
+      } else {
+        setTotalPoints(0);
+      }
+    });
 
-    // Wait for animation, then show result
-    setTimeout(() => {
+    return () => {
+      active = false;
+    };
+  }, [authUser]);
+
+  const handleGachaClick = async () => {
+    if (isSpinning) return;
+
+    if (!authUser) {
+      showTransientToast('請先登入 Passport，再進行每日搖珠。');
+      handlePassportLogin();
+      return;
+    }
+
+    setIsSpinning(true);
+    const startedAt = Date.now();
+    trackGtagEvent('spin_gacha', {
+      event_category: 'Interaction',
+      event_label: 'Start Spin',
+      authority: 'server',
+    });
+
+    const response = await playDailyGacha();
+    const isCommittedResult = response.ok || response.code === 'ALREADY_PROCESSED';
+    if (!isCommittedResult || !response.data) {
+      setIsSpinning(false);
+      showTransientToast(economyErrorMessage(response.code));
+      if (response.code === 'AUTH_REQUIRED') handlePassportLogin();
+      return;
+    }
+
+    const selectedPrize = presentDailyPrize(
+      response.data.outcome.prizeCode,
+      response.data.outcome.label,
+      response.data.rewardPoints,
+    );
+    const selectedFortune = presentFortune(
+      response.data.outcome.metadata,
+      response.data.outcome.prizeCode,
+    );
+    setResultPrize(selectedPrize);
+    setResultFortune(selectedFortune);
+
+    let authoritativeBalance = response.data.balance;
+    if (authoritativeBalance === null) {
+      const wallet = await getEconomyWallet();
+      authoritativeBalance = wallet.ok && wallet.data ? wallet.data.balance : 0;
+    }
+
+    const remainingAnimationMs = Math.max(0, 2500 - (Date.now() - startedAt));
+    window.setTimeout(() => {
       setIsSpinning(false);
       setShowEventModal(true);
       setIsPlayedToday(true);
-      setTodayResultUnavailable(false);
+      setTotalPoints(authoritativeBalance);
 
-      // GA4: gacha_drawn — 結果揭曉
       trackGtagEvent('gacha_drawn', {
         prize_id: selectedPrize.id,
         prize_points: selectedPrize.points,
         prize_label: selectedPrize.label,
+        response_code: response.code,
+        authority: 'server',
       });
       trackUserEvent('gacha_played', {
         prize_id: selectedPrize.id,
         prize_label: selectedPrize.label,
         points_earned: selectedPrize.points,
+        play_id: response.data?.playId,
+        authority: 'server',
       });
 
-      // Award points
-      const newBalance = addPoints(selectedPrize.points, 'gacha_earn', `扭蛋獲得 ${selectedPrize.label}`);
-      setTotalPoints(newBalance);
-      trackGtagEvent('reward_claimed', {
-        reward_name: selectedPrize.label,
-      });
-
-      // LIFF-4：廣播積分事件給 Passport（跨站同步）
-      document.dispatchEvent(new CustomEvent('kiwimu:points_earned', {
-        detail: {
-          points: selectedPrize.points,
-          action: 'gacha_earn' as PointAction,
-          description: `扭蛋獲得 ${selectedPrize.label} +${selectedPrize.points} 積分`,
-          source: 'gacha',
-        },
-        bubbles: true,
-      }));
-
-      // GA4 track
-      trackGtagEvent('points_earned', {
-        event_category: 'Points',
-        value: selectedPrize.points,
-        event_label: selectedPrize.label,
-      });
-
-      // Save today's result
-      const today = new Date().toLocaleDateString();
-      safeStorageSet('moonmoon_gacha_last_played', today);
-      safeStorageSet('moonmoon_gacha_today_result', JSON.stringify({
-        prizeId: selectedPrize.id,
-        fortuneId: randomFortune.id
-      }));
-
-    }, 2500);
+      if (response.ok) {
+        trackGtagEvent('reward_claimed', {
+          reward_name: selectedPrize.label,
+          value: selectedPrize.points,
+          authority: 'server',
+        });
+      } else {
+        showTransientToast('已載入今天由伺服器保存的搖珠結果。');
+      }
+    }, remainingAnimationMs);
   };
 
   const openPassportStore = (label: "Event Modal" | "Bottom Bar") => {
@@ -665,18 +634,10 @@ export default function App() {
       event_label: label,
     });
 
-    const pendingSync = getPendingPassportSync();
-    const url = pendingSync
-      ? buildPassportSyncUrl(ASSETS.passportUrl, pendingSync.amount, 'gacha', pendingSync.latestTimestamp)
-      : ASSETS.passportUrl;
+    const url = ASSETS.passportUrl;
 
     trackOutboundClick(url, `passport_store:${label}`);
-
-    if (pendingSync) {
-      showTransientToast(`準備同步 ${pendingSync.amount} 積分到 Passport。`);
-    } else {
-      showTransientToast('目前沒有新的 Gacha 積分待同步，直接帶你前往 Passport。');
-    }
+    showTransientToast('積分已由伺服器帳本同步，帶你前往 Passport。');
 
     const passportWindow = window.open(url, '_blank', 'noopener');
     if (!passportWindow) {
@@ -762,7 +723,7 @@ export default function App() {
             <GameCard
               icon="01"
               title="每日搖珠機"
-              subtitle="免費賺 5~200 積分"
+              subtitle="每日一次・伺服器抽選"
               badge={isPlayedToday ? '今日已轉' : '免費'}
               badgeVariant={isPlayedToday ? 'done' : 'free'}
               ctaLabel="轉一次"
@@ -774,7 +735,7 @@ export default function App() {
             <GameCard
               icon="02"
               title="幸運轉盤"
-              subtitle="30P / 次，獎品多元"
+              subtitle="成本與獎池由規則核定"
               badge="新"
               badgeVariant="new"
               ctaLabel="轉一次"
@@ -813,7 +774,7 @@ export default function App() {
           <div className="mt-4 rounded-lg border-2 border-[#111111] bg-[#FFFDF7] px-4 py-3 text-left text-xs leading-6 text-[#111111] shadow-[3px_3px_0px_#D4FF00]">
             <div className="font-bold mb-1">雲端同步暫時停用</div>
             <div>{supabaseEnvWarning}</div>
-            <div>目前仍可正常體驗每日扭蛋與本地積分，待環境變數補齊後再恢復登入與雲端同步。</div>
+            <div>為保護正式資產，設定修復前不會提供本地點數或離線發獎。</div>
           </div>
         )}
       </motion.div>
@@ -908,6 +869,9 @@ export default function App() {
             onClose={() => setShowWheelModal(false)}
             onPointsChange={(newBalance) => setTotalPoints(newBalance)}
             onToast={showTransientToast}
+            authenticated={Boolean(authUser)}
+            balance={totalPoints}
+            onLogin={handlePassportLogin}
           />
         )}
       </AnimatePresence>
