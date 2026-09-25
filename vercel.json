@@ -1,0 +1,12 @@
+{
+    "redirects": [
+        {
+            "source": "/:path*",
+            "has": [
+                { "type": "host", "value": "moonmoon-gacha.vercel.app" }
+            ],
+            "destination": "https://gacha.kiwimu.com/:path*",
+            "permanent": true
+        }
+    ]
+}

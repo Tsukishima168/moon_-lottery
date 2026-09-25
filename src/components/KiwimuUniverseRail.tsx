@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import { buildFromUrl, trackOutboundClick } from '../lib/crossSiteTracking';
 
 export type KiwimuUniverseSiteId = 'kiwimu' | 'shop' | 'passport' | 'gacha' | 'map';
 
@@ -68,13 +69,24 @@ export const KiwimuUniverseRail: React.FC<KiwimuUniverseRailProps> = ({ currentS
         <nav ref={navRef} className="ku-universe-rail__nav" aria-label="Kiwimu Universe 站點">
           {UNIVERSE_SITES.map((site, index) => {
             const isCurrent = site.id === currentSite;
+            // R3: 站內跨站連結不用 utm_*，改用單一參數 from=<來源站>_<位置>。
+            const href = isCurrent ? site.href : buildFromUrl(site.href, 'gacha_universe_rail');
 
             return (
               <a
                 key={site.id}
-                href={site.href}
+                href={href}
                 className={`ku-universe-rail__link${isCurrent ? ' is-current' : ''}`}
                 aria-current={isCurrent ? 'page' : undefined}
+                onClick={
+                  isCurrent
+                    ? undefined
+                    : () =>
+                        trackOutboundClick(href, `universe_rail_${site.id}`, {
+                          entrySurface: 'gacha_universe_rail',
+                          destinationType: 'internal',
+                        })
+                }
               >
                 <span className="ku-universe-rail__index" aria-hidden="true">
                   {String(index + 1).padStart(2, '0')}

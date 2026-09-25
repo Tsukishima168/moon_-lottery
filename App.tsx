@@ -8,7 +8,8 @@ import LuckyWheel from './src/components/LuckyWheel';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
 import { openPassportLogin, PASSPORT_AUTH_COMPLETE_EVENT } from './src/lib/authStorage';
-import { trackUtmLanding, trackOutboundClick } from './src/lib/crossSiteTracking';
+import { trackUtmLanding, trackOutboundClick, buildFromUrl } from './src/lib/crossSiteTracking';
+import { syncAttributionFromUrl } from './src/lib/attribution';
 import { KiwimuButton, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
@@ -425,7 +426,10 @@ export default function App() {
   }, []);
 
   const handlePassportLogin = () => {
-    trackOutboundClick('https://passport.kiwimu.com', 'passport_login');
+    trackOutboundClick('https://passport.kiwimu.com', 'passport_login', {
+      entrySurface: 'gacha_header',
+      destinationType: 'internal',
+    });
     openPassportLogin({
       intent: 'gacha_login',
       onError: (detail) => showTransientToast(detail.message || '登入失敗，請再試一次。'),
@@ -470,6 +474,8 @@ export default function App() {
       page_title: document.title,
     });
     trackUtmLanding();
+    // R4: 同步 kw_attr 第一接觸歸因 cookie（from／utm_source），供其他站建單時讀取。
+    syncAttributionFromUrl();
 
     // GA4 duration tracking
     const startTime = Date.now();
@@ -666,11 +672,16 @@ export default function App() {
     });
 
     const pendingSync = getPendingPassportSync();
-    const url = pendingSync
+    const syncUrl = pendingSync
       ? buildPassportSyncUrl(ASSETS.passportUrl, pendingSync.amount, 'gacha', pendingSync.latestTimestamp)
       : ASSETS.passportUrl;
+    // R3: 站內跨站連結不用 utm_*，改用單一參數 from=<來源站>_<位置>。
+    const url = buildFromUrl(syncUrl, 'gacha_store');
 
-    trackOutboundClick(url, `passport_store:${label}`);
+    trackOutboundClick(url, `passport_store:${label}`, {
+      entrySurface: 'gacha_store',
+      destinationType: 'internal',
+    });
 
     if (pendingSync) {
       showTransientToast(`準備同步 ${pendingSync.amount} 積分到 Passport。`);

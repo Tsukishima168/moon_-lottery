@@ -101,19 +101,58 @@ export function buildUtmUrl(
   return url.toString();
 }
 
-export function trackOutboundClick(url: string, label: string, extra?: Record<string, unknown>) {
+// R3: 站內跨站連結（指向其他 *.kiwimu.com 站）不用 utm_*，改用單一參數
+// from=<來源站>_<位置>（只小寫英數與底線）。
+const FROM_PARAM_PATTERN = /^[a-z0-9_]+$/;
+
+export function buildFromUrl(
+  baseUrl: string,
+  from: string,
+  additionalParams?: Record<string, string>,
+): string {
+  const url = new URL(baseUrl);
+
+  if (FROM_PARAM_PATTERN.test(from)) {
+    url.searchParams.set('from', from);
+  }
+
+  if (additionalParams) {
+    Object.entries(additionalParams).forEach(([key, value]) => {
+      url.searchParams.set(key, value);
+    });
+  }
+
+  return url.toString();
+}
+
+/**
+ * R5: outbound_click 參數固定帶 target_site、link_name、entry_surface、destination_type，
+ * transport_type: 'beacon'（跨站點擊常常立刻跳頁，beacon 確保事件送得出去）。
+ * `label` 沿用作 link_name，維持既有呼叫端相容；options 為新增選填參數。
+ */
+export function trackOutboundClick(
+  url: string,
+  label: string,
+  options?: { entrySurface?: string; destinationType?: string; extra?: Record<string, unknown> },
+) {
   let targetSite = 'external';
   try {
     targetSite = TARGET_SITE_BY_HOST[new URL(url).hostname] || 'external';
   } catch {
     targetSite = 'external';
   }
+  const destinationType = options?.destinationType || (targetSite === 'external' ? 'external' : 'internal');
+
   trackEvent('outbound_click', {
     source_site: SITE_ID,
     target_site: targetSite,
+    link_name: label,
+    entry_surface: options?.entrySurface,
+    destination_type: destinationType,
     label,
     url,
     ...compactUtmParams(getUtmParamsFromUrl(url)),
-    ...(extra || {}),
+    ...(options?.extra || {}),
+    transport_type: 'beacon',
   });
 }
