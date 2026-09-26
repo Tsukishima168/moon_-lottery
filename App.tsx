@@ -475,7 +475,10 @@ export default function App() {
     });
     trackUtmLanding();
     // R4: 同步 kw_attr 第一接觸歸因 cookie（from／utm_source），供其他站建單時讀取。
-    syncAttributionFromUrl();
+    // 修 BLOCKER：index.html 的 inline script 在 React 掛載前就已經把 from/utm_* 從
+    // window.location.search 清掉了，這裡必須讀 __GACHA_INITIAL_SEARCH__（inline script
+    // 清除前存下的原始 query string），否則 cookie 永遠寫不進去。
+    syncAttributionFromUrl(window.__GACHA_INITIAL_SEARCH__ ?? window.location.search);
 
     // GA4 duration tracking
     const startTime = Date.now();

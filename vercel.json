@@ -1,12 +1,13 @@
 {
-    "redirects": [
+    "headers": [
         {
             "source": "/:path*",
             "has": [
                 { "type": "host", "value": "moonmoon-gacha.vercel.app" }
             ],
-            "destination": "https://gacha.kiwimu.com/:path*",
-            "permanent": true
+            "headers": [
+                { "key": "X-Robots-Tag", "value": "noindex" }
+            ]
         }
     ]
 }
