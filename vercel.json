@@ -1,12 +1,18 @@
 {
     "headers": [
         {
-            "source": "/:path*",
+            "source": "/(.*)",
             "has": [
-                { "type": "host", "value": "moonmoon-gacha.vercel.app" }
+                {
+                    "type": "host",
+                    "value": "moonmoon-gacha.vercel.app"
+                }
             ],
             "headers": [
-                { "key": "X-Robots-Tag", "value": "noindex" }
+                {
+                    "key": "X-Robots-Tag",
+                    "value": "noindex"
+                }
             ]
         }
     ]
