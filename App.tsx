@@ -9,7 +9,7 @@ import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
 import { openPassportLogin, PASSPORT_AUTH_COMPLETE_EVENT } from './src/lib/authStorage';
 import { trackUtmLanding, trackOutboundClick, buildFromUrl } from './src/lib/crossSiteTracking';
-import { syncAttributionFromUrl } from './src/lib/attribution';
+import { resolveEntryFrom, syncAttributionFromUrl } from './src/lib/attribution';
 import { KiwimuButton, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
@@ -469,9 +469,13 @@ export default function App() {
 
   // Load state
   useEffect(() => {
+    // entry_from：這次著陸的站內入口（原始 query 的 from，或 30 分鐘內的 kw_attr.from）；沒有就不帶。
+    // 同樣要讀 __GACHA_INITIAL_SEARCH__，window.location.search 的 from 此時已被拔掉。
+    const entryFrom = resolveEntryFrom(window.__GACHA_INITIAL_SEARCH__ ?? window.location.search);
     trackGtagEvent('page_view', {
       page_path: window.location.pathname,
       page_title: document.title,
+      ...(entryFrom ? { entry_from: entryFrom } : {}),
     });
     trackUtmLanding();
     // R4: 同步 kw_attr 第一接觸歸因 cookie（from／utm_source），供其他站建單時讀取。

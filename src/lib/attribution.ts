@@ -144,3 +144,32 @@ export function syncAttributionFromUrl(search?: string): void {
 function capOrUndefined(value: string | null): string | undefined {
   return value ? capValue(value) : undefined;
 }
+
+/** GA4 entry_from：cookie 來源的 from 只在 from_ts 距今 < 30 分鐘時採用。 */
+export const ENTRY_FROM_WINDOW_MS = 30 * 60 * 1000;
+
+/**
+ * 解析 GA4 事件參數 `entry_from`（這一次著陸的站內入口）。唯讀，不寫 cookie。
+ * 必須用「原始 query」呼叫：index.html 的 inline script 會先把 from 從
+ * window.location.search 拔掉，所以呼叫端要傳 window.__GACHA_INITIAL_SEARCH__。
+ *  1. 原始網址有 from → 用它（截 64 字後須符合 ^[a-z0-9_]+$；格式不符回傳 undefined，
+ *     且不回退到 cookie —— 這次著陸本來就帶了 from=）。
+ *  2. 否則用 kw_attr.from，但只有 from_ts 距今 < 30 分鐘才採用。
+ *  3. 否則回傳 undefined（參數省略）。
+ * 全程 try/catch，絕不丟例外。
+ */
+export function resolveEntryFrom(search?: string, now: number = Date.now()): string | undefined {
+  try {
+    const query = search ?? (typeof window !== 'undefined' ? window.location.search : '');
+    const urlFrom = new URLSearchParams(query).get('from');
+    if (urlFrom) return sanitizeFrom(urlFrom);
+
+    const { from, from_ts: fromTs } = readKwAttr();
+    if (typeof from !== 'string' || typeof fromTs !== 'number' || !Number.isFinite(fromTs)) return undefined;
+    const age = now - fromTs;
+    if (age < 0 || age >= ENTRY_FROM_WINDOW_MS) return undefined;
+    return sanitizeFrom(from);
+  } catch {
+    return undefined;
+  }
+}
