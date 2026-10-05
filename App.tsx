@@ -136,7 +136,7 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
       >
         {/* 點擊提示 */}
         {!isSpinning && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#111111] text-[#F4F4F0] text-[10px] font-bold px-2 py-1 rounded-md shadow-[2px_2px_0px_#D4FF00] whitespace-nowrap animate-pulse">
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#111111] text-[#F4F4F0] text-[12px] font-bold px-2 py-1 rounded-md shadow-[2px_2px_0px_#D4FF00] whitespace-nowrap animate-pulse">
             一天一次・轉出積分好運
           </div>
         )}
@@ -197,11 +197,11 @@ const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () =>
 const PointsPrizeTicker = () => (
   <div className="w-full mt-2 pb-2">
     <div className="flex items-center justify-between mb-3 px-2">
-      <h3 className="kiwimu-mono text-[11px] font-bold text-[#666666] uppercase tracking-widest flex items-center gap-1">
+      <h3 className="kiwimu-mono text-[12px] font-bold text-[#666666] uppercase tracking-widest flex items-center gap-1">
         <Coins className="w-3 h-3" /> 積分獎池
       </h3>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] text-[#666666] font-medium">往右看兌換規劃</span>
+        <span className="text-[12px] text-[#666666] font-medium">往右看兌換規劃</span>
         <ArrowRight className="w-3 h-3 text-[#666666]" />
       </div>
     </div>
@@ -210,11 +210,11 @@ const PointsPrizeTicker = () => (
       {POINT_PRIZES.map((prize) => (
         <div key={prize.id} className={`snap-center shrink-0 w-[100px] bg-[#FFFDF7] rounded-lg p-3 border-2 ${prize.points >= 100 ? 'border-[#111111] shadow-[3px_3px_0px_#D4FF00]' : 'border-[#111111] shadow-[3px_3px_0px_#111111]'} flex flex-col items-center relative`}>
           {prize.points >= 100 && (
-            <div className="absolute top-0 right-0 bg-[#D4FF00] text-[#111111] text-[9px] font-black px-1.5 py-0.5 rounded-bl-md border-b-2 border-l-2 border-[#111111]">稀有</div>
+            <div className="absolute top-0 right-0 bg-[#D4FF00] text-[#111111] text-[12px] font-black px-1.5 py-0.5 rounded-bl-md border-b-2 border-l-2 border-[#111111]">稀有</div>
           )}
           <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
           <p className="font-bold text-[#111111] text-xs mb-0.5 text-center whitespace-nowrap">{prize.label}</p>
-          <p className="text-[10px] text-[#111111] font-black">+{prize.points} 積分</p>
+          <p className="text-[12px] text-[#111111] font-black">+{prize.points} 積分</p>
         </div>
       ))}
 
@@ -226,7 +226,7 @@ const PointsPrizeTicker = () => (
         <div key={item.name} className="snap-center shrink-0 w-[100px] bg-[#E5E5E5] rounded-lg p-3 border-2 border-dashed border-[#111111] flex flex-col items-center relative">
           <ShoppingBag className="w-6 h-6 text-[#111111] mb-2" />
           <p className="font-medium text-[#111111] text-xs mb-0.5 text-center whitespace-nowrap">{item.name}</p>
-          <p className="text-[10px] text-[#666666] font-bold">兌換尚未開放</p>
+          <p className="text-[12px] text-[#666666] font-bold">兌換尚未開放</p>
         </div>
       ))}
     </div>
@@ -281,7 +281,7 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
               className={`w-14 h-14 rounded-full ${prize.color} ${prize.border} border-2 shadow-lg ${prize.glow} mx-auto mb-4`}
             ></motion.div>
 
-            <p className="kiwimu-mono text-[11px] text-[#666666] mb-1 uppercase">reward unlocked</p>
+            <p className="kiwimu-mono text-[12px] text-[#666666] mb-1 uppercase">reward unlocked</p>
             <motion.p
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -372,17 +372,22 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
 export default function App() {
   // Auth State
   const [authUser, setAuthUser] = useState<any>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
 
   useEffect(() => {
     if (!supabase) {
       setAuthUser(null);
+      setAuthReady(true);
       return;
     }
     const sb = supabase;
 
     // 讀取 .kiwimu.com cookie session（跨網域共享）
-    sb.auth.getSession().then(({ data: { session } }) => {
+    sb.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) throw error;
       setAuthUser(session?.user ?? null);
+      setAuthReady(true);
       if (session?.user) {
         sb.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
         trackUserEvent('site_visited', {
@@ -391,8 +396,9 @@ export default function App() {
           path: window.location.pathname,
         });
       }
-    });
+    }).catch(() => { setAuthReady(true); showTransientToast('暫時無法確認會員狀態，請重新登入。'); });
     const { data: { subscription } } = sb.auth.onAuthStateChange((event, session) => {
+      setAuthReady(true);
       setAuthUser(session?.user ?? null);
       if (session?.user && event === 'SIGNED_IN') {
         sb.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
@@ -405,7 +411,8 @@ export default function App() {
     });
 
     const handlePassportAuthComplete = () => {
-      void sb.auth.getSession().then(({ data: { session } }) => {
+      void sb.auth.getSession().then(({ data: { session }, error }) => {
+        if (error) throw error;
         setAuthUser(session?.user ?? null);
         if (session?.user) {
           sb.rpc('update_last_seen', { p_site: 'gacha' }).then(() => {});
@@ -415,7 +422,7 @@ export default function App() {
             path: window.location.pathname,
           });
         }
-      });
+      }).catch(() => showTransientToast('會員狀態尚未同步，請再試一次登入。'));
     };
     window.addEventListener(PASSPORT_AUTH_COMPLETE_EVENT, handlePassportAuthComplete);
 
@@ -426,28 +433,36 @@ export default function App() {
   }, []);
 
   const handlePassportLogin = () => {
+    if (!authReady || authBusy) return;
+    setAuthBusy(true);
     trackOutboundClick('https://passport.kiwimu.com', 'passport_login', {
       entrySurface: 'gacha_header',
       destinationType: 'internal',
     });
     openPassportLogin({
       intent: 'gacha_login',
-      onError: (detail) => showTransientToast(detail.message || '登入失敗，請再試一次。'),
+      onComplete: () => setAuthBusy(false),
+      onError: (detail) => { setAuthBusy(false); showTransientToast(detail.message || '登入失敗，請再試一次。'); },
     });
   };
   const handleSignOut = async () => {
+    if (authBusy) return;
     if (!supabase) {
       setAuthUser(null);
       return;
     }
 
+    setAuthBusy(true);
     try {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setAuthUser(null);
       showTransientToast('已登出。');
     } catch (error) {
       console.error('Sign out failed', error);
-      showTransientToast('登出失敗，請稍後再試。');
+      showTransientToast('登出尚未完成，請確認網路後再試一次。');
+    } finally {
+      setAuthBusy(false);
     }
   };
 
@@ -711,24 +726,24 @@ export default function App() {
   };
 
   return (
-    <div className="kiwimu-page-bg relative min-h-screen font-sans text-[#111111] overflow-x-hidden flex flex-col pb-24">
+    <div className="kiwimu-page-bg relative min-h-screen font-sans text-[#111111] overflow-x-hidden flex flex-col pb-40">
 
       {/* Auth 狀態浮動列 */}
       <div className="sticky top-0 z-50 flex min-h-10 justify-end border-b-2 border-[#111111] bg-[#F4F4F0]/90 px-4 py-2 backdrop-blur-sm">
         {authUser ? (
           <div className="flex items-center gap-2 text-xs text-[#111111]">
             <span className="truncate max-w-[120px]">{authUser.email?.split('@')[0]}</span>
-            <button onClick={handleSignOut} className="flex items-center gap-1 text-[#666666] hover:text-[#111111] transition-colors">
-              <LogOut size={13} /> 登出
+            <button type="button" disabled={authBusy} aria-label={authBusy ? '登出中' : '登出'} onClick={handleSignOut} className="flex items-center gap-1 text-[#666666] hover:text-[#111111] transition-colors">
+              <LogOut size={13} /> {authBusy ? '登出中…' : '登出'}
             </button>
           </div>
         ) : !hasSupabaseEnv ? (
-          <div className="text-[11px] text-[#666666] bg-[#E5E5E5] border border-[#111111] px-3 py-1.5 rounded-md">
+          <div className="text-[12px] text-[#666666] bg-[#E5E5E5] border border-[#111111] px-3 py-1.5 rounded-md">
             會員同步暫停中
           </div>
         ) : (
-          <button onClick={handlePassportLogin} className="flex items-center gap-1.5 text-xs bg-[#111111] text-[#F4F4F0] px-3 py-1.5 rounded-md hover:bg-black transition-colors">
-            <LogIn size={13} /> Google 登入
+          <button type="button" disabled={!authReady || authBusy} aria-label={!authReady ? '確認登入狀態中' : authBusy ? '登入中' : '使用 Google 登入'} onClick={handlePassportLogin} className="flex items-center gap-1.5 text-xs bg-[#111111] text-[#F4F4F0] px-3 py-1.5 rounded-md hover:bg-black transition-colors">
+            <LogIn size={13} /> {!authReady ? '確認中…' : authBusy ? '登入中…' : 'Google 登入'}
           </button>
         )}
       </div>
@@ -771,7 +786,7 @@ export default function App() {
           <h2 className="kiwimu-heading text-2xl sm:text-3xl font-black tracking-widest text-[#111111] mb-1">
             月島・遊戲中心
           </h2>
-          <p className="kiwimu-mono text-[#666666] text-[10px] sm:text-xs tracking-widest mb-5 uppercase">
+          <p className="kiwimu-mono text-[#666666] text-[12px] sm:text-xs tracking-widest mb-5 uppercase">
             每日運勢・遊戲積分體驗
           </p>
 
@@ -882,7 +897,7 @@ export default function App() {
 
             {/* Kiwimu character */}
             <div className="mt-4 flex items-end justify-center gap-3">
-              <div className="relative bg-[#F4F4F0] border-2 border-[#111111] text-[#111111] text-[10px] px-3 py-2 rounded-lg rounded-br-none shadow-[3px_3px_0px_#D4FF00] max-w-[180px] text-right leading-relaxed">
+              <div className="relative bg-[#F4F4F0] border-2 border-[#111111] text-[#111111] text-[12px] px-3 py-2 rounded-lg rounded-br-none shadow-[3px_3px_0px_#D4FF00] max-w-[180px] text-right leading-relaxed">
                 <p>
                   每天來轉轉好運，留下一點今天的運勢。
                 </p>
@@ -915,9 +930,9 @@ export default function App() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <h3 className="kiwimu-heading text-sm font-black text-[#111111]">我的 Kiwimu</h3>
-              <span className="text-[10px] font-bold bg-[#FFFDF7] text-[#666666] border border-[#111111] px-2 py-0.5 rounded-md">即將推出</span>
+              <span className="text-[12px] font-bold bg-[#FFFDF7] text-[#666666] border border-[#111111] px-2 py-0.5 rounded-md">即將推出</span>
             </div>
-            <p className="text-[11px] text-[#666666] leading-tight">用積分解鎖背景、配件，收集 Bascat、Eggle 等夥伴角色</p>
+            <p className="text-[12px] text-[#666666] leading-tight">用積分解鎖背景、配件，收集 Bascat、Eggle 等夥伴角色</p>
           </div>
         </motion.div>
 
@@ -938,11 +953,11 @@ export default function App() {
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F4F4F0]/95 backdrop-blur-md border-t-2 border-[#111111] z-40 pb-8 sm:pb-4 safe-area-pb">
         {/* Step indicators */}
         <div className="max-w-md mx-auto w-full mb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[#666666] text-center">
-          <span className="text-[11px] font-medium">Step 1 遊戲賺積分</span>
+          <span className="text-[12px] font-medium">Step 1 遊戲賺積分</span>
           <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
-          <span className="text-[11px] font-medium">Step 2 轉盤花積分</span>
+          <span className="text-[12px] font-medium">Step 2 轉盤花積分</span>
           <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
-          <span className="text-[11px] font-black text-[#111111]">Step 3 查看護照紀錄</span>
+          <span className="text-[12px] font-black text-[#111111]">Step 3 查看護照紀錄</span>
         </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
           {/* Points display */}

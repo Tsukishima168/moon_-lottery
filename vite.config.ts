@@ -34,7 +34,8 @@ export default defineConfig(() => {
       tailwindcss(),
       react(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
+        injectRegister: false,
         includeAssets: ['icons/*.png', 'icons/*.svg'],
         manifest: {
           name: '月島扭蛋機',
@@ -67,16 +68,15 @@ export default defineConfig(() => {
           ],
         },
         workbox: {
+          clientsClaim: true,
+          importScripts: ['/pwa-retire-member-cache.js'],
           navigateFallback: '/',
           globPatterns: ['**/*.{css,js,html,svg,png,jpg,ico,txt,woff2}'],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-              handler: 'NetworkFirst',
-              options: {
-                cacheName: 'supabase-cache',
-                expiration: { maxEntries: 50, maxAgeSeconds: 300 },
-              },
+              // 會員與驗證回應不使用跨帳號的離線快取。
+              handler: 'NetworkOnly',
             },
             {
               urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
