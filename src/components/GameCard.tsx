@@ -37,26 +37,25 @@ const GameCard: React.FC<GameCardProps> = ({
   onClick,
 }) => {
   return (
-    <motion.div whileTap={{ scale: 0.98 }}>
-      <KiwimuCard className="p-0 gap-0 relative overflow-hidden">
+    <motion.div whileTap={{ scale: 0.98 }} className="h-full">
+      <KiwimuCard className="h-full p-0 gap-0 relative overflow-hidden">
         <div className={`absolute top-0 left-0 right-0 h-1.5 ${accentColor}`} />
 
-        <KiwimuCardContent className="p-4 flex flex-col gap-3">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-[#111111] bg-[#F4F4F0] text-xl">
-                {icon}
-              </span>
-              <div>
-                <h3 className="kiwimu-heading text-sm font-black text-[#111111] leading-tight">{title}</h3>
-                <p className="text-[11px] text-[#666666] leading-tight mt-0.5">{subtitle}</p>
-              </div>
-            </div>
+        <KiwimuCardContent className="flex-1 p-4 flex flex-col gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-1">
+            <span className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg border-2 border-[#111111] bg-[#F4F4F0] text-xl">
+              {icon}
+            </span>
             {badge && (
-              <KiwimuBadge variant={badgeVariant}>
+              <KiwimuBadge variant={badgeVariant} className="px-1 text-xs tracking-normal">
                 {badge}
               </KiwimuBadge>
             )}
+          </div>
+
+          <div className="min-w-0">
+            <h3 className="kiwimu-heading text-sm font-black text-[#111111] leading-snug">{title}</h3>
+            <p className="text-xs text-[#666666] leading-relaxed mt-1">{subtitle}</p>
           </div>
 
           <KiwimuButton
@@ -64,7 +63,7 @@ const GameCard: React.FC<GameCardProps> = ({
             size="md"
             onClick={onClick}
             disabled={ctaDisabled}
-            className={`w-full py-2.5 ${
+            className={`mt-auto w-full min-h-11 px-2 py-2.5 ${
               ctaDisabled
                 ? 'bg-[#E5E5E5] text-[#666666] cursor-not-allowed'
                 : accentColor
