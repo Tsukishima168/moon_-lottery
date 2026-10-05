@@ -784,7 +784,7 @@ export default function App() {
             <GameCard
               icon="01"
               title="每日搖珠機"
-              subtitle="免費獲得 5–200 遊戲積分"
+              subtitle="5–200 遊戲積分"
               badge={isPlayedToday ? '今日已轉' : '免費'}
               badgeVariant={isPlayedToday ? 'done' : 'free'}
               ctaLabel="轉一次"
@@ -796,7 +796,7 @@ export default function App() {
             <GameCard
               icon="02"
               title="幸運轉盤"
-              subtitle="30P / 次，獎品多元"
+              subtitle="30P／次・獎品預覽"
               badge="新"
               badgeVariant="new"
               ctaLabel="轉一次"
