@@ -183,14 +183,14 @@ const ResultModal: React.FC<{
           {prize.type === 'coupon' && (
             <div className="w-full bg-[#F4F4F0] border-2 border-[#111111] rounded-lg px-4 py-3 mb-4 text-center">
               <p className="text-xs font-bold text-[#111111] mb-1">{prize.couponLabel}</p>
-              <p className="text-[11px] text-[#666666]">請在店員面前出示此畫面核銷</p>
+              <p className="text-[11px] text-[#666666]">獎品示意，尚不能以此畫面兌換實體商品</p>
             </div>
           )}
 
           {/* 積分餘額 */}
           <div className="flex items-center gap-2 bg-[#F4F4F0] rounded-lg border border-[#111111] px-4 py-2 mb-5">
             <Coins className="w-4 h-4 text-[#111111]" />
-            <span className="text-sm text-[#666666]">積分餘額：</span>
+            <span className="text-sm text-[#666666]">本機遊戲積分：</span>
             <span className="text-sm font-black text-[#111111]">{newBalance}</span>
           </div>
 
@@ -382,7 +382,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
 
         {!canAfford && !hasFreeSpinBuff && (
           <p className="text-xs text-[#666666] text-center mb-4">
-            每日簽到或免費扭蛋可累積積分
+            每日免費搖珠機可累積遊戲積分
           </p>
         )}
 
