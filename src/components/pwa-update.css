@@ -1,0 +1,8 @@
+.ku-update-notice { position:fixed; z-index:300; inset:auto 16px calc(144px + env(safe-area-inset-bottom, 0px)) auto; width:min(360px, calc(100% - 32px)); padding:20px; border:1px solid var(--ku-ink); border-radius:12px; background:var(--ku-paper-raised); color:var(--ku-ink); box-shadow:4px 4px 0 var(--ku-ink); font:14px/1.7 var(--ku-font-body); }
+.ku-update-notice strong { font-size:16px; }
+.ku-update-notice p { margin:8px 0 12px; }
+.ku-update-actions { display:flex; justify-content:flex-end; gap:8px; }
+.ku-update-actions button { min-height:44px; padding:8px 16px; border:1px solid var(--ku-ink); border-radius:8px; font:inherit; cursor:pointer; background:transparent; }
+.ku-update-actions button:last-child { background:var(--ku-lime); font-weight:700; }
+.ku-update-actions button:disabled { opacity:.6; cursor:wait; }
+.ku-update-actions button:focus-visible { outline:3px solid var(--ku-ink); outline-offset:3px; }
