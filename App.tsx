@@ -51,6 +51,12 @@ const ASSETS = {
   passportUrl: "https://passport.kiwimu.com",
 };
 
+const MEMBER_JOURNEY_URL = buildFromUrl(ASSETS.passportUrl, 'gacha_member_return', {
+  screen: 'passport',
+  tab: 'journey',
+  journey_mode: 'online',
+});
+
 // ─── Points Prize Pool (replaces physical prizes) ───
 const POINT_PRIZES = [
   { id: 'bronze', label: '銅球', points: 5, weight: 45, color: 'bg-[#C9A46A]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
@@ -793,6 +799,25 @@ export default function App() {
           <p className="mb-5 rounded-lg border border-[#111111]/20 bg-[#FFFDF7] px-3 py-3 text-xs leading-relaxed text-[#666666]">
             這裡顯示此裝置的遊戲積分，與護照可用積分分開。實體兌換尚未開放；可用積分請以登入護照後的紀錄為準。
           </p>
+
+          <div className="mb-5 rounded-lg border-2 border-[#111111] bg-[#FFFDF7] p-4 text-left">
+            <p className="mb-1 text-sm font-bold text-[#111111]">今天的探索，從護照繼續</p>
+            <p className="mb-3 text-xs leading-relaxed text-[#666666]">
+              看看還有哪些線上任務；回到護照不會自動加點或蓋章。
+            </p>
+            <a
+              href={MEMBER_JOURNEY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackOutboundClick(MEMBER_JOURNEY_URL, 'member_journey', {
+                entrySurface: 'gacha_member_return',
+                destinationType: 'member_journey',
+              })}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-md border-2 border-[#111111] bg-[#D4FF00] px-4 py-2 text-sm font-bold text-[#111111] transition-colors hover:bg-[#E4FF70] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#111111]"
+            >
+              回護照看今日任務 <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" />
+            </a>
+          </div>
 
           {/* 雙卡並列：搖珠機 + 轉盤 */}
           <div className="grid grid-cols-2 gap-3 mb-5">
