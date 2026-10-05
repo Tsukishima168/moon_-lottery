@@ -201,7 +201,7 @@ const PointsPrizeTicker = () => (
         <Coins className="w-3 h-3" /> 積分獎池
       </h3>
       <div className="flex items-center gap-1">
-        <span className="text-[10px] text-[#666666] font-medium">往右看可兌換品項</span>
+        <span className="text-[10px] text-[#666666] font-medium">往右看兌換規劃</span>
         <ArrowRight className="w-3 h-3 text-[#666666]" />
       </div>
     </div>
@@ -226,7 +226,7 @@ const PointsPrizeTicker = () => (
         <div key={item.name} className="snap-center shrink-0 w-[100px] bg-[#E5E5E5] rounded-lg p-3 border-2 border-dashed border-[#111111] flex flex-col items-center relative">
           <ShoppingBag className="w-6 h-6 text-[#111111] mb-2" />
           <p className="font-medium text-[#111111] text-xs mb-0.5 text-center whitespace-nowrap">{item.name}</p>
-          <p className="text-[10px] text-[#666666] font-bold">{item.cost} 積分兌換</p>
+          <p className="text-[10px] text-[#666666] font-bold">兌換尚未開放</p>
         </div>
       ))}
     </div>
@@ -296,7 +296,7 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
             {/* Total Balance */}
             <div className="mt-4 bg-[#F4F4F0] rounded-lg px-4 py-2 inline-flex items-center gap-2 border border-[#111111]">
               <Coins className="w-4 h-4 text-[#111111]" />
-              <span className="text-sm text-[#666666]">累計積分：</span>
+              <span className="text-sm text-[#666666]">本機遊戲積分：</span>
               <span className="text-sm font-black text-[#111111]">{totalPoints}</span>
             </div>
           </div>
@@ -350,7 +350,7 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
               onClick={onGoToStore}
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>前往護照商店兌換</span>
+              <span>查看護照紀錄</span>
             </KiwimuButton>
 
             <KiwimuButton
@@ -540,7 +540,7 @@ export default function App() {
     const processPassportSyncAck = () => {
       const ackTimestamp = consumePassportSyncAck();
       if (ackTimestamp) {
-        showTransientToast('Passport 已確認同步這次積分。');
+        showTransientToast('Passport 已接收遊戲紀錄；可用積分以護照顯示為準。');
       }
     };
 
@@ -610,7 +610,7 @@ export default function App() {
         ...randomFortune,
         id: 999,
         level: "隱藏版",
-        text: "Kiwimu 極光降臨！這份幸運非你莫屬，200 積分直達帳戶！"
+        text: "Kiwimu 極光降臨！這份幸運非你莫屬，獲得 200 遊戲積分！"
       };
     }
 
@@ -742,7 +742,7 @@ export default function App() {
         {/* AI Semantic Context */}
         <section className="sr-only" aria-hidden="true">
           <h3>當前頁面核心功能</h3>
-          <p>月島甜點事務所的遊戲中心，包含每日免費搖珠機、幸運轉盤，以及積分兌換甜點咖啡。</p>
+          <p>月島甜點事務所的遊戲中心，包含每日免費搖珠機與幸運轉盤。本機遊戲積分與護照可用積分分開，實體兌換尚未開放。</p>
         </section>
 
         {/* --- Header Section --- */}
@@ -764,7 +764,7 @@ export default function App() {
             className="inline-flex items-center gap-2 bg-[#FFFDF7] rounded-lg px-4 py-2 shadow-[3px_3px_0px_#111111] border-2 border-[#111111] mb-3"
           >
             <Coins className="w-4 h-4 text-[#111111]" />
-            <span className="text-sm font-bold text-[#111111]">我的積分</span>
+            <span className="text-sm font-bold text-[#111111]">本機遊戲積分</span>
             <span className="kiwimu-heading text-lg font-black text-[#111111]">{totalPoints}</span>
           </motion.div>
 
@@ -772,7 +772,11 @@ export default function App() {
             月島・遊戲中心
           </h2>
           <p className="kiwimu-mono text-[#666666] text-[10px] sm:text-xs tracking-widest mb-5 uppercase">
-            轉蛋賺積分・幸運轉盤花積分・換甜點
+            每日運勢・遊戲積分體驗
+          </p>
+
+          <p className="mb-5 rounded-lg border border-[#111111]/20 bg-[#FFFDF7] px-3 py-3 text-xs leading-relaxed text-[#666666]">
+            這裡顯示此裝置的遊戲積分，與護照可用積分分開。實體兌換尚未開放；可用積分請以登入護照後的紀錄為準。
           </p>
 
           {/* 雙卡並列：搖珠機 + 轉盤 */}
@@ -780,7 +784,7 @@ export default function App() {
             <GameCard
               icon="01"
               title="每日搖珠機"
-              subtitle="免費賺 5~200 積分"
+              subtitle="免費獲得 5–200 遊戲積分"
               badge={isPlayedToday ? '今日已轉' : '免費'}
               badgeVariant={isPlayedToday ? 'done' : 'free'}
               ctaLabel="轉一次"
@@ -857,21 +861,21 @@ export default function App() {
                 <Gift className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
                 <div>
                   <p className="font-bold text-[#111111]">每日轉蛋</p>
-                  <p className="text-xs text-[#666666]">每天一次免費轉蛋，積分直接入帳</p>
+                  <p className="text-xs text-[#666666]">每天一次免費轉蛋，記錄此裝置的遊戲積分</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 bg-[#F4F4F0] rounded-lg p-3 border border-[#111111]/20">
                 <Star className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
                 <div>
                   <p className="font-bold text-[#111111]">護照簽到</p>
-                  <p className="text-xs text-[#666666]">連續簽到加成積分，7天/30天/100天里程碑</p>
+                  <p className="text-xs text-[#666666]">登入護照查看簽到紀錄與帳號可用積分</p>
                 </div>
               </div>
               <div className="flex items-start gap-3 bg-[#F4F4F0] rounded-lg p-3 border border-[#111111]/20">
                 <ShoppingBag className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
                 <div>
                   <p className="font-bold text-[#111111]">積分兌換</p>
-                  <p className="text-xs text-[#666666]">到護照商店用積分兌換甜點、咖啡及周邊</p>
+                  <p className="text-xs text-[#666666]">實體兌換尚未開放，開放時會另行公告</p>
                 </div>
               </div>
             </div>
@@ -880,7 +884,7 @@ export default function App() {
             <div className="mt-4 flex items-end justify-center gap-3">
               <div className="relative bg-[#F4F4F0] border-2 border-[#111111] text-[#111111] text-[10px] px-3 py-2 rounded-lg rounded-br-none shadow-[3px_3px_0px_#D4FF00] max-w-[180px] text-right leading-relaxed">
                 <p>
-                  每天來轉轉好運，積分越多、離免費甜點越近。
+                  每天來轉轉好運，留下一點今天的運勢。
                 </p>
               </div>
               <motion.div
@@ -938,7 +942,7 @@ export default function App() {
           <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
           <span className="text-[11px] font-medium">Step 2 轉盤花積分</span>
           <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
-          <span className="text-[11px] font-black text-[#111111]">Step 3 護照商店換甜點</span>
+          <span className="text-[11px] font-black text-[#111111]">Step 3 查看護照紀錄</span>
         </div>
         <div className="max-w-md mx-auto w-full flex gap-3">
           {/* Points display */}
@@ -949,7 +953,7 @@ export default function App() {
             disabled
           >
             <Coins className="w-4 h-4 text-[#111111]" />
-            <span className="text-sm">{totalPoints} 積分</span>
+            <span className="text-sm">{totalPoints} 遊戲積分</span>
           </KiwimuButton>
 
           {/* Go to store */}
@@ -960,7 +964,7 @@ export default function App() {
             onClick={handleGoToStoreFromBar}
           >
             <ShoppingBag className="w-4 h-4" />
-            <span className="text-sm tracking-wide">前往護照商店</span>
+            <span className="text-sm tracking-wide">查看護照紀錄</span>
           </KiwimuButton>
         </div>
       </div>
