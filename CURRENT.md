@@ -8,6 +8,8 @@ Last updated: 2026-10-06
 - Claude 配色統一：補 `<meta name="theme-color" content="#1F2F1F">`（原本沒有）；PWA manifest `theme_color` `#F5F0E8` → `#1F2F1F`，與 Map／Shop／Passport 一致。
 - Claude 接手重驗：tsc exit 0、build exit 0、`scripts/test-saved-fortune.mjs` 通過；本機 preview 1280／768／390／320 無水平溢出、無 console error、按鈕 ≥44px；轉盤視窗 0 點時按鈕停用、Esc 關閉且焦點回到觸發按鈕；系統深色模式仍為奶油白＋深綠。舊配色元件（KiwimuButton／Card／Dialog／Badge、GameCard）未被引用，POINT_PRIZES／WHEEL_PRIZES 的色彩欄位未渲染。
 - 未做：真實抽獎、加減點、Passport 同步、登入；實機 Safari／LINE 瀏覽器。
+- 已上線（PR #28 squash `83369f6`，production Ready）。上線後補：手機版（≤900px）Hero 文字區 `#142719` → 規格 `#1F3527`，與 Shop／Passport Hero 一致；桌機維持 `#142719`，因 Hero 圖左側文字區取樣為 `#122216`，用來與圖片融合。
+- PWA 更新：正式站回訪者會先看到「有新版本可以使用」，按「更新頁面」即換新版（本機以真實點擊重現驗證，可正常 reload 並啟用新 service worker）。
 
 ## Five-site visual system · 2026-07-15
 

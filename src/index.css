@@ -177,8 +177,8 @@ button:disabled { cursor: not-allowed; }
   .gacha-balance svg { display: none; }
   .gacha-balance strong { font-size: 14px; }
   .gacha-auth-button { min-height: 44px; border: 0; font-size: 12px; padding: 0 6px; }
-  .gacha-hero { display: flex; flex-direction: column; aspect-ratio: auto; min-height: 0; border-radius: 22px; }
-  .gacha-hero-copy { position: relative; width: 100%; order: 0; padding: 30px 28px 12px; background: #142719; }
+  .gacha-hero { display: flex; flex-direction: column; aspect-ratio: auto; min-height: 0; border-radius: 22px; background: #1F3527; }
+  .gacha-hero-copy { position: relative; width: 100%; order: 0; padding: 30px 28px 12px; background: #1F3527; }
   .gacha-hero-art { order: 1; position: relative; inset: auto; z-index: 0; margin-top: -1px; }
   .gacha-hero-art img { height: auto; width: 100%; aspect-ratio: 1.2; object-fit: cover; object-position: 50% 56%; }
   .gacha-hero .gacha-eyebrow { font-size: 12px; margin-bottom: 12px; }
