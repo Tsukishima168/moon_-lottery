@@ -9,10 +9,10 @@ function KiwimuToaster() {
   return (
     <Toaster
       position="bottom-center"
-      offset={96}
+      offset={24}
       toastOptions={{
         className:
-          "bg-[#111111] text-[#F4F4F0] rounded-lg shadow-[4px_4px_0px_#D4FF00] border border-[#D4FF00] px-5 py-3 text-sm font-bold",
+          "bg-[#1F2F1F] text-[#F5F0E8] rounded-xl border border-[#D7C678] px-5 py-3 text-sm font-medium",
       }}
     />
   )
