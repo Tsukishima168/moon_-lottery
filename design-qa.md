@@ -1,3 +1,36 @@
+# Gacha 內容與層級收斂 — 2026-10-06
+
+final result: passed（本機視覺／已測導覽範圍）
+
+本輪延續 Penso 已選定的第 1 稿，依已接受的 Passport 會員中心風格收斂；沒有再換機台或品牌方向。比較基準為本機提交 `4181ec4`，只有 App 文案／支持入口、CSS 與這份驗證紀錄改動。
+
+## 最新結果
+
+- 桌機主標縮至 44px，手機／平板 28px；主要按鈕統一 56px，降低原桌機 80px 按鈕的視覺重量。
+- 手機文字在上、機台在下；圖片裁掉部分背景留白，完整保留機台、把手、托盤與 Kiwimu。600–900px 平板改雙欄，避免整張方形圖拉長頁面。
+- 清楚標示「每日免費／不必登入」，用一個生活例子說明祝福卡。當天可重看、30P 成本、本機紀錄與預覽獎品的限制仍明示。
+- 「我的集章」連結從 footer 移到主要內容區；目的 URL、query 與原 `member_journey` tracking 保留，沒有新增 claim 或自動集章。
+- 每日機率用原生預設收合 details，六種小球與機率保持原樣；Enter 可開／關。
+- 狀態說明在桌機亮背景上補深綠底，確保小字可讀；手機首頁連結的點按範圍補足 44px。
+
+| 作者 IAB 寬度 | 橫向溢出 | 可見破圖 | Header／main 最小操作高度 | 主按鈕 |
+| --- | --- | --- | --- | --- |
+| 320px | 0 | 0 | 44px | 56px |
+| 390px | 0 | 0 | 44px | 56px |
+| 768px | 0 | 0 | 44px | 56px |
+| 1280px | 0 | 0 | 44px | 56px |
+
+- 說明視窗關閉回焦「遊戲說明」；空餘額轉盤返回每日遊戲回焦「免費轉一次」。沒有執行抽取。
+- Console warn／error 0。實際畫面與數據：`/tmp/kiwimu-gacha-green-polish-20261006/qa/` 的 `home-320.jpg`、`home-390.jpg`、`home-768.jpg`、`home-1280.jpg`、`rules-390-collapsed.jpg`、`rules-390-expanded.jpg`、`wheel-390-empty.jpg`、`viewport-results.json`。
+- Typecheck、production build、entry_from、9 PWA controller／4 legacy cache 與 17 saved fortune checks 通過。
+- Fresh-context 獨立 code／mocked behavior review：APPROVE，原有 actual-source VM 42＋4 案例通過；64 個 JSX expression attributes 與 App effects／handlers保持一致，12個 economy／auth／SSO／sync／telemetry檔案byte-identical。報告另存上述 private QA 目錄；不是獨立瀏覽器、Safari 或真人抽獎簽收。
+
+本機預覽維持 http://127.0.0.1:5224/ 。未 push／merge／部署。未改遊戲權重、成本、發獎、auth／SSO、Passport sync、獎池或素材；未登入、抽獎、扣點、分享、定位、核銷或 DB migration。Safari／iPhone 與 200% 實機縮放仍待驗收；既有伺服器權威錢包、專用 LIFF 及實體兌換待辦不因這次改版完成。
+
+自我更正：首輪尺寸統計在 responsive 圖片切換尚未載入時誤報一張破圖，截圖後重新讀取已確認 0；首頁文字連結原本低於 44px，已擴大並複驗。以下為第 1 稿初次實作的歷史紀錄，原 76px／80px 尺寸不代表新版。
+
+---
+
 # Gacha 第 1 稿實作驗證 — 2026-10-06
 
 final result: passed

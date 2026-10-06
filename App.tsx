@@ -491,13 +491,13 @@ export default function App() {
             <img src={ASSETS.heroDesktop} width="1942" height="809" fetchPriority="high" alt="深綠搖珠機與 Kiwimu，坐在柔和窗光裡。" />
           </motion.picture>
           <div className="gacha-hero-copy">
-            <p className="gacha-eyebrow">04 / PLAY & FORTUNE</p>
+            <p className="gacha-eyebrow">每日免費 · 不必登入</p>
             <h1 id="gacha-title">轉出今天的好運。</h1>
-            <p className="gacha-hero-description">每天一次免費搖珠，<br className="gacha-mobile-break" />收下一份祝福與生活小提醒。</p>
+            <p className="gacha-hero-description">每天轉一次，收下一份祝福。<br />再帶走一件今天做得到的小事。</p>
             <button type="button" ref={dailyButtonRef} className="gacha-button gacha-button-gold gacha-daily-button" disabled={isSpinning} onClick={handleGachaClick}>
               {isSpinning ? <><RefreshCw size={20} aria-hidden="true" className="gacha-spinner" />好運正在路上…</> : <>{isPlayedToday ? todayResultUnavailable ? '查看今日紀錄' : '看看今天的祝福' : '免費轉一次'}<ArrowRight size={22} aria-hidden="true" /></>}
             </button>
-            <p className="gacha-hero-note" role="status">{isSpinning ? '請稍候，搖珠完成後會顯示結果。' : isPlayedToday ? todayResultUnavailable ? '今天已搖過，紀錄暫時無法讀取。' : '今天已收下祝福，明天再來轉一次。' : '每日一次・遊戲積分僅記錄於此裝置'}</p>
+            <p className="gacha-hero-note" role="status">{isSpinning ? '請稍候，搖珠完成後會顯示結果。' : isPlayedToday ? todayResultUnavailable ? '今天已搖過，紀錄暫時無法讀取。' : '今天已收下祝福，明天再來轉一次。' : '今天的祝福與遊戲積分，保留在這個裝置。'}</p>
             {todayResultUnavailable && <button type="button" className="gacha-hero-retry" onClick={() => window.location.reload()}>重新整理紀錄</button>}
           </div>
         </section>
@@ -505,23 +505,22 @@ export default function App() {
         <section className="gacha-discover" aria-label="再逛一下遊戲中心">
           <div className="gacha-wheel-teaser">
             <img src={ASSETS.wheel} alt="" width="160" height="160" loading="lazy" />
-            <div><h2><span className="gacha-game-number">02</span>幸運轉盤</h2><p className="gacha-teaser-note">30P／次・獎品預覽</p><button type="button" ref={wheelButtonRef} className="gacha-button gacha-button-outline" onClick={() => setShowWheelModal(true)}>查看轉盤 <ArrowRight size={18} aria-hidden="true" /></button></div>
+            <div><p className="gacha-eyebrow">想多玩一回時</p><h2>幸運轉盤</h2><p className="gacha-teaser-note">30 本機積分／次 · 券與印章為預覽</p><button type="button" ref={wheelButtonRef} className="gacha-button gacha-button-outline" onClick={() => setShowWheelModal(true)}>先看看轉盤 <ArrowRight size={18} aria-hidden="true" /></button></div>
           </div>
-          <div className="gacha-little-note"><div><h2>一份祝福，一件小事</h2><p>把今天的小提醒，放進生活裡。</p></div><img src={ASSETS.blessing} alt="" width="90" height="110" loading="lazy" /></div>
+          <div className="gacha-little-note"><div><p className="gacha-eyebrow">你的月島日常</p><h2>回會員中心</h2><p>查看集章進度，挑下一件想做的小事。</p><a className="gacha-member-return" href={MEMBER_JOURNEY_URL} onClick={() => trackOutboundClick(MEMBER_JOURNEY_URL, 'member_journey', { entrySurface: 'gacha_member_return', destinationType: 'member_journey' })}>查看我的集章 <ArrowRight size={16} aria-hidden="true" /></a></div><img src={ASSETS.blessing} alt="" width="90" height="110" loading="lazy" /></div>
         </section>
       </main>
 
       <footer className="gacha-footer gacha-shell">
         <p>本機遊戲積分與會員積分分開，實體兌換尚未開放。</p>
-        <a className="gacha-member-return" href={MEMBER_JOURNEY_URL} onClick={() => trackOutboundClick(MEMBER_JOURNEY_URL, 'member_journey', { entrySurface: 'gacha_member_return', destinationType: 'member_journey' })}>回會員中心，看看下一步 <ArrowRight size={16} aria-hidden="true" /></a>
         <span className="gacha-footer-brand">MOON ISLAND · KIWIMU</span>
       </footer>
 
       <GreenDialog open={showRules} onClose={() => setShowRules(false)} title="遊戲說明" description="先收一份祝福，再決定要不要多玩一回。" returnFocusRef={rulesButtonRef}>
         <div className="gacha-rules">
-          <section><span className="gacha-tag">01 · 每日免費</span><h3>搖珠機，每天一份好運</h3><p>不必登入，每天可免費搖一次。收下 5–200 本機遊戲積分與一份祝福；當天再次點擊會打開原本的結果。</p><p>每日次數與積分以此瀏覽器的紀錄為準，清除紀錄或換裝置不會帶走這份紀錄。</p></section>
-          <section><span className="gacha-tag">02 · 每次 30P</span><h3>幸運轉盤，想玩再玩</h3><p>使用本機遊戲積分抽取。積分不足時，可以先玩每日免費搖珠；抽到免費機會，下一次便不扣積分。</p><p>券與印章目前為預覽，尚不能折抵、兌換或完成會員集章。抽取前可在轉盤查看完整機率。</p></section>
-          <section><h3>每日搖珠的機率</h3><div className="gacha-prize-list">{POINT_PRIZES.map((prize) => <div key={prize.id}><span>{prize.label}<small>+{prize.points} P</small></span><strong>{prize.weight}%</strong></div>)}</div></section>
+          <section><span className="gacha-tag">每日免費</span><h3>今天先收一份祝福</h3><p>不必登入，每天可以免費搖一次。結果包含一份祝福、生活例子、小行動，以及 5–200 本機遊戲積分。</p><p>例如抽到「留一點空白」，可以試著在行程裡留十五分鐘散步。當天再按一次會重看同一份結果，不會再抽或加分。</p><p>每日次數與積分保留在這個瀏覽器；清除紀錄或換裝置後，無法從其他裝置找回。</p></section>
+          <section><span className="gacha-tag">每次 30P</span><h3>還想玩，再開轉盤</h3><p>先查看獎品與機率，按下「轉一次」才會使用 30 本機遊戲積分。積分不足時，可以先玩每日免費搖珠；抽到免費機會，下一次便不扣積分。</p><p>券與印章目前為預覽，尚不能折抵、兌換或完成會員集章。</p></section>
+          <details className="gacha-daily-prizes"><summary>查看每日搖珠的機率 <span>6 種小球</span></summary><div className="gacha-prize-list">{POINT_PRIZES.map((prize) => <div key={prize.id}><span>{prize.label}<small>+{prize.points} P</small></span><strong>{prize.weight}%</strong></div>)}</div></details>
           <aside className="gacha-small-action"><Coins size={18} aria-hidden="true" /><div><strong>兩種積分，分開查看</strong><p>這裡顯示本機遊戲積分。護照的可用積分以會員中心顯示為準，不能將本機餘額當成到店兌換憑證。</p></div></aside>
           <button type="button" className="gacha-button gacha-button-outline" onClick={handleGoToStoreFromBar}>查看護照紀錄 <ArrowRight size={18} aria-hidden="true" /></button>
           <button type="button" className="gacha-button gacha-button-gold" onClick={() => setShowRules(false)}>我知道了，回到遊戲</button>
