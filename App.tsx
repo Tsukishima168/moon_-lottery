@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Star, RefreshCw, Gift, X, ArrowRight, ChevronRight, Coins, ShoppingBag, TrendingUp, LogIn, LogOut, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowRight, Coins, LogOut, MessageCircle, RefreshCw, Sparkles } from 'lucide-react';
 import { getDeviceId, getPointsBalance, addPoints, buildPassportSyncUrl, consumePassportSyncAck, getPendingPassportSync, PointAction } from './pointsSystem';
-import { hasSupabaseEnv, supabase, supabaseEnvWarning } from './src/lib/supabase';
-import GameCard from './src/components/GameCard';
+import { hasSupabaseEnv, supabase } from './src/lib/supabase';
 import LuckyWheel from './src/components/LuckyWheel';
+import { GreenDialog } from './src/components/gacha/GreenDialog';
+import { FORTUNES, JACKPOT_FORTUNE, findSavedFortune, type Fortune } from './src/data/fortunes';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
 import { openPassportLogin, PASSPORT_AUTH_COMPLETE_EVENT } from './src/lib/authStorage';
 import { trackUtmLanding, trackOutboundClick, buildFromUrl } from './src/lib/crossSiteTracking';
 import { resolveEntryFrom, syncAttributionFromUrl } from './src/lib/attribution';
-import { KiwimuButton, KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
+import { KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
 
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -43,21 +44,18 @@ const safeStorageRemove = (key: string) => {
   }
 };
 
-// --- Assets & Data ---
 const ASSETS = {
-  mainImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-03_juymmq.webp",
-  pitifulImage: "https://res.cloudinary.com/dvizdsv4m/image/upload/v1768744157/Enter-04_mfdlsz.webp",
-  instagramLink: "https://www.instagram.com/moon_moon_dessert/",
-  passportUrl: "https://passport.kiwimu.com",
+  passportUrl: 'https://passport.kiwimu.com',
+  heroDesktop: '/assets/gacha-green/hero-desktop-9278df2b7c.webp',
+  heroMobile: '/assets/gacha-green/hero-mobile-d7578411bf.webp',
+  wheel: '/assets/gacha-green/wheel-ed6e052bf4.webp',
+  blessing: '/assets/gacha-green/blessing-841d2d20d0.webp',
 };
-
 const MEMBER_JOURNEY_URL = buildFromUrl(ASSETS.passportUrl, 'gacha_member_return', {
-  screen: 'passport',
-  tab: 'journey',
-  journey_mode: 'online',
+  screen: 'passport', tab: 'journey', journey_mode: 'online',
 });
+const MEMBER_HOME_URL = buildFromUrl(ASSETS.passportUrl, 'gacha_header', { screen: 'passport', tab: 'hub' });
 
-// ─── Points Prize Pool (replaces physical prizes) ───
 const POINT_PRIZES = [
   { id: 'bronze', label: '銅球', points: 5, weight: 45, color: 'bg-[#C9A46A]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
   { id: 'silver', label: '銀球', points: 10, weight: 30, color: 'bg-[#E5E5E5]', border: 'border-[#111111]', glow: 'shadow-stone-300' },
@@ -67,188 +65,12 @@ const POINT_PRIZES = [
   { id: 'jackpot', label: '月光球', points: 200, weight: 2, color: 'bg-[#D4FF00]', border: 'border-[#111111]', glow: 'shadow-lime-200' },
 ];
 
-// 詩籤 Kiwimu Blessing (unchanged)
-const FORTUNES = [
-  { id: 1, level: "大吉", text: "新的一年，財神爺已經在你家門口排隊了。" },
-  { id: 2, level: "中吉", text: "財源滾滾來，今年的紅包厚度會讓你笑出來。" },
-  { id: 3, level: "大吉", text: "福星高照！不只吃甜點，連走在路上都會撿到錢。" },
-  { id: 4, level: "吉", text: "好運來敲門，今天適合買張彩券試試手氣。" },
-  { id: 5, level: "大吉", text: "事業步步高升，今年的戶頭數字將會直線上升。" },
-  { id: 6, level: "中吉", text: "福氣滿滿，今年你將會收穫滿滿的善意與財富。" },
-  { id: 7, level: "吉", text: "貴人相助，今年遇到什麼困難都能輕鬆迎刃而解。" },
-  { id: 8, level: "小吉", text: "雖然是小吉，但積累的福氣足以讓你整年平安順遂。" },
-  { id: 9, level: "大吉", text: "金銀財寶滿滿滿，今年的你就是行走的招財貓！" },
-  { id: 10, level: "隱藏版", text: "Kiwimu 賜予你隱藏版好運，心想事成，萬事如意。" }
-];
 
-// ─── Points Redemption Items (preview for the ticker) ───
-const REDEEM_PREVIEW = [
-  { name: '蕎麥茶', cost: 50 },
-  { name: '冰美式', cost: 80 },
-  { name: '西西里咖啡', cost: 100 },
-  { name: '經典烤布丁', cost: 200 },
-  { name: '戚風蛋糕', cost: 300 },
-];
-
-// --- Components ---
-
-// 日式搖珠機 (Garapon) 動畫元件
-const GaraponAnimation = ({ onClick, isSpinning, resultColor }: { onClick: () => void, isSpinning: boolean, resultColor?: string }) => {
-  const controls = useAnimation();
-  const drumControls = useAnimation();
-
-  useEffect(() => {
-    if (isSpinning) {
-      const sequence = async () => {
-        await controls.start({ x: [0, -5, 5, -5, 5, 0], transition: { duration: 0.4 } });
-        await drumControls.start({
-          rotate: 360 * 3,
-          transition: { duration: 2, ease: "easeInOut" }
-        });
-        drumControls.set({ rotate: 0 });
-      };
-      sequence();
-    }
-  }, [isSpinning, controls, drumControls]);
-
-  useEffect(() => {
-    if (!isSpinning) {
-      controls.start({
-        y: [0, -5, 0],
-        transition: { duration: 2.5, repeat: Infinity, ease: "easeInOut" }
-      });
-      drumControls.start({
-        rotate: 360,
-        transition: { duration: 20, repeat: Infinity, ease: "linear" }
-      });
-    } else {
-      controls.stop();
-    }
-  }, [isSpinning, controls, drumControls]);
-
-
-  return (
-    <div className="relative w-48 h-48 mx-auto mb-6 flex items-center justify-center">
-      <button
-        type="button"
-        onClick={onClick}
-        disabled={isSpinning}
-        aria-label="點擊轉蛋獲得月島積分"
-        className="absolute inset-0 z-40 rounded-full cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4FF00] focus-visible:ring-offset-4 disabled:cursor-wait"
-      />
-      <motion.div
-        className="pointer-events-none relative w-full h-full flex items-center justify-center"
-        animate={controls}
-      >
-        {/* 點擊提示 */}
-        {!isSpinning && (
-          <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#111111] text-[#F4F4F0] text-[12px] font-bold px-2 py-1 rounded-md shadow-[2px_2px_0px_#D4FF00] whitespace-nowrap animate-pulse">
-            一天一次・轉出積分好運
-          </div>
-        )}
-
-        {/* Stand Base */}
-        <div className="absolute bottom-0 w-32 h-4 bg-stone-800 rounded-lg z-10"></div>
-        <div className="absolute bottom-2 left-10 w-4 h-24 bg-stone-800 -rotate-12 z-0"></div>
-        <div className="absolute bottom-2 right-10 w-4 h-24 bg-stone-800 rotate-12 z-0"></div>
-
-        {/* Rotating Hexagon Drum */}
-        <motion.div
-          className="relative w-32 h-32 z-10"
-          animate={drumControls}
-        >
-          <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
-            <path d="M50 0 L93.3 25 L93.3 75 L50 100 L6.7 75 L6.7 25 Z" fill="#111111" stroke="#D4FF00" strokeWidth="2" />
-            <path d="M6.7 25 L50 0 L50 100 L6.7 75 Z" fill="#D4FF00" fillOpacity="0.42" />
-            <circle cx="50" cy="50" r="5" fill="#1C1917" />
-          </svg>
-        </motion.div>
-
-        {/* Handle */}
-        <motion.div
-          className="absolute z-20"
-          animate={drumControls}
-        >
-          <div className="w-1 h-12 bg-stone-400 origin-top translate-y-[-2px]"></div>
-          <div className="w-3 h-3 bg-stone-900 rounded-full translate-x-[-4px] translate-y-10"></div>
-        </motion.div>
-
-        {/* Dropping Ball */}
-        <AnimatePresence>
-          {isSpinning && resultColor && resultColor !== "" && (
-            <motion.div
-              className={`absolute bottom-4 z-30 w-6 h-6 rounded-full ${resultColor} border-2 border-white shadow-md`}
-              initial={{ y: 10, opacity: 0, scale: 0 }}
-              animate={{
-                y: [10, 60],
-                x: [0, 20],
-                opacity: [0, 1],
-                scale: [0.5, 1.2]
-              }}
-              transition={{
-                delay: 1.8,
-                duration: 0.5,
-                ease: "easeOut"
-              }}
-            />
-          )}
-        </AnimatePresence>
-
-      </motion.div>
-    </div>
-  );
-};
-
-// 積分球獎池展示 + 兌換預告
-const PointsPrizeTicker = () => (
-  <div className="w-full mt-2 pb-2">
-    <div className="flex items-center justify-between mb-3 px-2">
-      <h3 className="kiwimu-mono text-[12px] font-bold text-[#666666] uppercase tracking-widest flex items-center gap-1">
-        <Coins className="w-3 h-3" /> 積分獎池
-      </h3>
-      <div className="flex items-center gap-1">
-        <span className="text-[12px] text-[#666666] font-medium">往右看兌換規劃</span>
-        <ArrowRight className="w-3 h-3 text-[#666666]" />
-      </div>
-    </div>
-    <div className="flex gap-3 overflow-x-auto pb-6 px-4 snap-x snap-mandatory items-end pt-4" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-      {/* Prize balls */}
-      {POINT_PRIZES.map((prize) => (
-        <div key={prize.id} className={`snap-center shrink-0 w-[100px] bg-[#FFFDF7] rounded-lg p-3 border-2 ${prize.points >= 100 ? 'border-[#111111] shadow-[3px_3px_0px_#D4FF00]' : 'border-[#111111] shadow-[3px_3px_0px_#111111]'} flex flex-col items-center relative`}>
-          {prize.points >= 100 && (
-            <div className="absolute top-0 right-0 bg-[#D4FF00] text-[#111111] text-[12px] font-black px-1.5 py-0.5 rounded-bl-md border-b-2 border-l-2 border-[#111111]">稀有</div>
-          )}
-          <div className={`w-8 h-8 rounded-full ${prize.color} ${prize.border} border shadow-inner mb-2`}></div>
-          <p className="font-bold text-[#111111] text-xs mb-0.5 text-center whitespace-nowrap">{prize.label}</p>
-          <p className="text-[12px] text-[#111111] font-black">+{prize.points} 積分</p>
-        </div>
-      ))}
-
-      {/* Divider */}
-      <div className="snap-center shrink-0 w-[2px] h-16 bg-[#111111] self-center mx-1"></div>
-
-      {/* Redeem preview */}
-      {REDEEM_PREVIEW.map((item) => (
-        <div key={item.name} className="snap-center shrink-0 w-[100px] bg-[#E5E5E5] rounded-lg p-3 border-2 border-dashed border-[#111111] flex flex-col items-center relative">
-          <ShoppingBag className="w-6 h-6 text-[#111111] mb-2" />
-          <p className="font-medium text-[#111111] text-xs mb-0.5 text-center whitespace-nowrap">{item.name}</p>
-          <p className="text-[12px] text-[#666666] font-bold">兌換尚未開放</p>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-// 點擊轉蛋後的結果 Modal：積分 + 運籤
-const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoToStore, onShareResult }: {
-  onClose: () => void,
-  prize: typeof POINT_PRIZES[0],
-  fortune: typeof FORTUNES[0],
-  isPlayedToday: boolean,
-  totalPoints: number,
-  onGoToStore: () => void,
-  onShareResult: (message: string) => void
-}) => {
+function EventModal({ prize, fortune, totalPoints, onClose, onGoToStore, onShareResult, returnFocusRef }: {
+  prize: typeof POINT_PRIZES[0]; fortune: Fortune; totalPoints: number;
+  onClose: () => void; onGoToStore: () => void; onShareResult: (message: string) => void;
+  returnFocusRef: React.RefObject<HTMLButtonElement | null>;
+}) {
   useEffect(() => {
     trackGtagEvent('result_viewed', {
       prize_id: prize.id,
@@ -256,125 +78,36 @@ const EventModal = ({ onClose, prize, fortune, isPlayedToday, totalPoints, onGoT
       prize_points: prize.points,
     });
   }, [prize.id, prize.label, prize.points]);
-
+  const [sharing, setSharing] = useState(false);
+  const share = async () => {
+    if (sharing) return;
+    setSharing(true);
+    try {
+      const result = await sharePullToLine(prize.label, prize.points);
+      onShareResult(result.ok ? '已開啟 LINE 分享。' : 'message' in result ? result.message : '暫時無法分享，請稍後再試。');
+    } catch { onShareResult('暫時無法分享，請稍後再試。'); }
+    finally { setSharing(false); }
+  };
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-5 bg-[#111111]/70 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ scale: 0.95, y: 10, opacity: 0 }}
-        animate={{ scale: 1, y: 0, opacity: 1 }}
-        exit={{ scale: 0.95, y: 10, opacity: 0 }}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[320px] bg-[#FFFDF7] rounded-xl shadow-[6px_6px_0px_#D4FF00] border-2 border-[#111111] overflow-hidden relative flex flex-col items-center"
-      >
-        <div className={`absolute top-0 w-full h-1.5 ${prize.points >= 100 ? 'bg-[#D4FF00]' : prize.points >= 25 ? 'bg-[#D4AF37]' : 'bg-[#111111]'} opacity-100`}></div>
-
-        <div className="p-8 w-full flex flex-col items-center">
-          {/* 1. Points Earned */}
-          <div className="text-center mb-6 relative w-full">
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full -z-10 opacity-40 ${prize.points >= 100 ? 'bg-[#D4FF00]' : prize.points >= 25 ? 'bg-[#D4AF37]' : 'bg-[#E5E5E5]'}`}></div>
-
-            {/* Prize Ball */}
-            <motion.div
-              initial={{ scale: 0, rotate: -180 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", damping: 10, delay: 0.2 }}
-              className={`w-14 h-14 rounded-full ${prize.color} ${prize.border} border-2 shadow-lg ${prize.glow} mx-auto mb-4`}
-            ></motion.div>
-
-            <p className="kiwimu-mono text-[12px] text-[#666666] mb-1 uppercase">reward unlocked</p>
-            <motion.p
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", delay: 0.4 }}
-              className="kiwimu-heading text-3xl font-black text-[#111111] mb-1"
-            >
-              +{prize.points}
-              <span className="text-lg ml-1">積分</span>
-            </motion.p>
-            <p className="text-xs text-[#666666]">{prize.label}</p>
-
-            {/* Total Balance */}
-            <div className="mt-4 bg-[#F4F4F0] rounded-lg px-4 py-2 inline-flex items-center gap-2 border border-[#111111]">
-              <Coins className="w-4 h-4 text-[#111111]" />
-              <span className="text-sm text-[#666666]">本機遊戲積分：</span>
-              <span className="text-sm font-black text-[#111111]">{totalPoints}</span>
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="w-12 h-[2px] bg-[#111111] mb-6"></div>
-
-          {/* 2. Fortune */}
-          <div className="text-center mb-6">
-            <span className={`inline-block px-4 py-1 rounded-md text-xs font-black tracking-[0.2em] mb-3 border-2 ${fortune.level === '隱藏版' ? 'bg-[#D4FF00] text-[#111111] border-[#111111]' :
-              fortune.level === '大吉' ? 'bg-[#111111] text-[#F4F4F0] border-[#111111]' :
-                fortune.level === '中吉' ? 'bg-[#D4AF37] text-[#111111] border-[#111111]' :
-                  'bg-[#E5E5E5] text-[#111111] border-[#111111]'
-              }`}>
-              {fortune.level}
-            </span>
-            <p className="text-[#111111] font-serif font-medium text-base leading-relaxed tracking-wide px-2 italic">
-              「{fortune.text}」
-            </p>
-          </div>
-
-          {isPlayedToday && (
-            <p className="text-xs text-[#666666] mb-4">( 這是您今天的運勢，明天再來轉喔！ )</p>
-          )}
-
-          {/* 3. Actions */}
-          <div className="w-full flex flex-col gap-2">
-            <KiwimuButton
-              variant="line"
-              size="md"
-              className="w-full py-3"
-              onClick={async () => {
-                const result = await sharePullToLine(prize.label, prize.points);
-                if (result.ok) {
-                  onShareResult('已開啟 LINE 分享。');
-                  return;
-                }
-                if ('message' in result) {
-                  onShareResult(result.message);
-                }
-              }}
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>跟 LINE 好友炫耀</span>
-            </KiwimuButton>
-
-            <KiwimuButton
-              variant="accent"
-              size="md"
-              className="w-full py-3"
-              onClick={onGoToStore}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span>查看護照紀錄</span>
-            </KiwimuButton>
-
-            <KiwimuButton
-              variant="ghost"
-              size="md"
-              className="w-full py-3"
-              onClick={onClose}
-            >
-              收下祝福
-            </KiwimuButton>
-          </div>
+    <GreenDialog open onClose={onClose} title="今天的好運" description="這份祝福，今天隨時都能回來看。" returnFocusRef={returnFocusRef}>
+      <div className="gacha-fortune">
+        <img src={ASSETS.blessing} alt="" width="84" height="100" className="gacha-fortune-mascot" />
+        <span className="gacha-tag">{fortune.level} · {prize.label}</span>
+        <h3>{fortune.text}</h3>
+        <div className="gacha-small-story"><p className="gacha-eyebrow">像這樣的一天</p><p>{fortune.example}</p></div>
+        <div className="gacha-small-action"><Sparkles size={18} aria-hidden="true" /><div><strong>今天，試著做一件小事</strong><p>{fortune.action}</p></div></div>
+        <div className="gacha-reward-line"><span>今日收下 <strong>+{prize.points} P</strong></span><span>本機餘額 <strong>{totalPoints} P</strong></span></div>
+        <p className="gacha-fine-print">祝福是生活小提醒；遊戲積分僅記錄於此裝置，與會員積分分開。</p>
+        <div className="gacha-dialog-actions">
+          <button type="button" className="gacha-button gacha-button-gold" onClick={onClose}>收下今天的祝福 <ArrowRight size={18} aria-hidden="true" /></button>
+          <button type="button" className="gacha-button gacha-button-outline" onClick={share} disabled={sharing}><MessageCircle size={18} aria-hidden="true" />{sharing ? '準備分享中…' : '分享給 LINE 好友'}</button>
+          <button type="button" className="gacha-text-button" onClick={onGoToStore}>查看護照紀錄 <ArrowRight size={16} aria-hidden="true" /></button>
         </div>
-      </motion.div>
-    </motion.div>
+      </div>
+    </GreenDialog>
   );
-};
+}
 
-// ─── Main App ───
 export default function App() {
   // Auth State
   const [authUser, setAuthUser] = useState<any>(null);
@@ -472,6 +205,12 @@ export default function App() {
     }
   };
 
+  const [showRules, setShowRules] = useState(false);
+  const dailyButtonRef = useRef<HTMLButtonElement>(null);
+  const wheelButtonRef = useRef<HTMLButtonElement>(null);
+  const rulesButtonRef = useRef<HTMLButtonElement>(null);
+  const reduceMotion = useReducedMotion();
+
   // Wheel State
   const [showWheelModal, setShowWheelModal] = useState(false);
 
@@ -536,10 +275,14 @@ export default function App() {
         try {
           const parsed = JSON.parse(savedResult);
           if (parsed.prizeId && parsed.fortuneId) {
-            const prize = POINT_PRIZES.find(p => p.id === parsed.prizeId) || POINT_PRIZES[0];
-            const fortune = FORTUNES.find(f => f.id === parsed.fortuneId) || FORTUNES[0];
-            setResultPrize(prize);
-            setResultFortune(fortune);
+            const prize = POINT_PRIZES.find(p => p.id === parsed.prizeId);
+            const fortune = findSavedFortune(parsed.fortuneId, parsed.prizeId);
+            if (prize && fortune) {
+              setResultPrize(prize);
+              setResultFortune(fortune);
+            } else {
+              setTodayResultUnavailable(true);
+            }
           } else {
             safeStorageRemove('moonmoon_gacha_today_result');
             setTodayResultUnavailable(true);
@@ -627,12 +370,7 @@ export default function App() {
 
     // Jackpot override
     if (selectedPrize.id === 'jackpot') {
-      randomFortune = {
-        ...randomFortune,
-        id: 999,
-        level: "隱藏版",
-        text: "Kiwimu 極光降臨！這份幸運非你莫屬，獲得 200 遊戲積分！"
-      };
+      randomFortune = JACKPOT_FORTUNE;
     }
 
     setResultPrize(selectedPrize);
@@ -732,283 +470,64 @@ export default function App() {
   };
 
   return (
-    <div className="kiwimu-page-bg relative min-h-screen font-sans text-[#111111] overflow-x-hidden flex flex-col pb-40">
+    <div className="gacha-page">
+      <a className="gacha-skip" href="#gacha-main">跳到遊戲內容</a>
+      <header className="gacha-local-header gacha-shell">
+        <a href="/" className="gacha-wordmark" aria-label="月島遊戲中心首頁">月島<span>・</span>遊戲中心</a>
+        <nav aria-label="遊戲中心導覽" className="gacha-local-nav">
+          <button type="button" ref={rulesButtonRef} onClick={() => setShowRules(true)}>遊戲說明</button>
+          <a href={MEMBER_HOME_URL} onClick={() => trackOutboundClick(MEMBER_HOME_URL, 'member_center', { entrySurface: 'gacha_header', destinationType: 'internal' })}>會員中心</a>
+        </nav>
+        <div className="gacha-account-tools">
+          <div className="gacha-balance" aria-label={`本機遊戲積分 ${totalPoints}`}><Coins size={17} aria-hidden="true" /><span>本機遊戲積分</span><strong>{totalPoints.toLocaleString()}</strong></div>
+          {authUser ? <button type="button" className="gacha-auth-button" disabled={authBusy} onClick={handleSignOut} aria-label={authBusy ? '登出中' : '登出'}><LogOut size={16} aria-hidden="true" /><span>{authBusy ? '登出中…' : '登出'}</span></button> : hasSupabaseEnv ? <button type="button" className="gacha-auth-button" disabled={!authReady || authBusy} onClick={handlePassportLogin}>{!authReady ? '確認中…' : authBusy ? '登入中…' : '登入'}</button> : null}
+        </div>
+      </header>
 
-      {/* Auth 狀態浮動列 */}
-      <div className="sticky top-0 z-50 flex min-h-10 justify-end border-b-2 border-[#111111] bg-[#F4F4F0]/90 px-4 py-2 backdrop-blur-sm">
-        {authUser ? (
-          <div className="flex items-center gap-2 text-xs text-[#111111]">
-            <span className="truncate max-w-[120px]">{authUser.email?.split('@')[0]}</span>
-            <button type="button" disabled={authBusy} aria-label={authBusy ? '登出中' : '登出'} onClick={handleSignOut} className="flex items-center gap-1 text-[#666666] hover:text-[#111111] transition-colors">
-              <LogOut size={13} /> {authBusy ? '登出中…' : '登出'}
+      <main id="gacha-main" className="gacha-shell" tabIndex={-1}>
+        <section className="gacha-hero" aria-labelledby="gacha-title" aria-busy={isSpinning}>
+          <motion.picture className="gacha-hero-art" animate={isSpinning && !reduceMotion ? { scale: [1, 1.012, 1], rotate: [0, 0.3, -0.3, 0] } : { scale: 1, rotate: 0 }} transition={{ duration: 1.2, repeat: isSpinning && !reduceMotion ? Infinity : 0 }}>
+            <source media="(max-width: 900px)" srcSet={ASSETS.heroMobile} />
+            <img src={ASSETS.heroDesktop} width="1942" height="809" fetchPriority="high" alt="深綠搖珠機與 Kiwimu，坐在柔和窗光裡。" />
+          </motion.picture>
+          <div className="gacha-hero-copy">
+            <p className="gacha-eyebrow">每日免費 · 不必登入</p>
+            <h1 id="gacha-title">轉出今天的好運。</h1>
+            <p className="gacha-hero-description">每天轉一次，收下一份祝福。<br />再帶走一件今天做得到的小事。</p>
+            <button type="button" ref={dailyButtonRef} className="gacha-button gacha-button-gold gacha-daily-button" disabled={isSpinning} onClick={handleGachaClick}>
+              {isSpinning ? <><RefreshCw size={20} aria-hidden="true" className="gacha-spinner" />好運正在路上…</> : <>{isPlayedToday ? todayResultUnavailable ? '查看今日紀錄' : '看看今天的祝福' : '免費轉一次'}<ArrowRight size={22} aria-hidden="true" /></>}
             </button>
+            <p className="gacha-hero-note" role="status">{isSpinning ? '請稍候，搖珠完成後會顯示結果。' : isPlayedToday ? todayResultUnavailable ? '今天已搖過，紀錄暫時無法讀取。' : '今天已收下祝福，明天再來轉一次。' : '今天的祝福與遊戲積分，保留在這個裝置。'}</p>
+            {todayResultUnavailable && <button type="button" className="gacha-hero-retry" onClick={() => window.location.reload()}>重新整理紀錄</button>}
           </div>
-        ) : !hasSupabaseEnv ? (
-          <div className="text-[12px] text-[#666666] bg-[#E5E5E5] border border-[#111111] px-3 py-1.5 rounded-md">
-            會員同步暫停中
-          </div>
-        ) : (
-          <button type="button" disabled={!authReady || authBusy} aria-label={!authReady ? '確認登入狀態中' : authBusy ? '登入中' : '使用 Google 登入'} onClick={handlePassportLogin} className="flex items-center gap-1.5 text-xs bg-[#111111] text-[#F4F4F0] px-3 py-1.5 rounded-md hover:bg-black transition-colors">
-            <LogIn size={13} /> {!authReady ? '確認中…' : authBusy ? '登入中…' : 'Google 登入'}
-          </button>
-        )}
-      </div>
-
-      {/* Background Pattern */}
-      <main
-        className="flex-grow w-full max-w-md mx-auto px-6 py-8 relative z-10 flex flex-col items-center"
-        role="main"
-        aria-label="月島遊戲中心"
-      >
-        {/* AI Semantic Context */}
-        <section className="sr-only" aria-hidden="true">
-          <h3>當前頁面核心功能</h3>
-          <p>月島甜點事務所的遊戲中心，包含每日免費搖珠機與幸運轉盤。本機遊戲積分與護照可用積分分開，實體兌換尚未開放。</p>
         </section>
 
-        {/* --- Header Section --- */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-6 w-full"
-        >
-          <div className="mb-4">
-            <p className="ku-site-kicker">04 / Play &amp; fortune</p>
+        <section className="gacha-discover" aria-label="再逛一下遊戲中心">
+          <div className="gacha-wheel-teaser">
+            <img src={ASSETS.wheel} alt="" width="160" height="160" loading="lazy" />
+            <div><p className="gacha-eyebrow">想多玩一回時</p><h2>幸運轉盤</h2><p className="gacha-teaser-note">30 本機積分／次 · 券與印章為預覽</p><button type="button" ref={wheelButtonRef} className="gacha-button gacha-button-outline" onClick={() => setShowWheelModal(true)}>先看看轉盤 <ArrowRight size={18} aria-hidden="true" /></button></div>
           </div>
-
-          {/* Points Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 }}
-            className="inline-flex items-center gap-2 bg-[#FFFDF7] rounded-lg px-4 py-2 shadow-[3px_3px_0px_#111111] border-2 border-[#111111] mb-3"
-          >
-            <Coins className="w-4 h-4 text-[#111111]" />
-            <span className="text-sm font-bold text-[#111111]">本機遊戲積分</span>
-            <span className="kiwimu-heading text-lg font-black text-[#111111]">{totalPoints}</span>
-          </motion.div>
-
-          <h2 className="kiwimu-heading text-2xl sm:text-3xl font-black tracking-widest text-[#111111] mb-1">
-            月島・遊戲中心
-          </h2>
-          <p className="kiwimu-mono text-[#666666] text-[12px] sm:text-xs tracking-widest mb-5 uppercase">
-            每日運勢・遊戲積分體驗
-          </p>
-
-          <p className="mb-5 rounded-lg border border-[#111111]/20 bg-[#FFFDF7] px-3 py-3 text-xs leading-relaxed text-[#666666]">
-            這裡顯示此裝置的遊戲積分，與護照可用積分分開。實體兌換尚未開放；可用積分請以登入護照後的紀錄為準。
-          </p>
-
-          <div className="mb-5 rounded-lg border-2 border-[#111111] bg-[#FFFDF7] p-4 text-left">
-            <p className="mb-1 text-sm font-bold text-[#111111]">今天的探索，從護照繼續</p>
-            <p className="mb-3 text-xs leading-relaxed text-[#666666]">
-              看看還有哪些線上任務；回到護照不會自動加點或蓋章。
-            </p>
-            <a
-              href={MEMBER_JOURNEY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackOutboundClick(MEMBER_JOURNEY_URL, 'member_journey', {
-                entrySurface: 'gacha_member_return',
-                destinationType: 'member_journey',
-              })}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-md border-2 border-[#111111] bg-[#D4FF00] px-4 py-2 text-sm font-bold text-[#111111] transition-colors hover:bg-[#E4FF70] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#111111]"
-            >
-              回護照看今日任務 <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" />
-            </a>
-          </div>
-
-          {/* 雙卡並列：搖珠機 + 轉盤 */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <GameCard
-              icon="01"
-              title="每日搖珠機"
-              subtitle="5–200 遊戲積分"
-              badge={isPlayedToday ? '今日已轉' : '免費'}
-              badgeVariant={isPlayedToday ? 'done' : 'free'}
-              ctaLabel="轉一次"
-              ctaDisabled={isSpinning}
-              ctaDisabledLabel="轉動中..."
-              accentColor="bg-[#D4FF00]"
-              onClick={handleGachaClick}
-            />
-            <GameCard
-              icon="02"
-              title="幸運轉盤"
-              subtitle="30P／次・獎品預覽"
-              badge="新"
-              badgeVariant="new"
-              ctaLabel="轉一次"
-              accentColor="bg-[#111111] text-[#F4F4F0]"
-              onClick={() => setShowWheelModal(true)}
-            />
-          </div>
-
-          {/* 搖珠機本體（保持功能，縮在這裡觸發） */}
-          <div className="hidden">
-            <GaraponAnimation
-              onClick={handleGachaClick}
-              isSpinning={isSpinning}
-              resultColor={resultPrize?.color}
-            />
-          </div>
-
-          <AnimatePresence>
-            {showEventModal && resultPrize && resultFortune && (
-              <EventModal
-                onClose={() => setShowEventModal(false)}
-                prize={resultPrize}
-                fortune={resultFortune}
-                isPlayedToday={isPlayedToday}
-                totalPoints={totalPoints}
-                onGoToStore={handleGoToStore}
-                onShareResult={showTransientToast}
-              />
-            )}
-          </AnimatePresence>
-
-        {/* Prize Ticker */}
-        <PointsPrizeTicker />
-
-        {!hasSupabaseEnv && (
-          <div className="mt-4 rounded-lg border-2 border-[#111111] bg-[#FFFDF7] px-4 py-3 text-left text-xs leading-6 text-[#111111] shadow-[3px_3px_0px_#D4FF00]">
-            <div className="font-bold mb-1">雲端同步暫時停用</div>
-            <div>{supabaseEnvWarning}</div>
-            <div>目前仍可正常體驗每日扭蛋與本地積分，待環境變數補齊後再恢復登入與雲端同步。</div>
-          </div>
-        )}
-      </motion.div>
-
-        {/* --- Info Card --- */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-          className="bg-[#FFFDF7] rounded-xl p-5 shadow-[4px_4px_0px_#111111] border-2 border-[#111111] mb-6 relative w-full"
-        >
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-[#D4FF00] rounded-t-[10px]"></div>
-
-          <div className="flex flex-col items-center w-full">
-            {/* How it works */}
-            <h3 className="kiwimu-heading text-sm font-black text-[#111111] mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-[#111111]" />
-              積分攻略
-            </h3>
-
-            <div className="w-full space-y-3 text-sm text-[#111111]">
-              <div className="flex items-start gap-3 bg-[#F4F4F0] rounded-lg p-3 border border-[#111111]/20">
-                <Gift className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
-                <div>
-                  <p className="font-bold text-[#111111]">每日轉蛋</p>
-                  <p className="text-xs text-[#666666]">每天一次免費轉蛋，記錄此裝置的遊戲積分</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 bg-[#F4F4F0] rounded-lg p-3 border border-[#111111]/20">
-                <Star className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
-                <div>
-                  <p className="font-bold text-[#111111]">護照簽到</p>
-                  <p className="text-xs text-[#666666]">登入護照查看簽到紀錄與帳號可用積分</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 bg-[#F4F4F0] rounded-lg p-3 border border-[#111111]/20">
-                <ShoppingBag className="mt-0.5 h-4 w-4 shrink-0 text-[#111111]" />
-                <div>
-                  <p className="font-bold text-[#111111]">積分兌換</p>
-                  <p className="text-xs text-[#666666]">實體兌換尚未開放，開放時會另行公告</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Kiwimu character */}
-            <div className="mt-4 flex items-end justify-center gap-3">
-              <div className="relative bg-[#F4F4F0] border-2 border-[#111111] text-[#111111] text-[12px] px-3 py-2 rounded-lg rounded-br-none shadow-[3px_3px_0px_#D4FF00] max-w-[180px] text-right leading-relaxed">
-                <p>
-                  每天來轉轉好運，留下一點今天的運勢。
-                </p>
-              </div>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-14 h-14 shrink-0 relative top-1"
-              >
-                <img
-                  src={ASSETS.pitifulImage}
-                  alt="Kiwimu"
-                  className="w-full h-full object-contain drop-shadow-md"
-                />
-              </motion.div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Phase 2 預留：我的 Kiwimu */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="bg-[#E5E5E5] rounded-xl p-4 border-2 border-[#111111] border-dashed mb-6 w-full flex items-center gap-4"
-        >
-          <div className="w-12 h-12 rounded-lg bg-[#FFFDF7] border-2 border-[#111111] flex items-center justify-center text-sm font-black shrink-0">
-            K
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h3 className="kiwimu-heading text-sm font-black text-[#111111]">我的 Kiwimu</h3>
-              <span className="text-[12px] font-bold bg-[#FFFDF7] text-[#666666] border border-[#111111] px-2 py-0.5 rounded-md">即將推出</span>
-            </div>
-            <p className="text-[12px] text-[#666666] leading-tight">用積分解鎖背景、配件，收集 Bascat、Eggle 等夥伴角色</p>
-          </div>
-        </motion.div>
-
+          <div className="gacha-little-note"><div><p className="gacha-eyebrow">你的月島日常</p><h2>回會員中心</h2><p>查看集章進度，挑下一件想做的小事。</p><a className="gacha-member-return" href={MEMBER_JOURNEY_URL} onClick={() => trackOutboundClick(MEMBER_JOURNEY_URL, 'member_journey', { entrySurface: 'gacha_member_return', destinationType: 'member_journey' })}>查看我的集章 <ArrowRight size={16} aria-hidden="true" /></a></div><img src={ASSETS.blessing} alt="" width="90" height="110" loading="lazy" /></div>
+        </section>
       </main>
 
-      {/* 幸運轉盤 Modal */}
-      <AnimatePresence>
-        {showWheelModal && (
-          <LuckyWheel
-            onClose={() => setShowWheelModal(false)}
-            onPointsChange={(newBalance) => setTotalPoints(newBalance)}
-            onToast={showTransientToast}
-          />
-        )}
-      </AnimatePresence>
+      <footer className="gacha-footer gacha-shell">
+        <p>本機遊戲積分與會員積分分開，實體兌換尚未開放。</p>
+        <span className="gacha-footer-brand">MOON ISLAND · KIWIMU</span>
+      </footer>
 
-      {/* --- Sticky Bottom Action Bar --- */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-[#F4F4F0]/95 backdrop-blur-md border-t-2 border-[#111111] z-40 pb-8 sm:pb-4 safe-area-pb">
-        {/* Step indicators */}
-        <div className="max-w-md mx-auto w-full mb-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[#666666] text-center">
-          <span className="text-[12px] font-medium">Step 1 遊戲賺積分</span>
-          <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
-          <span className="text-[12px] font-medium">Step 2 轉盤花積分</span>
-          <ChevronRight className="w-3 h-3 text-[#111111] shrink-0" />
-          <span className="text-[12px] font-black text-[#111111]">Step 3 查看護照紀錄</span>
+      <GreenDialog open={showRules} onClose={() => setShowRules(false)} title="遊戲說明" description="先收一份祝福，再決定要不要多玩一回。" returnFocusRef={rulesButtonRef}>
+        <div className="gacha-rules">
+          <section><span className="gacha-tag">每日免費</span><h3>今天先收一份祝福</h3><p>不必登入，每天可以免費搖一次。結果包含一份祝福、生活例子、小行動，以及 5–200 本機遊戲積分。</p><p>例如抽到「留一點空白」，可以試著在行程裡留十五分鐘散步。當天再按一次會重看同一份結果，不會再抽或加分。</p><p>每日次數與積分保留在這個瀏覽器；清除紀錄或換裝置後，無法從其他裝置找回。</p></section>
+          <section><span className="gacha-tag">每次 30P</span><h3>還想玩，再開轉盤</h3><p>先查看獎品與機率，按下「轉一次」才會使用 30 本機遊戲積分。積分不足時，可以先玩每日免費搖珠；抽到免費機會，下一次便不扣積分。</p><p>券與印章目前為預覽，尚不能折抵、兌換或完成會員集章。</p></section>
+          <details className="gacha-daily-prizes"><summary>查看每日搖珠的機率 <span>6 種小球</span></summary><div className="gacha-prize-list">{POINT_PRIZES.map((prize) => <div key={prize.id}><span>{prize.label}<small>+{prize.points} P</small></span><strong>{prize.weight}%</strong></div>)}</div></details>
+          <aside className="gacha-small-action"><Coins size={18} aria-hidden="true" /><div><strong>兩種積分，分開查看</strong><p>這裡顯示本機遊戲積分。護照的可用積分以會員中心顯示為準，不能將本機餘額當成到店兌換憑證。</p></div></aside>
+          <button type="button" className="gacha-button gacha-button-outline" onClick={handleGoToStoreFromBar}>查看護照紀錄 <ArrowRight size={18} aria-hidden="true" /></button>
+          <button type="button" className="gacha-button gacha-button-gold" onClick={() => setShowRules(false)}>我知道了，回到遊戲</button>
         </div>
-        <div className="max-w-md mx-auto w-full flex gap-3">
-          {/* Points display */}
-          <KiwimuButton
-            variant="default"
-            size="lg"
-            className="flex-1 py-3.5 px-4 cursor-default hover:bg-white"
-            disabled
-          >
-            <Coins className="w-4 h-4 text-[#111111]" />
-            <span className="text-sm">{totalPoints} 遊戲積分</span>
-          </KiwimuButton>
-
-          {/* Go to store */}
-          <KiwimuButton
-            variant="accent"
-            size="lg"
-            className="flex-[2] py-3.5 px-4"
-            onClick={handleGoToStoreFromBar}
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span className="text-sm tracking-wide">查看護照紀錄</span>
-          </KiwimuButton>
-        </div>
-      </div>
-
+      </GreenDialog>
+      {showEventModal && resultPrize && resultFortune && <EventModal prize={resultPrize} fortune={resultFortune} totalPoints={totalPoints} onClose={() => setShowEventModal(false)} onGoToStore={handleGoToStore} onShareResult={showTransientToast} returnFocusRef={dailyButtonRef} />}
+      {showWheelModal && <LuckyWheel onClose={() => setShowWheelModal(false)} onPointsChange={setTotalPoints} onToast={showTransientToast} returnFocusRef={wheelButtonRef} dailyButtonRef={dailyButtonRef} onGoToDaily={() => { setShowWheelModal(false); dailyButtonRef.current?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' }); }} />}
       <KiwimuToaster />
     </div>
   );

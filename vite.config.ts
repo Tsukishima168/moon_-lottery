@@ -41,7 +41,7 @@ export default defineConfig(() => {
           name: '月島扭蛋機',
           short_name: '月島扭蛋',
           description: '每日抽一個 Kiwimu — 月島甜點扭蛋遊戲',
-          theme_color: '#F5F0E8',
+          theme_color: '#1F2F1F',
           background_color: '#F5F0E8',
           display: 'standalone',
           orientation: 'portrait',

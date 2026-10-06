@@ -1,6 +1,13 @@
 # Gacha Current
 
-Last updated: 2026-07-15
+Last updated: 2026-10-06
+
+## 月島深綠改版 · 2026-10-06
+
+- 分支 `codex/gacha-map-green-20261006`（base＝main `8cd2983`）：Codex 作者的兩個 commit（窗邊遊戲台深綠介面＋敘事祝福、日常文案與手機入口）＋ Claude 配色統一修正。Codex 兩輪獨立審查 APPROVE（42＋4 VM 案例；App effects／handlers 與 12 個 economy／auth／sync 檔案 byte-identical）。
+- Claude 配色統一：補 `<meta name="theme-color" content="#1F2F1F">`（原本沒有）；PWA manifest `theme_color` `#F5F0E8` → `#1F2F1F`，與 Map／Shop／Passport 一致。
+- Claude 接手重驗：tsc exit 0、build exit 0、`scripts/test-saved-fortune.mjs` 通過；本機 preview 1280／768／390／320 無水平溢出、無 console error、按鈕 ≥44px；轉盤視窗 0 點時按鈕停用、Esc 關閉且焦點回到觸發按鈕；系統深色模式仍為奶油白＋深綠。舊配色元件（KiwimuButton／Card／Dialog／Badge、GameCard）未被引用，POINT_PRIZES／WHEEL_PRIZES 的色彩欄位未渲染。
+- 未做：真實抽獎、加減點、Passport 同步、登入；實機 Safari／LINE 瀏覽器。
 
 ## Five-site visual system · 2026-07-15
 
