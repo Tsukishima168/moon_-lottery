@@ -43,7 +43,7 @@ function ResultModal({ prize, newBalance, onSpinAgain, onClose, onShare, returnF
         {(prize.type === 'coupon' || prize.type === 'stamp') && <p className="gacha-small-story">這是獎品示意，實體兌換與會員集章尚未開放；不能以此畫面核銷。</p>}
         <div className="gacha-reward-line"><Coins size={18} aria-hidden="true" /><span>本機遊戲積分 <strong>{newBalance} P</strong></span></div>
         <div className="gacha-dialog-actions">
-          <button type="button" className="gacha-button gacha-button-gold" onClick={onClose}>收下，繼續逛 <ArrowRight size={18} aria-hidden="true" /></button>
+          <button type="button" className="gacha-button gacha-button-green" onClick={onClose}>收下，繼續逛 <ArrowRight size={18} aria-hidden="true" /></button>
           {(freeSpin || newBalance >= WHEEL_CONFIG.costPerSpin) && <button type="button" className="gacha-button gacha-button-outline" onClick={onSpinAgain}><RotateCcw size={18} aria-hidden="true" />{freeSpin ? '使用免費機會再轉一次' : `再轉一次（${WHEEL_CONFIG.costPerSpin}P）`}</button>}
           <button type="button" className="gacha-text-button" disabled={sharing} onClick={share}><MessageCircle size={18} aria-hidden="true" />{sharing ? '準備分享中…' : '分享給 LINE 好友'}</button>
         </div>
@@ -83,7 +83,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
     if (!isFree) {
       const result = deductPoints(WHEEL_CONFIG.costPerSpin, 'wheel_spend', '幸運轉盤消費');
       if (!result.success) {
-        onToast('積分不足，無法扭蛋！');
+        onToast('遊戲積分還不夠，先玩每日免費搖珠再來。');
         return;
       }
       onPointsChange(result.newBalance);
@@ -132,7 +132,7 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
           <p className="gacha-eyebrow">02 / CAPSULE GAME</p><h3>想玩，就多轉一回。</h3>
           <p>每次使用 {WHEEL_CONFIG.costPerSpin} 本機遊戲積分。<br />開始前，先看看獎品與機率。</p>
           <div className="gacha-wheel-balance"><Coins size={18} aria-hidden="true" /><span>目前餘額</span><strong>{currentBalance} P</strong></div>
-          <button type="button" className="gacha-button gacha-button-gold" ref={spinButtonRef} onClick={() => handleSpin(false)} disabled={isSpinning || (!canAfford && !hasFreeSpinBuff)}>
+          <button type="button" className="gacha-button gacha-button-green" ref={spinButtonRef} onClick={() => handleSpin(false)} disabled={isSpinning || (!canAfford && !hasFreeSpinBuff)}>
             {isSpinning ? <><RefreshCw className="gacha-spinner" size={18} aria-hidden="true" />扭蛋正在轉動…</> : hasFreeSpinBuff ? <>免費轉一次 <ArrowRight size={18} aria-hidden="true" /></> : canAfford ? <>轉一次（{WHEEL_CONFIG.costPerSpin}P）<ArrowRight size={18} aria-hidden="true" /></> : <>還差 {WHEEL_CONFIG.costPerSpin - currentBalance}P，就能轉一次</>}
           </button>
           <p className="gacha-fine-print" role="status">{isSpinning ? '請稍候，結果揭曉後就能繼續操作。' : hasFreeSpinBuff ? '你有一次免費機會，這次不扣積分。' : canAfford ? '按下後立即扣除積分，再顯示抽取結果。' : '先收下每日免費搖珠的祝福，慢慢累積。'}</p>

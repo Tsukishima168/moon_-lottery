@@ -1,6 +1,27 @@
 # Gacha Current
 
-Last updated: 2026-10-06
+## 2026-10-07｜主對話收尾｜本機驗證完成，待獨立簽收與上線核定
+
+- ✅ 主對話移除「可用積分以護照顯示為準」的不準確承諾。遊戲說明與兩個Passport回傳／前往提示改成會員可兌換積分／資格由門市確認；public/llms同步。`App.tsx:315`、`App.tsx:461`、`App.tsx:532`。
+- ✅ 最終typecheck／build與actual-source AST／7auth mock通過；17保護檔相同，App effects除literal toast外相同。主對話rules／wheel預覽四種寬度無溢出、按鈕至少44px，0P未抽取，Esc回焦。
+- 📌 自我更正：初版說明仍將Passport可能含本機紀錄的餘額當兌換依據，覆讀後修正；沒有修改同步／點數機制或假裝實體兌換已開放。
+- ⚠️ 最終patch尚未獨立簽收（審查員額度限制）；未真人抽獎、登入、分享、加減點或兌換。
+- 📌 最終交付索引與hash：/Users/pensoair/.codex/visualizations/2026/10/07/kiwimu-public-copy-repair/gacha/final-manifest.json；原作者證據保留為歷史，新的final-manifest才是送審版本。未部署；合併上線需Penso同意。
+
+
+Last updated: 2026-10-07
+
+## Public copy and dialog detail repair · 2026-10-07
+
+- Goal: remove visitor-facing implementation/drafting wording and raw provider errors, and use deep-green primary actions on paper dialogs.
+- Source: isolated worktree `/Users/pensoair/.codex/visualizations/2026/10/07/kiwimu-public-copy-repair/worktrees/gacha`, branch `codex/gacha-public-copy-repair-20261007`, base `origin/main` `41455f1`. Canonical main remains `8cd2983`; all seven pre-existing untracked duplicate files are preserved.
+- Changed: `App.tsx` maps Passport error callbacks to customer wording while retaining diagnostic logging and busy reset; Passport navigation messages now describe viewing records without promising available points. LINE unavailable messages and insufficient-game-points feedback explain a useful next step.
+- Changed: four paper-dialog primary actions use `#1F3527`; the gold daily Hero action, intentional desktop Hero `#142719`, mobile Hero `#1F3527`, artwork, shared Universe rail, handlers and failure gates remain unchanged.
+- Changed: `index.html` semantic summary, `public/llms.txt` and `metadata.json` describe current gameplay rather than AI drafting instructions or the old review-generator concept. Local/member points separation, 30P cost, local-record limits and nonredeemable coupon/stamp previews remain explicit.
+- Validation: TypeScript exit 0; production build passed; entry-from passed; 9 PWA controller + 4 cache fixtures passed; 17 saved-fortune cases passed; diff check passed. Actual-source AST/VM checks passed, including 7 auth-error display fixtures, daily pool/handler and App effects unchanged, wheel handler unchanged except toast text, LIFF behavior/reason contracts unchanged after message normalization, and 17 protected files byte-identical.
+- Self-correction: SSOT still described the green version as local-only, but fresh Git verification found `origin/main` already at green source `41455f1`; this repair starts from that ref. The first CURRENT patch expected the older canonical heading and did not apply; this entry uses the freshly read worktree heading, retaining all history. The exported Supabase configuration warning is unused in visitor rendering, so auth configuration and failure gates were left byte-identical. Public reward previews were retained because they explain the current redemption limit.
+- Evidence and backups: `/Users/pensoair/.codex/visualizations/2026/10/07/kiwimu-public-copy-repair/gacha/`. Backup files are outside the repo and are not deployment inputs. Local preview requested at `http://127.0.0.1:5234/`; no private env was copied.
+- Limitations: no browser/visual verification or independent sign-off in this worker; no real login, draw, points change, sharing, stamp, redemption, order, payment, email, GPS or DB mutation. VM/PWA tests are fixtures, not live gameplay proof. No commit, push, merge or deployment. Next: fresh-context review of the frozen patch, then user review and any separately authorized release work.
 
 ## 月島深綠改版 · 2026-10-06
 

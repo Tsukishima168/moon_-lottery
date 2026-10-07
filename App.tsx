@@ -99,7 +99,7 @@ function EventModal({ prize, fortune, totalPoints, onClose, onGoToStore, onShare
         <div className="gacha-reward-line"><span>今日收下 <strong>+{prize.points} P</strong></span><span>本機餘額 <strong>{totalPoints} P</strong></span></div>
         <p className="gacha-fine-print">祝福是生活小提醒；遊戲積分僅記錄於此裝置，與會員積分分開。</p>
         <div className="gacha-dialog-actions">
-          <button type="button" className="gacha-button gacha-button-gold" onClick={onClose}>收下今天的祝福 <ArrowRight size={18} aria-hidden="true" /></button>
+          <button type="button" className="gacha-button gacha-button-green" onClick={onClose}>收下今天的祝福 <ArrowRight size={18} aria-hidden="true" /></button>
           <button type="button" className="gacha-button gacha-button-outline" onClick={share} disabled={sharing}><MessageCircle size={18} aria-hidden="true" />{sharing ? '準備分享中…' : '分享給 LINE 好友'}</button>
           <button type="button" className="gacha-text-button" onClick={onGoToStore}>查看護照紀錄 <ArrowRight size={16} aria-hidden="true" /></button>
         </div>
@@ -181,7 +181,15 @@ export default function App() {
     openPassportLogin({
       intent: 'gacha_login',
       onComplete: () => setAuthBusy(false),
-      onError: (detail) => { setAuthBusy(false); showTransientToast(detail.message || '登入失敗，請再試一次。'); },
+      onError: (detail) => {
+        setAuthBusy(false);
+        console.warn('Passport login did not complete:', detail.message);
+        showTransientToast(detail.redirectTo
+          ? '正在前往會員中心登入…'
+          : detail.message === '登入視窗已關閉，請再試一次。'
+            ? '登入視窗已關閉，請再試一次。'
+            : '登入尚未完成，請稍後再試一次。');
+      },
     });
   };
   const handleSignOut = async () => {
@@ -304,7 +312,7 @@ export default function App() {
     const processPassportSyncAck = () => {
       const ackTimestamp = consumePassportSyncAck();
       if (ackTimestamp) {
-        showTransientToast('Passport 已接收遊戲紀錄；可用積分以護照顯示為準。');
+        showTransientToast('會員中心已接收遊戲紀錄；兌換資格需由門市確認。');
       }
     };
 
@@ -450,9 +458,9 @@ export default function App() {
     });
 
     if (pendingSync) {
-      showTransientToast(`準備同步 ${pendingSync.amount} 積分到 Passport。`);
+      showTransientToast('帶你前往會員中心查看遊戲紀錄；兌換資格需由門市確認。');
     } else {
-      showTransientToast('目前沒有新的 Gacha 積分待同步，直接帶你前往 Passport。');
+      showTransientToast('帶你前往會員中心查看紀錄。');
     }
 
     const passportWindow = window.open(url, '_blank', 'noopener');
@@ -521,9 +529,9 @@ export default function App() {
           <section><span className="gacha-tag">每日免費</span><h3>今天先收一份祝福</h3><p>不必登入，每天可以免費搖一次。結果包含一份祝福、生活例子、小行動，以及 5–200 本機遊戲積分。</p><p>例如抽到「留一點空白」，可以試著在行程裡留十五分鐘散步。當天再按一次會重看同一份結果，不會再抽或加分。</p><p>每日次數與積分保留在這個瀏覽器；清除紀錄或換裝置後，無法從其他裝置找回。</p></section>
           <section><span className="gacha-tag">每次 30P</span><h3>還想玩，再開轉盤</h3><p>先查看獎品與機率，按下「轉一次」才會使用 30 本機遊戲積分。積分不足時，可以先玩每日免費搖珠；抽到免費機會，下一次便不扣積分。</p><p>券與印章目前為預覽，尚不能折抵、兌換或完成會員集章。</p></section>
           <details className="gacha-daily-prizes"><summary>查看每日搖珠的機率 <span>6 種小球</span></summary><div className="gacha-prize-list">{POINT_PRIZES.map((prize) => <div key={prize.id}><span>{prize.label}<small>+{prize.points} P</small></span><strong>{prize.weight}%</strong></div>)}</div></details>
-          <aside className="gacha-small-action"><Coins size={18} aria-hidden="true" /><div><strong>兩種積分，分開查看</strong><p>這裡顯示本機遊戲積分。護照的可用積分以會員中心顯示為準，不能將本機餘額當成到店兌換憑證。</p></div></aside>
+          <aside className="gacha-small-action"><Coins size={18} aria-hidden="true" /><div><strong>兩種積分，分開查看</strong><p>這裡顯示本機遊戲積分。會員可兌換的積分與資格需由門市確認，不能將本機餘額當成到店兌換憑證。</p></div></aside>
           <button type="button" className="gacha-button gacha-button-outline" onClick={handleGoToStoreFromBar}>查看護照紀錄 <ArrowRight size={18} aria-hidden="true" /></button>
-          <button type="button" className="gacha-button gacha-button-gold" onClick={() => setShowRules(false)}>我知道了，回到遊戲</button>
+          <button type="button" className="gacha-button gacha-button-green" onClick={() => setShowRules(false)}>我知道了，回到遊戲</button>
         </div>
       </GreenDialog>
       {showEventModal && resultPrize && resultFortune && <EventModal prize={resultPrize} fortune={resultFortune} totalPoints={totalPoints} onClose={() => setShowEventModal(false)} onGoToStore={handleGoToStore} onShareResult={showTransientToast} returnFocusRef={dailyButtonRef} />}

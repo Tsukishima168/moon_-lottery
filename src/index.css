@@ -63,6 +63,9 @@ button:disabled { cursor: not-allowed; }
 .gacha-button-gold { background: var(--sun); color: var(--ink); }
 .gacha-button-gold:hover:not(:disabled) { background: #E2D38D; box-shadow: 0 6px 20px #0B1C1926; }
 .gacha-button-gold:disabled { background: #E2E2D5; color: #5F6856; box-shadow: none; }
+.gacha-button-green { background: #1F3527; color: var(--paper); }
+.gacha-button-green:hover:not(:disabled) { background: var(--forest); box-shadow: 0 6px 20px #0B1C1926; }
+.gacha-button-green:disabled { background: #E2E2D5; color: #5F6856; box-shadow: none; }
 .gacha-button-outline { background: transparent; color: var(--ink); border-color: #7B867166; }
 .gacha-button-outline:hover { background: #E6E7DA; border-color: var(--forest); }
 .gacha-daily-button { width: min(260px, 100%); min-height: 56px; padding-inline: 24px; justify-content: center; gap: 18px; font-size: 16px; border-radius: 12px; }
