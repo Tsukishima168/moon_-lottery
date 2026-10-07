@@ -47,7 +47,7 @@ export const sharePullToLine = async (prizeLabel: string, points: number): Promi
         return {
             ok: false,
             reason: 'missing_liff_id',
-            message: 'LINE 分享功能尚未啟用，請稍後再試。',
+            message: '目前無法分享給 LINE 好友，請稍後再試。',
         };
     }
 
@@ -56,7 +56,7 @@ export const sharePullToLine = async (prizeLabel: string, points: number): Promi
         return {
             ok: false,
             reason: 'unavailable',
-            message: '目前無法啟用 LINE 分享，請改用 LINE App 開啟或稍後再試。',
+            message: '目前無法分享，請用 LINE 開啟這一頁，或稍後再試。',
         };
     }
 
@@ -74,7 +74,7 @@ export const sharePullToLine = async (prizeLabel: string, points: number): Promi
         return {
             ok: false,
             reason: 'unavailable',
-            message: '目前環境不支援 LINE 分享，請改用 LINE App 開啟。',
+            message: '這個瀏覽器暫時無法直接分享，請用 LINE 開啟這一頁。',
         };
     }
 
