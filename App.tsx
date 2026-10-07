@@ -8,7 +8,12 @@ import { GreenDialog } from './src/components/gacha/GreenDialog';
 import { FORTUNES, JACKPOT_FORTUNE, findSavedFortune, type Fortune } from './src/data/fortunes';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
-import { openPassportLogin, PASSPORT_AUTH_COMPLETE_EVENT } from './src/lib/authStorage';
+import {
+  openPassportLogin,
+  PASSPORT_AUTH_COMPLETE_EVENT,
+  PASSPORT_LOGIN_POPUP_BLOCKED_MESSAGE,
+  PASSPORT_LOGIN_POPUP_CLOSED_MESSAGE,
+} from './src/lib/authStorage';
 import { trackUtmLanding, trackOutboundClick, buildFromUrl } from './src/lib/crossSiteTracking';
 import { resolveEntryFrom, syncAttributionFromUrl } from './src/lib/attribution';
 import { KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
@@ -184,10 +189,13 @@ export default function App() {
       onError: (detail) => {
         setAuthBusy(false);
         console.warn('Passport login did not complete:', detail.message);
-        showTransientToast(detail.redirectTo
+        // Only the popup-blocked path actually redirects (authStorage falls back
+        // to a full-page login). Broker errors also carry redirectTo, so it can't
+        // be used to decide whether to say "going to login".
+        showTransientToast(detail.message === PASSPORT_LOGIN_POPUP_BLOCKED_MESSAGE
           ? '正在前往會員中心登入…'
-          : detail.message === '登入視窗已關閉，請再試一次。'
-            ? '登入視窗已關閉，請再試一次。'
+          : detail.message === PASSPORT_LOGIN_POPUP_CLOSED_MESSAGE
+            ? PASSPORT_LOGIN_POPUP_CLOSED_MESSAGE
             : '登入尚未完成，請稍後再試一次。');
       },
     });
