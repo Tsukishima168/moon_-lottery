@@ -8,7 +8,12 @@ import { GreenDialog } from './src/components/gacha/GreenDialog';
 import { FORTUNES, JACKPOT_FORTUNE, findSavedFortune, type Fortune } from './src/data/fortunes';
 import { sharePullToLine } from './src/lib/liffShare';
 import { trackUserEvent } from './src/lib/eventTracker';
-import { openPassportLogin, PASSPORT_AUTH_COMPLETE_EVENT } from './src/lib/authStorage';
+import {
+  openPassportLogin,
+  PASSPORT_AUTH_COMPLETE_EVENT,
+  PASSPORT_LOGIN_POPUP_BLOCKED_MESSAGE,
+  PASSPORT_LOGIN_POPUP_CLOSED_MESSAGE,
+} from './src/lib/authStorage';
 import { trackUtmLanding, trackOutboundClick, buildFromUrl } from './src/lib/crossSiteTracking';
 import { resolveEntryFrom, syncAttributionFromUrl } from './src/lib/attribution';
 import { KiwimuToaster, kiwimuToast } from '@/components/kiwimu';
@@ -184,10 +189,13 @@ export default function App() {
       onError: (detail) => {
         setAuthBusy(false);
         console.warn('Passport login did not complete:', detail.message);
-        showTransientToast(detail.redirectTo
+        // Only the popup-blocked path actually redirects (authStorage falls back
+        // to a full-page login). Broker errors also carry redirectTo, so it can't
+        // be used to decide whether to say "going to login".
+        showTransientToast(detail.message === PASSPORT_LOGIN_POPUP_BLOCKED_MESSAGE
           ? '正在前往會員中心登入…'
-          : detail.message === '登入視窗已關閉，請再試一次。'
-            ? '登入視窗已關閉，請再試一次。'
+          : detail.message === PASSPORT_LOGIN_POPUP_CLOSED_MESSAGE
+            ? PASSPORT_LOGIN_POPUP_CLOSED_MESSAGE
             : '登入尚未完成，請稍後再試一次。');
       },
     });
@@ -312,7 +320,7 @@ export default function App() {
     const processPassportSyncAck = () => {
       const ackTimestamp = consumePassportSyncAck();
       if (ackTimestamp) {
-        showTransientToast('會員中心已接收遊戲紀錄；兌換資格需由門市確認。');
+        showTransientToast('會員中心已接收遊戲紀錄；實體兌換尚未開放。');
       }
     };
 
@@ -458,7 +466,7 @@ export default function App() {
     });
 
     if (pendingSync) {
-      showTransientToast('帶你前往會員中心查看遊戲紀錄；兌換資格需由門市確認。');
+      showTransientToast('帶你前往會員中心查看遊戲紀錄；實體兌換尚未開放。');
     } else {
       showTransientToast('帶你前往會員中心查看紀錄。');
     }
@@ -529,7 +537,7 @@ export default function App() {
           <section><span className="gacha-tag">每日免費</span><h3>今天先收一份祝福</h3><p>不必登入，每天可以免費搖一次。結果包含一份祝福、生活例子、小行動，以及 5–200 本機遊戲積分。</p><p>例如抽到「留一點空白」，可以試著在行程裡留十五分鐘散步。當天再按一次會重看同一份結果，不會再抽或加分。</p><p>每日次數與積分保留在這個瀏覽器；清除紀錄或換裝置後，無法從其他裝置找回。</p></section>
           <section><span className="gacha-tag">每次 30P</span><h3>還想玩，再開轉盤</h3><p>先查看獎品與機率，按下「轉一次」才會使用 30 本機遊戲積分。積分不足時，可以先玩每日免費搖珠；抽到免費機會，下一次便不扣積分。</p><p>券與印章目前為預覽，尚不能折抵、兌換或完成會員集章。</p></section>
           <details className="gacha-daily-prizes"><summary>查看每日搖珠的機率 <span>6 種小球</span></summary><div className="gacha-prize-list">{POINT_PRIZES.map((prize) => <div key={prize.id}><span>{prize.label}<small>+{prize.points} P</small></span><strong>{prize.weight}%</strong></div>)}</div></details>
-          <aside className="gacha-small-action"><Coins size={18} aria-hidden="true" /><div><strong>兩種積分，分開查看</strong><p>這裡顯示本機遊戲積分。會員可兌換的積分與資格需由門市確認，不能將本機餘額當成到店兌換憑證。</p></div></aside>
+          <aside className="gacha-small-action"><Coins size={18} aria-hidden="true" /><div><strong>兩種積分，分開查看</strong><p>這裡顯示本機遊戲積分，與會員積分分開。實體兌換尚未開放，不能將本機餘額當成到店兌換憑證。</p></div></aside>
           <button type="button" className="gacha-button gacha-button-outline" onClick={handleGoToStoreFromBar}>查看護照紀錄 <ArrowRight size={18} aria-hidden="true" /></button>
           <button type="button" className="gacha-button gacha-button-green" onClick={() => setShowRules(false)}>我知道了，回到遊戲</button>
         </div>

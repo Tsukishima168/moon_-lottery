@@ -7,6 +7,8 @@ const IPV4_HOST_PATTERN = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 export const PASSPORT_LOGIN_URL = 'https://passport.kiwimu.com';
 export const PASSPORT_AUTH_COMPLETE_EVENT = 'kiwimu:passport-auth-complete';
 export const PASSPORT_SSO_MESSAGE_TYPE = 'kiwimu:sso:complete';
+export const PASSPORT_LOGIN_POPUP_BLOCKED_MESSAGE = '登入視窗被瀏覽器阻擋，正在改用整頁登入…';
+export const PASSPORT_LOGIN_POPUP_CLOSED_MESSAGE = '登入視窗已關閉，請再試一次。';
 
 export type PassportLoginPresentation = 'redirect' | 'popup';
 
@@ -229,7 +231,7 @@ export function openPassportLogin(options: OpenPassportLoginOptions = {}): boole
       type: PASSPORT_SSO_MESSAGE_TYPE,
       status: 'error',
       redirectTo: fallbackUrl,
-      message: '登入視窗被瀏覽器阻擋，正在改用整頁登入…',
+      message: PASSPORT_LOGIN_POPUP_BLOCKED_MESSAGE,
     });
     // Popup blocked by the browser: fall back to a full-page redirect so the
     // user can still complete login, instead of leaving them on an error toast.
@@ -274,7 +276,7 @@ export function openPassportLogin(options: OpenPassportLoginOptions = {}): boole
       options.onError?.({
         type: PASSPORT_SSO_MESSAGE_TYPE,
         status: 'error',
-        message: '登入視窗已關閉，請再試一次。',
+        message: PASSPORT_LOGIN_POPUP_CLOSED_MESSAGE,
       });
     }
   }, 500);
