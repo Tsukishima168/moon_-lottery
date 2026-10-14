@@ -1,8 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
 @import "tailwindcss";
 @custom-variant dark (&:is(.dark *));
 
-/* Map's green series applies to this game site. The shared black rail stays intact. */
+/* Map's green series applies to this game site. The shared Universe rail is the same forest set (#1F2F1F / #F5F0E8 / #D7C678). Fonts load once, from index.html. */
 :root {
   --radius: .75rem;
   --paper: #F5F0E8;
@@ -35,7 +34,7 @@ button:disabled { cursor: not-allowed; }
 .kiwimu-heading { font-family: 'Noto Sans TC', system-ui, sans-serif; }
 .kiwimu-mono, .gacha-eyebrow, .gacha-footer-brand { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 .kiwimu-page-bg { background: var(--paper); }
-.gacha-page { min-height: calc(100dvh - 49px); padding-bottom: env(safe-area-inset-bottom, 0); }
+.gacha-page { min-height: calc(100dvh - var(--ku-rail-height)); padding-bottom: env(safe-area-inset-bottom, 0); }
 .gacha-shell { width: min(1168px, calc(100% - 88px)); margin-inline: auto; }
 .gacha-skip { position: fixed; z-index: 500; left: 16px; top: -90px; padding: 12px 18px; background: var(--paper); border-radius: 8px; }
 .gacha-skip:focus { top: 60px; }
@@ -233,6 +232,12 @@ button:disabled { cursor: not-allowed; }
   .gacha-little-note img { width: 88px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
   .gacha-spinner { animation: none; }
   .gacha-button { transition: none; }
 }
