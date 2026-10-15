@@ -30,6 +30,8 @@ button { font: inherit; cursor: pointer; }
 button:disabled { cursor: not-allowed; }
 ::selection { background: #D7C67890; color: var(--ink); }
 :focus-visible { outline: 3px solid var(--forest); outline-offset: 5px; }
+:where(#root) button { min-height: 2.75rem; min-width: 2.75rem; }
+:where(#root) :is(button, a, summary):focus-visible { outline: 3px solid var(--forest, #111); outline-offset: 4px; }
 .safe-area-pb { padding-bottom: env(safe-area-inset-bottom, 0); }
 .kiwimu-heading { font-family: 'Noto Sans TC', system-ui, sans-serif; }
 .kiwimu-mono, .gacha-eyebrow, .gacha-footer-brand { font-family: 'JetBrains Mono', ui-monospace, monospace; }
