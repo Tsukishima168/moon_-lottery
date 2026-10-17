@@ -65,6 +65,28 @@ Production-only checks:
 - LIFF share works inside LINE after the LIFF ID is configured.
 - GA4 events include `site_id: gacha`.
 
+## GA4: shared rail event `universe_nav_click`
+
+The shared Kiwimu Universe rail (`src/components/KiwimuUniverseRail.tsx`, byte-identical across the five sites) reports every rail link click as `universe_nav_click` through `trackEvent` in `src/lib/crossSiteTracking.ts`. **The rail no longer sends `outbound_click`** (the old `link_name=universe_rail_<id>`, `entry_surface=gacha_universe_rail`, `destination_type=internal` history ends at the cutover; `outbound_click` is still sent by non-rail links such as the member-journey return link in `App.tsx`).
+
+12 parameters, plus `site_id: gacha` added by `trackEvent`:
+
+| Parameter | Value |
+|---|---|
+| `source_site` | `gacha` |
+| `target_site` | `kiwimu` / `passport` / `map` / `gacha` / `shop` / `canopy` |
+| `viewport`, `viewport_width`, `viewport_height` | e.g. `390x844`, `390`, `844` |
+| `viewport_category` | `mobile` (<=640) / `tablet` (<=1024) / `desktop` / `unknown` |
+| `login_status` | `authenticated` / `anonymous` / `unknown` (read once at mount via `readSupabaseLoginStatus(getAuthClient())`; `unknown` when Supabase env is missing) |
+| `surface`, `entry_surface` | `universe_rail` |
+| `link_name` | `MBTI` / `Passport` / `Map` / `Gacha` / `Shop` / `Canopy` |
+| `destination_type` | `cross_site_nav` (five sites) / `external` (forest exhibition) |
+| `transport_type` | `beacon` |
+
+The link to the current site (gacha) also fires the event with `source_site = target_site`; filter with `source_site != target_site` for cross-site analysis. In reports, custom dimensions for the new parameters must be registered in GA4 separately.
+
+Local check (no network needed): load the production preview with a stub `window.gtag`, click a rail link, and read the event from the stub.
+
 ## Release Gate
 
 Before push:

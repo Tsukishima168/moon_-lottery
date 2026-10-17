@@ -5,8 +5,13 @@ import App from './App';
 import PwaUpdateNotice from './src/components/PwaUpdateNotice';
 import { startPwaUpdateMonitor } from './src/lib/pwaUpdates';
 import { startMemberCacheCleanup } from './src/lib/memberCache';
-import KiwimuUniverseRail from './src/components/KiwimuUniverseRail';
+import KiwimuUniverseRail, { readSupabaseLoginStatus } from './src/components/KiwimuUniverseRail';
+import { trackEvent } from './src/lib/crossSiteTracking';
+import { getAuthClient } from './src/lib/auth';
 import './src/styles/kiwimu-universe.css';
+
+// 共用導覽只讀一次登入狀態（無副作用）；追蹤事件統一為 universe_nav_click。
+const getRailLoginStatus = () => readSupabaseLoginStatus(getAuthClient());
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -18,7 +23,7 @@ startPwaUpdateMonitor();
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <KiwimuUniverseRail currentSite="gacha" />
+    <KiwimuUniverseRail currentSite="gacha" onTrack={trackEvent} getLoginStatus={getRailLoginStatus} />
     <App />
     <PwaUpdateNotice />
   </React.StrictMode>

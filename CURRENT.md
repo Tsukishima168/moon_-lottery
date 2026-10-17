@@ -1,5 +1,29 @@
 # Gacha Current
 
+## 2026-10-15｜五站風格升級 Phase B｜安裝共用森林導覽核心、統一 `universe_nav_click`
+
+- 分支 `claude/style-upgrade-20261014`。`src/components/KiwimuUniverseRail.tsx` 與 `src/styles/kiwimu-universe.css` 換成 rail kit（與 kit 的 sha256 相同，`verify-rail.mjs --scan` PASS）。遊戲、抽獎、積分、auth 邏輯未動。
+- 掛載（`index.tsx`）：`onTrack` 接既有 `trackEvent`（帶 `site_id:gacha`），`getLoginStatus` 用 `readSupabaseLoginStatus(getAuthClient())`（掛載時讀一次、無副作用、缺 Supabase env 時為 `unknown`）。
+- 追蹤：rail 點擊改送 `universe_nav_click`（12 欄＋`site_id`），**rail 不再送 `outbound_click`**；欄位說明與 GA4 注意事項在 `VERIFY.md`。`crossSiteTracking.ts` 的 `trackOutboundClick` 仍供非 rail 連結使用。
+- 站點 CSS：舊 rail CSS 內的 `#root button` 44px 與 `focus-visible` 兩條規則搬進 `src/index.css`（內容不變，仍為 3px）；`pwa-update.css` 的 `--ku-font-body` 改成直接寫字體。kit 不再 `@import` 字體，Google Fonts 樣式表整頁只剩 `index.html` 一條（Phase A 後為 2）。
+- 手機（≤640px）「更多」依 kit 顯示「遊戲中心 ＋」並標示目前站，展開時 z-index 210；桌機 rail 與改動前逐像素相同。
+- 主行動規則：淺色面深綠實心、深色面柔金。PWA 更新提示卡（奶油白）的「更新頁面」由柔金改為 `#1F2F1F` 底、`#F5F0E8` 字；深色 Hero 的柔金按鈕、紙面對話框原有的深綠主按鈕不變。
+- 驗證：`npx tsc --noEmit`、`npm run build` exit 0；`scripts/` 三支 node 檢查與 kit 行為測試（161 項）通過；Playwright 於 1440／390／320 量 rail 與追蹤，首頁 1440 前後 0 差異、390 只有 rail 帶（「更多」欄）有差異，rail 以外 0。
+- 限制：焦點環仍是 3px（`src/index.css` 全域與 `#root` 規則，搬移時未改，與 common.md 的 2px 規則不同，尚待決定）；本機沒有 Supabase env，`login_status` 只驗到 `unknown`；未真人 Safari／LINE，未登入、未抽獎。未 push、未開 PR、未部署。
+- QA 證據：`/Users/pensoair/Desktop/Web-Projects/sites/.worktrees/style-20261014-qa/gacha/`（`DELIVERY.md` Phase B 一節、`results.json` 的 `phaseB`）。
+
+## 2026-10-14｜五站風格升級 Phase A｜字體單一載入、rail 高度變數、reduced-motion catch-all
+
+- 分支 `claude/style-upgrade-20261014`（base `origin/main` `833574c`）。gacha 是 10/14 驗收的五站標竿，這輪只修四項，遊戲、抽獎、積分、auth、共用 rail 檔與 rail 掛載一律未動。
+- G1 字體：Noto Sans TC 與 JetBrains Mono 合併成 `index.html` 一條 Google Fonts 連結（字重 400／500／700／900 與 500／600／700 不變），刪掉 `src/index.css` 重複的 `@import`。Phase A 後字體 CSS 請求由 3 降為 2；剩下的一個來自 rail CSS，Phase B 整合 rail kit 時才處理。
+- G2 `.gacha-page` 的 `min-height` 由寫死的 rail 高度數值改為 `calc(100dvh - var(--ku-rail-height))`。對該數值做 `git grep`（repo 內）為 0 筆；`.gacha-page` 最小高度 390 為 795px、1440 為 851px，與改動前相同。
+- G3 `src/index.css` 的 `prefers-reduced-motion` 區塊加入全域 catch-all（animation／transition 壓到 0.01ms、animation 只跑 1 次、關掉 smooth scroll），既有 `.gacha-spinner`、`.gacha-button` 規則與 JS 的 `useReducedMotion` 保留。
+- G4 `src/index.css` 的「黑色 rail」註解與 `design-qa.md` 兩處（rail 說明、顏色與狀態）改為森林綠版。
+- 驗證：`npx tsc --noEmit` exit 0、`npm run build` exit 0（gacha repo 沒有 CI workflow，命令取自 `VERIFY.md`）；`scripts/` 三支 node 檢查通過。390（DPR2）與 1440 的首頁整頁、首屏、轉盤 dialog 前後截圖逐像素比對 0 差異；reduce 下首頁與轉盤 dialog 的 transition／animation >0.01ms 元素為 0。
+- 誠實註記：reduce 下上述兩個畫面在改動前就已是 0（原有 `.gacha-button { transition: none }` 與 rail 自己的規則已涵蓋），這次是補上全域保證；用一個 inline `transition: all 1s` 的探針元素驗證，改動前仍是 1s、改動後被壓到 0.01ms。
+- 未做：`html { scroll-padding-top: 64px }`、`.gacha-skip:focus { top: 60px }` 等與 rail 高度相近但不是同一個數值的設定未動；Phase B（rail 追蹤與 rail kit）待通知。未 push、未開 PR、未部署。
+- QA 證據：`/Users/pensoair/Desktop/Web-Projects/sites/.worktrees/style-20261014-qa/gacha/`（`DELIVERY.md`、`results.json`、`before/`、`after/`）。
+
 ## 2026-10-07｜主對話收尾｜本機驗證完成，待獨立簽收與上線核定
 
 - ✅ 主對話移除「可用積分以護照顯示為準」的不準確承諾。遊戲說明與兩個Passport回傳／前往提示改成會員可兌換積分／資格由門市確認；public/llms同步。`App.tsx:315`、`App.tsx:461`、`App.tsx:532`。
