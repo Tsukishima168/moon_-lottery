@@ -36,7 +36,9 @@ export default defineConfig(() => {
       VitePWA({
         registerType: 'prompt',
         injectRegister: false,
-        includeAssets: ['icons/*.png', 'icons/*.svg'],
+        // 圖示由 workbox.globPatterns（png）預快取一次；關掉外掛另外把 manifest 圖示、includeAssets 再加一次的行為，
+        // 否則 precache 清單裡每張圖示會出現兩次（revision 相同，只是白白變大）。
+        includeManifestIcons: false,
         manifest: {
           name: '月島・遊戲中心',
           short_name: '月島遊戲中心',
