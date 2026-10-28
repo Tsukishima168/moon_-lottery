@@ -34,7 +34,7 @@ function ResultModal({ prize, newBalance, onSpinAgain, onClose, onShare, returnF
     setSharing(true);
     try {
       const result = await sharePullToLine(prize.name, prize.type === 'points' ? prize.value : undefined);
-      onShare(result.ok ? '已開啟 LINE 分享。' : 'message' in result ? result.message : '暫時無法分享，請稍後再試。');
+      onShare(result.message);
     } catch { onShare('暫時無法分享，請稍後再試。'); }
     finally { setSharing(false); }
   };

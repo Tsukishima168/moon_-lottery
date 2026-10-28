@@ -89,7 +89,7 @@ function EventModal({ prize, fortune, totalPoints, onClose, onGoToStore, onShare
     setSharing(true);
     try {
       const result = await sharePullToLine(prize.label, prize.points);
-      onShareResult(result.ok ? '已開啟 LINE 分享。' : 'message' in result ? result.message : '暫時無法分享，請稍後再試。');
+      onShareResult(result.message);
     } catch { onShareResult('暫時無法分享，請稍後再試。'); }
     finally { setSharing(false); }
   };

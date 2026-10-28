@@ -8,7 +8,7 @@ const SITE_URL = 'https://gacha.kiwimu.com';
 const SITE_NAME = '月島・遊戲中心';
 
 export type ShareToLineResult =
-    | { ok: true }
+    | { ok: true; message: string }
     | {
         ok: false;
         reason: 'popup_blocked' | 'cancelled' | 'error';
@@ -58,14 +58,34 @@ const buildShareText = (prizeLabel: string, points?: number): string => {
     return lines.join('\n');
 };
 
+const OPENED_LINE_SHARE_MESSAGE = '已開啟 LINE 分享。';
+const COPIED_SHARE_MESSAGE = '已複製分享文字，貼到 LINE 聊天室就能分享給好友。';
+const OPENED_WEB_SHARE_MESSAGE = '已開啟 LINE 網頁版分享：需要先登入 LINE，而且只會帶上遊戲連結。';
+
 /**
- * 不需要 LIFF 的分享：LINE 官方 URL scheme（https://line.me/R/share?text=...，text 需 UTF-8 百分比編碼）。
- * 手機會喚起 LINE App 的「分享給」畫面，桌機會開 LINE 的分享頁。
- * 文件：https://developers.line.biz/en/docs/line-login/using-line-url-scheme/
- * 注意：不能用 'noopener' 這個 window.open 特徵，否則一律回傳 null，就分辨不出視窗是否被擋。
+ * 判斷是不是手機／平板（會有 LINE App 可以接 line.me 的分享連結）。
+ * 為什麼不能全部都開 https://line.me/R/share：2026-10-28 用不同 User-Agent 實測（curl，唯讀），
+ * 手機（iPhone／Android 手機與平板）回 200 並帶出 line://share；桌機的 Chrome、Firefox、Edge
+ * （Mac／Windows／Linux）一律 302 到 https://line.me/（LINE 首頁），根本沒有分享畫面。
+ * 所以依據是「裝置有沒有 LINE App 可以接」：
+ *   1. navigator.userAgentData.mobile（Chromium 提供的布林值，最可靠）；
+ *   2. 沒有的話看 User-Agent 有沒有 Android／iPhone／iPad／iPod／Mobile／Windows Phone；
+ *   3. iPadOS 13+ 的 Safari 預設送 Mac 桌機 UA，用「platform 是 MacIntel 且觸控點數 > 1」辨識（Mac 本身沒有觸控）。
+ * 判斷不到時一律當桌機：桌機路徑（複製文字）在手機上也能用，只是少了一步直接喚起 LINE。
  */
-const shareViaLineUrl = (text: string): ShareToLineResult => {
-    const shareUrl = `https://line.me/R/share?text=${encodeURIComponent(text)}`;
+const isMobileDevice = (): boolean => {
+    if (typeof navigator === 'undefined') return false;
+    const uaData = (navigator as Navigator & { userAgentData?: { mobile?: boolean } }).userAgentData;
+    if (uaData?.mobile === true) return true;
+    if (/Android|iPhone|iPad|iPod|Mobile|Windows Phone/i.test(navigator.userAgent ?? '')) return true;
+    return navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+};
+
+/**
+ * 開新視窗到指定網址。不能用 'noopener' 這個 window.open 特徵，否則一律回傳 null，就分辨不出視窗是否被擋；
+ * 改成開啟後把 opener 設為 null。
+ */
+const openShareWindow = (shareUrl: string, successMessage: string): ShareToLineResult => {
     try {
         const shareWindow = window.open(shareUrl, '_blank');
         if (!shareWindow) {
@@ -80,7 +100,7 @@ const shareViaLineUrl = (text: string): ShareToLineResult => {
         } catch {
             // 切斷 opener 只是額外保護，失敗不影響分享
         }
-        return { ok: true };
+        return { ok: true, message: successMessage };
     } catch (error) {
         console.error('Error opening LINE share URL', error);
         return {
@@ -89,6 +109,34 @@ const shareViaLineUrl = (text: string): ShareToLineResult => {
             message: '分享失敗，請稍後再試。',
         };
     }
+};
+
+/**
+ * 不需要 LIFF 的分享。
+ * 手機：LINE 官方 URL scheme（https://line.me/R/share?text=...，text 需 UTF-8 百分比編碼），
+ *   會喚起 LINE App 的「分享給」畫面。文件：https://developers.line.biz/en/docs/line-login/using-line-url-scheme/
+ * 桌機：line.me/R/share 會被轉到 LINE 首頁，所以改成「複製分享文字」，貼到 LINE（電腦版或手機）聊天室就能分享，
+ *   不用登入網頁版，也保留獎品文字；複製不了（瀏覽器不支援或被拒絕）才退回
+ *   https://social-plugins.line.me/lineit/share?url=...（LINE 網頁版分享，需登入 LINE，只能帶網址、不能帶文字）。
+ * 複製／開視窗都要在使用者點擊的同一個動作裡呼叫，所以呼叫端在這之前不能先 await。
+ */
+const shareViaLineUrl = async (text: string): Promise<ShareToLineResult> => {
+    if (isMobileDevice()) {
+        return openShareWindow(`https://line.me/R/share?text=${encodeURIComponent(text)}`, OPENED_LINE_SHARE_MESSAGE);
+    }
+
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return { ok: true, message: COPIED_SHARE_MESSAGE };
+        }
+    } catch (error) {
+        console.warn('Clipboard write failed, falling back to the LINE web share page.', error);
+    }
+    return openShareWindow(
+        `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(SITE_URL)}`,
+        OPENED_WEB_SHARE_MESSAGE,
+    );
 };
 
 export const sharePullToLine = async (prizeLabel: string, points?: number): Promise<ShareToLineResult> => {
@@ -190,7 +238,7 @@ export const sharePullToLine = async (prizeLabel: string, points?: number): Prom
         const res = await liff.shareTargetPicker([flexMessage]);
         if (res) {
             console.log('Flex message sent successfully');
-            return { ok: true };
+            return { ok: true, message: OPENED_LINE_SHARE_MESSAGE };
         } else {
             console.log('User cancelled share target picker');
             return {
