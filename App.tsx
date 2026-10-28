@@ -471,8 +471,17 @@ export default function App() {
       showTransientToast('帶你前往會員中心查看紀錄。');
     }
 
-    const passportWindow = window.open(url, '_blank', 'noopener');
-    if (!passportWindow) {
+    // 不能用 'noopener' 特徵：帶它時 window.open 一律回傳 null（規格如此），
+    // 就分不出「新分頁開成功」與「被瀏覽器擋下」，結果每次都會同時開新分頁又把目前分頁導走。
+    // 改成開啟後把 opener 設為 null；只有真的被擋（回傳 null）才在本頁跳轉。
+    const passportWindow = window.open(url, '_blank');
+    if (passportWindow) {
+      try {
+        passportWindow.opener = null;
+      } catch {
+        // 切斷 opener 只是額外保護，失敗不影響開啟
+      }
+    } else {
       window.location.href = url;
     }
   };
