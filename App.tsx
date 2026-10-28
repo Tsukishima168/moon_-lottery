@@ -102,7 +102,7 @@ function EventModal({ prize, fortune, totalPoints, onClose, onGoToStore, onShare
         <div className="gacha-small-story"><p className="gacha-eyebrow">像這樣的一天</p><p>{fortune.example}</p></div>
         <div className="gacha-small-action"><Sparkles size={18} aria-hidden="true" /><div><strong>今天，試著做一件小事</strong><p>{fortune.action}</p></div></div>
         <div className="gacha-reward-line"><span>今日收下 <strong>+{prize.points} P</strong></span><span>本機餘額 <strong>{totalPoints} P</strong></span></div>
-        <p className="gacha-fine-print">祝福是生活小提醒；遊戲積分僅記錄於此裝置，與會員積分分開。</p>
+        <p className="gacha-fine-print">祝福是生活小提醒。遊戲積分餘額以這個裝置為準，異動也會嘗試備份到月島資料庫；按「查看護照紀錄」時，搖珠積分會帶到會員護照（設有上限），轉盤積分不會。</p>
         <div className="gacha-dialog-actions">
           <button type="button" className="gacha-button gacha-button-green" onClick={onClose}>收下今天的祝福 <ArrowRight size={18} aria-hidden="true" /></button>
           <button type="button" className="gacha-button gacha-button-outline" onClick={share} disabled={sharing}><MessageCircle size={18} aria-hidden="true" />{sharing ? '準備分享中…' : '分享給 LINE 好友'}</button>
@@ -528,7 +528,7 @@ export default function App() {
       </main>
 
       <footer className="gacha-footer gacha-shell">
-        <p>本機遊戲積分與會員積分分開，實體兌換尚未開放。</p>
+        <p>遊戲積分餘額以這個裝置為準，不等於會員護照的積分；實體兌換尚未開放。</p>
         <span className="gacha-footer-brand">MOON ISLAND · KIWIMU</span>
       </footer>
 
@@ -537,7 +537,7 @@ export default function App() {
           <section><span className="gacha-tag">每日免費</span><h3>今天先收一份祝福</h3><p>不必登入，每天可以免費搖一次。結果包含一份祝福、生活例子、小行動，以及 5–200 本機遊戲積分。</p><p>例如抽到「留一點空白」，可以試著在行程裡留十五分鐘散步。當天再按一次會重看同一份結果，不會再抽或加分。</p><p>每日次數與積分保留在這個瀏覽器；清除紀錄或換裝置後，無法從其他裝置找回。</p></section>
           <section><span className="gacha-tag">每次 30P</span><h3>還想玩，再開轉盤</h3><p>先查看獎品與機率，按下「轉一次」才會使用 30 本機遊戲積分。積分不足時，可以先玩每日免費搖珠；抽到免費機會，下一次便不扣積分。</p><p>券與印章目前為預覽，尚不能折抵、兌換或完成會員集章。</p></section>
           <details className="gacha-daily-prizes"><summary>查看每日搖珠的機率 <span>6 種小球</span></summary><div className="gacha-prize-list">{POINT_PRIZES.map((prize) => <div key={prize.id}><span>{prize.label}<small>+{prize.points} P</small></span><strong>{prize.weight}%</strong></div>)}</div></details>
-          <aside className="gacha-small-action"><Coins size={18} aria-hidden="true" /><div><strong>兩種積分，分開查看</strong><p>這裡顯示本機遊戲積分，與會員積分分開。實體兌換尚未開放，不能將本機餘額當成到店兌換憑證。</p></div></aside>
+          <aside className="gacha-small-action"><Coins size={18} aria-hidden="true" /><div><strong>兩種積分，各自累計</strong><p>這裡顯示的是本機遊戲積分：餘額存在這個瀏覽器，每筆異動也會嘗試備份到月島資料庫。按「查看護照紀錄」時，每日搖珠的積分會帶到會員護照（單次與每日設有上限），幸運轉盤的積分不會。實體兌換尚未開放，不能將本機餘額當成到店兌換憑證。</p></div></aside>
           <button type="button" className="gacha-button gacha-button-outline" onClick={handleGoToStoreFromBar}>查看護照紀錄 <ArrowRight size={18} aria-hidden="true" /></button>
           <button type="button" className="gacha-button gacha-button-green" onClick={() => setShowRules(false)}>我知道了，回到遊戲</button>
         </div>

@@ -8,6 +8,10 @@ import { sharePullToLine } from '../lib/liffShare';
 import { GreenDialog } from './gacha/GreenDialog';
 
 const DISPENSE_MS = 2600;
+// 「獎品與機率一覽」只調整顯示順序：積分獎品依點數由小到大，其餘維持原本順序（Array.sort 為穩定排序）。
+// 抽獎仍用 wheelService 的 WHEEL_PRIZES 與權重，機率不變。
+const PRIZES_FOR_DISPLAY = [...WHEEL_PRIZES].sort((a, b) =>
+  (a.type === 'points' ? 0 : 1) - (b.type === 'points' ? 0 : 1) || (a.type === 'points' ? a.value - b.value : 0));
 const trackGtagEvent = (eventName: string, params: Record<string, unknown> = {}) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
     (window as any).gtag('event', eventName, { site_id: 'gacha', ...params });
@@ -139,8 +143,8 @@ const LuckyWheel: React.FC<LuckyWheelProps> = ({ onClose, onPointsChange, onToas
           {!canAfford && !hasFreeSpinBuff && <button type="button" className="gacha-text-button" onClick={() => { exitFocusRef.current = dailyButtonRef.current; onGoToDaily(); }}>回到每日免費搖珠 <ArrowRight size={16} aria-hidden="true" /></button>}
         </div>
       </div>
-      <details className="gacha-wheel-prizes"><summary>獎品與機率一覽 <span>10 種小驚喜</span></summary><div className="gacha-prize-list">{WHEEL_PRIZES.map((prize) => <div key={prize.id}><span>{prize.name}{(prize.type === 'coupon' || prize.type === 'stamp') && <small>預覽・尚未開放</small>}</span><strong>{(prize.weight / WHEEL_PRIZES.reduce((sum, item) => sum + item.weight, 0) * 100).toFixed(1)}%</strong></div>)}</div></details>
-      <p className="gacha-fine-print gacha-wheel-disclaimer">本機遊戲積分與會員積分分開。券與印章為預覽，尚不能兌換或集章。</p>
+      <details className="gacha-wheel-prizes"><summary>獎品與機率一覽 <span>10 種小驚喜</span></summary><div className="gacha-prize-list">{PRIZES_FOR_DISPLAY.map((prize) => <div key={prize.id}><span>{prize.name}{(prize.type === 'coupon' || prize.type === 'stamp') && <small>預覽・尚未開放</small>}</span><strong>{(prize.weight / WHEEL_PRIZES.reduce((sum, item) => sum + item.weight, 0) * 100).toFixed(1)}%</strong></div>)}</div></details>
+      <p className="gacha-fine-print gacha-wheel-disclaimer">轉盤的遊戲積分以這個裝置為準，不會帶到會員護照。券與印章為預覽，尚不能兌換或集章。</p>
       {showResult && resultPrize && <ResultModal prize={resultPrize} newBalance={resultBalance} onSpinAgain={() => { setShowResult(false); handleSpin(false); }} onClose={() => setShowResult(false)} onShare={onToast} returnFocusRef={spinButtonRef} returnFocusFallbackRef={wheelTitleRef} />}
     </GreenDialog>
   );
