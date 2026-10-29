@@ -36,11 +36,13 @@ export default defineConfig(() => {
       VitePWA({
         registerType: 'prompt',
         injectRegister: false,
-        includeAssets: ['icons/*.png', 'icons/*.svg'],
+        // 圖示由 workbox.globPatterns（png）預快取一次；關掉外掛另外把 manifest 圖示、includeAssets 再加一次的行為，
+        // 否則 precache 清單裡每張圖示會出現兩次（revision 相同，只是白白變大）。
+        includeManifestIcons: false,
         manifest: {
-          name: '月島扭蛋機',
-          short_name: '月島扭蛋',
-          description: '每日抽一個 Kiwimu — 月島甜點扭蛋遊戲',
+          name: '月島・遊戲中心',
+          short_name: '月島遊戲中心',
+          description: '每天免費收下一份 Kiwimu 祝福，也可以用本機遊戲積分參與幸運轉盤。券與印章為預覽，實體兌換尚未開放。',
           theme_color: '#1F2F1F',
           background_color: '#F5F0E8',
           display: 'standalone',
@@ -60,10 +62,10 @@ export default defineConfig(() => {
               type: 'image/png',
             },
             {
-              src: '/icons/pwa-512x512.png',
+              src: '/icons/pwa-maskable-512x512.png',
               sizes: '512x512',
               type: 'image/png',
-              purpose: 'any maskable',
+              purpose: 'maskable',
             },
           ],
         },

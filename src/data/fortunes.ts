@@ -7,6 +7,7 @@ export interface Fortune {
 }
 
 // Keep the ten existing IDs so today's saved result can still be opened.
+// 「隱藏版」只保留給月光球的 JACKPOT_FORTUNE（2%）；一般籤池裡的籤不再標隱藏版。
 export const FORTUNES: Fortune[] = [
   { id: 1, level: '大吉', text: '你願意開始的那一小步，就是今天的好運。', example: '想做的事一直放在清單裡？不必一次做完，先打開文件、寫下一句，就已經開始。', action: '挑一件掛在心上的事，留五分鐘給它。' },
   { id: 2, level: '中吉', text: '慢一點，也能把日子過得剛剛好。', example: '午休不用急著回訊息。好好吃完一口飯，再決定接下來要做什麼。', action: '今天給自己一段不看手機的十分鐘。' },
@@ -17,7 +18,7 @@ export const FORTUNES: Fortune[] = [
   { id: 7, level: '吉', text: '不必獨自完成的事，就讓人陪你一段。', example: '卡住時問同事一句「可以陪我看一下嗎」，往往比自己反覆猜測更快找到方向。', action: '對一件卡住的事，提出一個具體的求助。' },
   { id: 8, level: '小吉', text: '平凡的一天，也值得被好好記住。', example: '路上的一束光、剛好的咖啡溫度，或有人替你留門，都是今天可以收下的小片刻。', action: '睡前寫下今天一件讓你舒服的小事。' },
   { id: 9, level: '大吉', text: '喜歡的事，不一定要等到有空才輪到。', example: '想看一本書，可以先讀兩頁；想去散步，也可以只走到街角。小份量的喜歡一樣算數。', action: '把一件喜歡的事，放進今天的十分鐘。' },
-  { id: 10, level: '隱藏版', text: '今天的你，值得一份沒有理由的小獎勵。', example: '即使沒有完成所有待辦，也可以泡杯喜歡的茶、聽一首歌，好好結束今天。', action: '挑一件讓你開心的小事，送給自己。' },
+  { id: 10, level: '小吉', text: '今天的你，值得一份沒有理由的小獎勵。', example: '即使沒有完成所有待辦，也可以泡杯喜歡的茶、聽一首歌，好好結束今天。', action: '挑一件讓你開心的小事，送給自己。' },
 ];
 
 export const JACKPOT_FORTUNE: Fortune = {
