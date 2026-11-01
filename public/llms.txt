@@ -34,7 +34,7 @@ gacha.kiwimu.com 是 Kiwimu 的月島・遊戲中心。每天免費轉一次，�
 ## Kiwimu 生態連結
 
 - MBTI / Kiwimu 主站：https://kiwimu.com
-- Shop：https://shop.kiwimu.com
+- 菜單預訂：https://map.kiwimu.com/menu
 - Passport：https://passport.kiwimu.com
 - Gacha：https://gacha.kiwimu.com
 - Map：https://map.kiwimu.com
