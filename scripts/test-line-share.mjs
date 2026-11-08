@@ -9,7 +9,7 @@ const src = readFileSync(new URL('../src/lib/liffShare.ts', import.meta.url), 'u
 const js = ts.transpileModule(src, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText
-  .replace(/import liff from ['"]@line\/liff['"];?/, 'const liff = globalThis.__liff;')
+  .replace(/await import\(['"]@line\/liff['"]\)/, '({ default: globalThis.__liff })')
   .replace('import.meta.env.VITE_LINE_LIFF_ID', 'globalThis.__LIFF_ID');
 assert.ok(js.includes('globalThis.__liff') && js.includes('globalThis.__LIFF_ID'), 'stub replacement failed');
 

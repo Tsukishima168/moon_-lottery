@@ -1,4 +1,11 @@
-import liff from '@line/liff';
+// LIFF SDK（約 34 KB gzip）延後到真的要分享時才載入，不進首屏。
+// 沒有 VITE_LINE_LIFF_ID 時（目前正式站）整條路徑都不會碰到 SDK。
+type LiffSdk = typeof import('@line/liff').default;
+let liffSdk: LiffSdk | null = null;
+const loadLiff = async (): Promise<LiffSdk> => {
+    if (!liffSdk) liffSdk = (await import('@line/liff')).default;
+    return liffSdk;
+};
 
 const liffId = import.meta.env.VITE_LINE_LIFF_ID;
 let liffInitPromise: Promise<boolean> | null = null;
@@ -31,6 +38,7 @@ export const initLiff = async () => {
 
     liffInitPromise = (async () => {
         try {
+            const liff = await loadLiff();
             await liff.init({ liffId });
             liffReady = true;
             return true;
@@ -151,6 +159,9 @@ export const sharePullToLine = async (prizeLabel: string, points?: number): Prom
     if (!initialized) {
         return shareViaLineUrl(text);
     }
+
+    // initLiff 成功代表 SDK 已載入並 init，這裡不會再等網路。
+    const liff = await loadLiff();
 
     if (!liff.isLoggedIn()) {
         // 不在 LINE App 內（或尚未登入 LINE）時 shareTargetPicker 會失敗，改走分享網址。
